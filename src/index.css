@@ -1,0 +1,281 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: 'Satoshi';
+  src: url('./assets/fonts/Satoshi-Variable.woff2') format('woff2-variations'),
+       url('./assets/fonts/Satoshi-Variable.woff2') format('woff2'),
+       url('https://cdn.fontshare.com/wf/NWBQYJIM7GCZ5XWD7D26ARB3VDY55ZRT/K63EV2KZIGKLE7RANQ2U42S6SVHU5RJ7/X6XYTKIVDUW7GZTZPZNN4EUM5KH54KHF.woff2') format('woff2');
+  font-weight: 300 900;
+  font-display: swap;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Satoshi';
+  src: url('./assets/fonts/Satoshi-VariableItalic.woff2') format('woff2-variations'),
+       url('./assets/fonts/Satoshi-VariableItalic.woff2') format('woff2'),
+       url('https://cdn.fontshare.com/wf/3JZIFUW7KLFSPLVCIUI2DLGNIER6IFCX/MMP4RUF5LYGUAZS3DCJC3GJ6F6SAGKSN/E3NEPGEAHYCHR37DSBXHV33XCYYRE2CY.woff2') format('woff2');
+  font-weight: 300 900;
+  font-display: swap;
+  font-style: italic;
+}
+
+@theme {
+  --font-sans: 'Satoshi', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+@layer base {
+  :root {
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+    --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+    
+    --background: #09090b;
+    --elevation: #121215;
+    --elevation-hover: #18181c;
+    --border: #222226;
+    --border-hover: #333338;
+    --foreground: #f4f4f6;
+    --foreground-muted: #8b8b94;
+    --foreground-subtle: #56565f;
+    --accent: #ffffff;
+    --accent-foreground: #000000;
+
+    /* Semantic Accent Tokens */
+    --accent-ai: #EEE14B;
+    --accent-ai-hover: #f5eb6d;
+    --accent-ai-subtle: rgba(238, 225, 75, 0.15);
+    --accent-ai-border: rgba(238, 225, 75, 0.35);
+
+    --accent-success: #34d399;
+    --accent-success-subtle: rgba(16, 185, 129, 0.15);
+    --accent-success-border: rgba(16, 185, 129, 0.30);
+
+    --accent-info: #60a5fa;
+    --accent-info-subtle: rgba(59, 130, 246, 0.15);
+    --accent-info-border: rgba(59, 130, 246, 0.30);
+  }
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+button, input, select, textarea {
+  font-family: inherit;
+}
+
+img {
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
+  user-drag: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Custom interactive animation utilities following Emil Kowalski guidelines */
+.btn-press {
+  transition: transform 160ms var(--ease-out), background-color 150ms ease, border-color 150ms ease, opacity 150ms ease;
+}
+
+.btn-press:active {
+  transform: scale(0.97);
+}
+
+
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46;
+}
+
+/* Omnimage Logo Hexagonal Orbit Keyframes */
+@keyframes omnimageDotOrbit {
+  0% { transform: translate(0, 0); }
+  16% { transform: translate(6px, 10px); }
+  33% { transform: translate(0, 20px); }
+  50% { transform: translate(-12px, 20px); }
+  66% { transform: translate(-18px, 10px); }
+  83% { transform: translate(-12px, 0); }
+  100% { transform: translate(0, 0); }
+}
+
+.animate-omnimage-dot {
+  animation: omnimageDotOrbit 4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+}
+
+/* Skeleton Shimmer Loading Placeholder */
+@keyframes skeletonShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background-color: #18181b;
+  background-image: linear-gradient(110deg, #18181b 30%, #27272a 50%, #18181b 70%);
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.5s linear infinite;
+}
+
+/* ==========================================================================
+   Anchor Ripple Wave Shimmer (GPU-accelerated, 120 FPS on Compositor Thread)
+   ========================================================================== */
+.anchor-wave-card {
+  --d: 0ms;
+}
+
+.anchor-wave-card.is-wave-animating {
+  will-change: transform, opacity;
+}
+
+/* Phase 1: Base placeholder pulse with anchor accent */
+.anchor-wave-placeholder {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background-color: var(--anchor-accent-subtle, rgba(255, 255, 255, 0.1));
+  border-radius: inherit;
+  opacity: 0;
+  animation: anchorWavePulse 750ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: var(--d);
+  pointer-events: none;
+}
+
+/* Phase 1: Pure GPU translateX sliding beam pseudo-element */
+.anchor-wave-placeholder::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--anchor-accent-bright, #ffffff) 42%, transparent) 50%,
+    transparent 100%
+  );
+  transform: translateX(-100%);
+  animation: anchorWaveSlide 850ms cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  animation-delay: var(--d);
+  pointer-events: none;
+}
+
+/* Phase 2: Content reveal fade without blocking content arrival */
+.anchor-wave-image-reveal {
+  opacity: 0;
+  animation: anchorImageFadeIn 400ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: var(--d);
+}
+
+@keyframes anchorWavePulse {
+  0% {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  35% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes anchorWaveSlide {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes anchorImageFadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-shimmer {
+    animation: none;
+    background-image: none;
+    background-color: #18181b;
+  }
+
+  .anchor-wave-placeholder::after {
+    display: none !important;
+    animation: none !important;
+  }
+
+  .anchor-wave-placeholder {
+    animation: anchorSimpleFade 250ms ease forwards !important;
+    animation-delay: 0ms !important;
+    transform: none !important;
+  }
+
+  .anchor-wave-image-reveal {
+    animation: anchorSimpleFade 250ms ease forwards !important;
+    animation-delay: 0ms !important;
+  }
+
+  @keyframes anchorSimpleFade {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+
+/* Amber Semantic Theme Override (#EEE14B) */
+.text-amber-400 { color: #EEE14B !important; }
+.text-amber-300 { color: #f5ea6c !important; }
+.text-amber-200 { color: #faf4a8 !important; }
+.bg-amber-400 { background-color: #EEE14B !important; }
+.bg-amber-500\/10 { background-color: rgba(238, 225, 75, 0.10) !important; }
+.bg-amber-500\/15 { background-color: rgba(238, 225, 75, 0.15) !important; }
+.bg-amber-500\/20 { background-color: rgba(238, 225, 75, 0.20) !important; }
+.bg-amber-500\/30 { background-color: rgba(238, 225, 75, 0.30) !important; }
+.border-amber-400 { border-color: #EEE14B !important; }
+.border-amber-500\/20 { border-color: rgba(238, 225, 75, 0.20) !important; }
+.border-amber-500\/25 { border-color: rgba(238, 225, 75, 0.25) !important; }
+.border-amber-500\/30 { border-color: rgba(238, 225, 75, 0.30) !important; }
+.border-amber-500\/40 { border-color: rgba(238, 225, 75, 0.40) !important; }
+.ring-amber-400 { --tw-ring-color: #EEE14B !important; }
+.shadow-amber-500\/20 { --tw-shadow-color: rgba(238, 225, 75, 0.20) !important; }

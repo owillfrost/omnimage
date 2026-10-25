@@ -1,0 +1,325 @@
+﻿import * as React from 'react'
+import type { Artwork } from '../types/artwork'
+import {
+  sortArtworksByColorProximity,
+  type ScoredArtwork,
+} from '../core/colorClustering'
+import type {
+  ColorSortWorkerRequest,
+  ColorSortWorkerResponse,
+  SimilaritySortMode,
+} from '../workers/colorSort.worker'
+import { getCatalogProvider } from '../providers/providerFactory'
+
+// Module-level WeakMap keyed by the filteredArtworks array reference.
+// Automatically garbage-collected when filteredArtworks changes, and safe to read in useMemo.
+const ANCHOR_SORT_CACHE = new WeakMap<Artwork[], Map<string, ScoredArtwork[]>>()
+
+function getOrCreateCacheForList(list: Artwork[]): Map<string, ScoredArtwork[]> {
+  let map = ANCHOR_SORT_CACHE.get(list)
+  if (!map) {
+    map = new Map<string, ScoredArtwork[]>()
+    ANCHOR_SORT_CACHE.set(list, map)
+  }
+  return map
+}
+
+function extractStyleTokens(artwork: Artwork): string[] {
+  const rawText = `${artwork.title || ''} ${artwork.culture && artwork.culture !== 'Local Asset' ? artwork.culture : ''}`
+  const matches = rawText.toLowerCase().match(/[a-z0-9à-ú]{3,20}/g)
+  if (!matches) return []
+  return Array.from(new Set(matches)).slice(0, 24)
+}
+
+/**
+ * Orchestrates off-thread CIELAB D65 + HSL + CLIP visual embedding radial sorting via Web Worker
+ * with zero-copy Transferable TypedArrays and predictive pointer-down pre-sorting.
+ */
+export function useColorSortWorker(
+  filteredArtworks: Artwork[],
+  colorAnchorArtwork: Artwork | null,
+  mode: SimilaritySortMode = 'hybrid'
+) {
+  const workerRef = React.useRef<Worker | null>(null)
+  const requestIdRef = React.useRef(0)
+  const listVersionRef = React.useRef(0)
+  const artworksRef = React.useRef<Artwork[]>(filteredArtworks)
+  const anchorRef = React.useRef<Artwork | null>(colorAnchorArtwork)
+  const modeRef = React.useRef<SimilaritySortMode>(mode)
+  const pendingKeysRef = React.useRef<Set<string>>(new Set())
+  const loadedEmbeddingLibsRef = React.useRef<Set<string>>(new Set())
+  const loadingEmbeddingLibsRef = React.useRef<Map<string, Promise<boolean>>>(new Map())
+
+  React.useEffect(() => {
+    anchorRef.current = colorAnchorArtwork
+  }, [colorAnchorArtwork])
+
+  React.useEffect(() => {
+    modeRef.current = mode
+  }, [mode])
+
+  const [workerResult, setWorkerResult] = React.useState<{
+    targetId: string
+    mode: SimilaritySortMode
+    artworksList: Artwork[]
+    scored: ScoredArtwork[]
+    hasVisualEmbeddings: boolean
+  } | null>(null)
+
+  const ensureEmbeddingsForLibrary = React.useCallback((libraryKey: string): Promise<boolean> => {
+    if (loadedEmbeddingLibsRef.current.has(libraryKey)) {
+      return Promise.resolve(true)
+    }
+    const existing = loadingEmbeddingLibsRef.current.get(libraryKey)
+    if (existing) return existing
+
+    const promise = (async () => {
+      try {
+        const provider = getCatalogProvider()
+        const data = await provider.fetchEmbeddingsBinary(libraryKey)
+        if (!data || data.buffer.byteLength < 12) return false
+
+        const { dim, buffer } = data
+        const view = new DataView(buffer)
+        const headerByteLen = view.getUint32(0, true)
+        if (headerByteLen <= 0 || 4 + headerByteLen > buffer.byteLength) {
+          return false
+        }
+
+        const headerBytes = new Uint8Array(buffer, 4, headerByteLen)
+        const idsJson = new TextDecoder('utf-8').decode(headerBytes)
+        const ids = JSON.parse(idsJson) as string[]
+        const vectorBuffer = buffer.slice(4 + headerByteLen)
+        const vectors = new Int8Array(vectorBuffer)
+
+        const worker = workerRef.current
+        if (!worker) return false
+
+        worker.postMessage(
+          {
+            type: 'SET_EMBEDDINGS',
+            library: libraryKey,
+            dim,
+            ids,
+            vectors,
+          } as ColorSortWorkerRequest,
+          [vectorBuffer]
+        )
+
+        loadedEmbeddingLibsRef.current.add(libraryKey)
+        return true
+      } catch {
+        return false
+      } finally {
+        loadingEmbeddingLibsRef.current.delete(libraryKey)
+      }
+    })()
+
+    loadingEmbeddingLibsRef.current.set(libraryKey, promise)
+    return promise
+  }, [])
+
+  // Initialize Web Worker once
+  React.useEffect(() => {
+    const worker = new Worker(
+      new URL('../workers/colorSort.worker.ts', import.meta.url),
+      { type: 'module' }
+    )
+    workerRef.current = worker
+
+    worker.onmessage = (event: MessageEvent<ColorSortWorkerResponse>) => {
+      const msg = event.data
+      if (msg.type !== 'SORT_RESULT') return
+      if (msg.listVersion !== undefined && msg.listVersion !== listVersionRef.current) {
+        return
+      }
+
+      const currentList = artworksRef.current
+      const { targetId, mode: resultMode = 'hybrid', sortedIndices, distances, similarities, hasVisualEmbeddings } = msg
+      const cacheKey = `${targetId}:${resultMode}`
+      pendingKeysRef.current.delete(cacheKey)
+
+      if (sortedIndices.length !== currentList.length) {
+        return
+      }
+
+      const len = sortedIndices.length
+      const reconstructed: ScoredArtwork[] = new Array(len)
+      for (let i = 0; i < len; i++) {
+        const idx = sortedIndices[i]
+        reconstructed[i] = {
+          artwork: currentList[idx],
+          distance: distances[i],
+          similarityPercent: similarities[i],
+        }
+      }
+
+      const isAnchorInList = currentList.some((a) => a.id === targetId)
+      let finalScored = reconstructed
+      const activeAnchor = anchorRef.current
+      if (!isAnchorInList && activeAnchor && activeAnchor.id === targetId) {
+        finalScored = [
+          {
+            artwork: activeAnchor,
+            distance: 0,
+            similarityPercent: 100,
+          },
+          ...reconstructed,
+        ]
+      }
+
+      const listCache = getOrCreateCacheForList(currentList)
+      if (listCache.size >= 24) {
+        const oldestKey = listCache.keys().next().value
+        if (oldestKey) listCache.delete(oldestKey)
+      }
+      listCache.set(cacheKey, finalScored)
+
+      setWorkerResult({
+        targetId,
+        mode: resultMode,
+        artworksList: currentList,
+        scored: finalScored,
+        hasVisualEmbeddings,
+      })
+    }
+
+    return () => {
+      worker.terminate()
+      workerRef.current = null
+    }
+  }, [])
+
+  // Sync compact color + style metadata to Worker whenever filteredArtworks changes
+  React.useEffect(() => {
+    listVersionRef.current++
+    const version = listVersionRef.current
+    artworksRef.current = filteredArtworks
+    pendingKeysRef.current.clear()
+
+    const worker = workerRef.current
+    if (!worker || filteredArtworks.length === 0) return
+
+    const firstId = filteredArtworks[0]?.id || ''
+    const libKey = filteredArtworks[0]?.libraryId || (firstId.startsWith('google-flow-') ? 'google-flow' : 'design')
+    void ensureEmbeddingsForLibrary(libKey)
+
+    // Defer the heavy mapping and token extraction of 40,000+ items to the next event loop tick
+    // so the browser can immediately render and paint the canvas and cards at 0ms latency!
+    const timer = window.setTimeout(() => {
+      if (version !== listVersionRef.current) return
+      const compactItems = filteredArtworks.map((a) => ({
+        id: a.id,
+        dominantColor: a.dominantColor || '#18181b',
+        palette: a.palette,
+        paletteWeights: a.paletteWeights,
+        aspectRatio: a.aspectRatio,
+        tags: a.tags,
+        tokens: extractStyleTokens(a),
+      }))
+      const payload: ColorSortWorkerRequest = {
+        type: 'SET_ITEMS',
+        items: compactItems,
+        listVersion: version,
+      }
+      worker.postMessage(payload)
+    }, 0)
+
+    return () => window.clearTimeout(timer)
+  }, [filteredArtworks, ensureEmbeddingsForLibrary])
+
+  // Trigger off-thread Worker sort on pointerDown (before click completes) or when mode changes
+  const prefetchAnchorSort = React.useCallback(
+    async (target: Artwork, explicitMode?: SimilaritySortMode) => {
+      const activeMode = explicitMode || modeRef.current
+      const currentList = artworksRef.current
+      const cacheKey = `${target.id}:${activeMode}`
+      const listCache = getOrCreateCacheForList(currentList)
+      if (listCache.has(cacheKey) || pendingKeysRef.current.has(cacheKey)) {
+        return
+      }
+      const worker = workerRef.current
+      if (!worker) return
+
+      pendingKeysRef.current.add(cacheKey)
+
+      if (activeMode !== 'color') {
+        const libKey = target.libraryId || (target.id.startsWith('google-flow-')
+          ? 'google-flow'
+          : target.id.startsWith('design-')
+          ? 'design'
+          : (currentList[0]?.libraryId || (currentList[0]?.id.startsWith('google-flow-') ? 'google-flow' : 'design')))
+        await ensureEmbeddingsForLibrary(libKey)
+      }
+
+      const nextReqId = ++requestIdRef.current
+      const payload: ColorSortWorkerRequest = {
+        type: 'SORT_BY_ANCHOR',
+        requestId: nextReqId,
+        targetId: target.id,
+        targetColor: target.dominantColor || '#ffffff',
+        targetPalette: target.palette,
+        targetPaletteWeights: target.paletteWeights,
+        targetAspectRatio: target.aspectRatio,
+        targetTags: target.tags,
+        targetTokens: extractStyleTokens(target),
+        mode: activeMode,
+        listVersion: listVersionRef.current,
+        targetEmbedding: target.embedding,
+        isTextAnchor: Boolean(target.isTextQuery || target.tags?.includes('clip-text-query')),
+      }
+      worker.postMessage(payload)
+    },
+    [ensureEmbeddingsForLibrary]
+  )
+
+  // Request worker sort if colorAnchorArtwork or mode is selected and not yet cached
+  React.useEffect(() => {
+    if (!colorAnchorArtwork) return
+    const cacheKey = `${colorAnchorArtwork.id}:${mode}`
+    const listCache = getOrCreateCacheForList(filteredArtworks)
+    if (!listCache.has(cacheKey)) {
+      void prefetchAnchorSort(colorAnchorArtwork, mode)
+    }
+  }, [colorAnchorArtwork, mode, filteredArtworks, prefetchAnchorSort])
+
+  const scoredArtworks = React.useMemo(() => {
+    if (!colorAnchorArtwork) return []
+
+    const cacheKey = `${colorAnchorArtwork.id}:${mode}`
+    const listCache = getOrCreateCacheForList(filteredArtworks)
+    const isAnchorInList = filteredArtworks.some((a) => a.id === colorAnchorArtwork.id)
+    const expectedLen = isAnchorInList ? filteredArtworks.length : filteredArtworks.length + 1
+
+    // 1. Check Worker pre-computed cache first (0.00ms on Main Thread!)
+    const cached = listCache.get(cacheKey)
+    if (cached && cached.length === expectedLen) {
+      return cached
+    }
+
+    // 2. Check latest reactive Worker state
+    if (
+      workerResult &&
+      workerResult.targetId === colorAnchorArtwork.id &&
+      workerResult.mode === mode &&
+      workerResult.artworksList === filteredArtworks
+    ) {
+      return workerResult.scored
+    }
+
+    // 3. Fallback synchronous computation while Worker finishes computing
+    const colorCacheKey = `${colorAnchorArtwork.id}:color`
+    let syncScored = listCache.get(colorCacheKey)
+    if (!syncScored || syncScored.length !== expectedLen) {
+      syncScored = sortArtworksByColorProximity(filteredArtworks, colorAnchorArtwork)
+      listCache.set(colorCacheKey, syncScored)
+    }
+    return syncScored
+  }, [colorAnchorArtwork, mode, filteredArtworks, workerResult])
+
+  return {
+    scoredArtworks,
+    prefetchAnchorSort,
+    hasVisualEmbeddings: workerResult?.hasVisualEmbeddings ?? false,
+  }
+}

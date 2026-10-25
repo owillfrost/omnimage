@@ -1,0 +1,29 @@
+appId: com.omnimage.catalog
+productName: Omnimage - Visual Asset Catalog
+copyright: Copyright © 2026 Omnimage Team
+directories:
+  output: dist-electron
+  buildResources: build
+files:
+  - dist/**/*
+  - electron/**/*
+  - server/**/*
+  - package.json
+asar: true
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+    - target: portable
+      arch:
+        - x64
+mac:
+  target:
+    - default
+  category: public.app-category.graphics-design
+linux:
+  target:
+    - AppImage
+    - deb
+  category: Graphics

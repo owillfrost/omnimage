@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='6' r='3' fill='white'/><circle cx='24.6' cy='11' r='3' fill='white'/><circle cx='24.6' cy='21' r='3' fill='white'/><circle cx='16' cy='26' r='3' fill='white'/><circle cx='7.4' cy='21' r='3' fill='white'/><circle cx='7.4' cy='11' r='3' fill='white'/></svg>" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#09090b" />
+    <meta name="description" content="Omnimage - Spatial visual search engine for reference libraries." />
+    <link rel="preconnect" href="https://api.fontshare.com" crossorigin />
+    <link rel="preconnect" href="https://cdn.fontshare.com" crossorigin />
+    <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900,1&display=swap" rel="stylesheet" />
+    <title>Omnimage</title>
+  </head>
+  <body class="bg-[#09090b] text-[#f4f4f6] font-sans antialiased overflow-hidden select-none">
+    <div id="root">
+      <div style="position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: #09090b; z-index: 9999;">
+        <svg width="40" height="40" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <style>
+            @keyframes omnimagePulseDot {
+              0%, 100% { opacity: 1; }
+              50% { opacity: 0.35; }
+            }
+            .omnimage-dot {
+              animation: omnimagePulseDot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            }
+          </style>
+          <circle cx="16" cy="6" r="2.2" fill="white" class="omnimage-dot" style="animation-delay: 0ms;" />
+          <circle cx="24.66" cy="11" r="2.2" fill="white" class="omnimage-dot" style="animation-delay: 150ms;" />
+          <circle cx="24.66" cy="21" r="2.2" fill="white" class="omnimage-dot" style="animation-delay: 300ms;" />
+          <circle cx="16" cy="26" r="2.2" fill="white" class="omnimage-dot" style="animation-delay: 450ms;" />
+          <circle cx="7.34" cy="21" r="2.2" fill="white" class="omnimage-dot" style="animation-delay: 600ms;" />
+          <circle cx="7.34" cy="11" r="2.2" fill="white" class="omnimage-dot" style="animation-delay: 750ms;" />
+          <path
+            d="M16 6 L24.66 11 L24.66 21 L16 26 L7.34 21 L7.34 11 Z"
+            stroke="rgba(255, 255, 255, 0.25)"
+            stroke-width="1"
+            stroke-dasharray="2 2"
+          />
+        </svg>
+      </div>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
