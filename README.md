@@ -13,6 +13,13 @@ Licensed under the [MIT License](./LICENSE).
 ## Features
 
 <p align="center">
+  
+
+
+
+https://github.com/user-attachments/assets/75053c9e-3d9e-494c-9a5d-d9fabaa10dc7
+
+
   <img src="./docs/screenshots/screenshot-02.png" alt="Omnimage Fullscreen Inspector, Color Palette Extraction & AI Metadata" width="100%" />
 </p>
 
