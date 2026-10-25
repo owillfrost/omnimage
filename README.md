@@ -2,11 +2,19 @@
 
 **Omnimage** is a local-first, 120 FPS spatial visual catalog and semantic search engine for large reference libraries (40,000+ images and videos).
 
+<p align="center">
+  <img src="./docs/screenshots/screenshot-01.jpg" alt="Omnimage 120 FPS Infinite Spatial Grid Canvas" width="100%" />
+</p>
+
 Licensed under the [MIT License](./LICENSE).
 
 ---
 
 ## Features
+
+<p align="center">
+  <img src="./docs/screenshots/screenshot-02.png" alt="Omnimage Fullscreen Inspector, Color Palette Extraction & AI Metadata" width="100%" />
+</p>
 
 - **2D Spatial Infinite Grid (120 FPS):** $O(\log N)$ viewport virtualization with instant pan/zoom and masonry explore feed.
 - **Perceptual Color Harmonization:** Multi-color filtering and radial color sorting in perceptual **CIELAB (D65) + HSL** space.
