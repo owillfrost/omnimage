@@ -1,4 +1,11 @@
-﻿import type { Artwork } from '../types/artwork'
+import type { Artwork } from '../types/artwork'
+import { rgbToLab } from './colorConversion'
+import {
+  type SplitToningProfile,
+  deriveFallbackSplitToningFromPalette,
+} from './paletteExtractor'
+
+export { rgbToLab } from './colorConversion'
 
 export function hexToRgb(hex: string): [number, number, number] {
   const clean = hex.replace('#', '').trim()
@@ -39,37 +46,6 @@ export function rgbToHsl(r: number, g: number, b: number): [number, number, numb
   }
 
   return [h * 360, s, l]
-}
-
-/**
- * Converts sRGB to CIELAB space (D65 standard illuminant).
- * Used for perceptual color difference calculations matching human vision.
- */
-export function rgbToLab(r: number, g: number, b: number): [number, number, number] {
-  // sRGB to linear RGB
-  let R = r / 255
-  let G = g / 255
-  let B = b / 255
-
-  R = R > 0.04045 ? Math.pow((R + 0.055) / 1.055, 2.4) : R / 12.92
-  G = G > 0.04045 ? Math.pow((G + 0.055) / 1.055, 2.4) : G / 12.92
-  B = B > 0.04045 ? Math.pow((B + 0.055) / 1.055, 2.4) : B / 12.92
-
-  // Linear RGB to CIE XYZ
-  const X = (R * 0.4124 + G * 0.3576 + B * 0.1805) / 0.95047
-  const Y = (R * 0.2126 + G * 0.7152 + B * 0.0722) / 1.00000
-  const Z = (R * 0.0193 + G * 0.1192 + B * 0.9505) / 1.08883
-
-  const f = (t: number) => (t > 0.008856 ? Math.cbrt(t) : 7.787 * t + 16 / 116)
-  const fx = f(X)
-  const fy = f(Y)
-  const fz = f(Z)
-
-  const L = 116 * fy - 16
-  const a = 500 * (fx - fy)
-  const bVal = 200 * (fy - fz)
-
-  return [L, a, bVal]
 }
 
 // Fast in-memory vector cache for CIELAB and HSL color values
@@ -195,11 +171,68 @@ export function calculateWeightedPaletteDistance(
 }
 
 /**
- * Sorts all artworks by weighted full-palette harmony relative to the target artwork.
+ * Compares two images by their split-toning color grade (shadows and highlights color casts in CIELAB).
+ * - Computes deltaE (Euclidean distance on a/b plane) between shadows and between highlights.
+ * - Weights each group according to its valid pixel count (low pixel count groups receive lower weight).
+ * - Incorporates a gentle penalty if there is an extreme shadow/highlight balance disparity.
+ */
+export function calculateSplitToningDistance(
+  profileA?: SplitToningProfile,
+  profileB?: SplitToningProfile
+): number {
+  if (!profileA || !profileB) return 50
+
+  const sA = profileA.shadows
+  const sB = profileB.shadows
+  const hA = profileA.highlights
+  const hB = profileB.highlights
+
+  // Delta E in a/b chrominance plane
+  const deltaAs = sA.a - sB.a
+  const deltaBs = sA.b - sB.b
+  const distShadows = Math.sqrt(deltaAs * deltaAs + deltaBs * deltaBs)
+
+  const deltaAh = hA.a - hB.a
+  const deltaBh = hA.b - hB.b
+  const distHighlights = Math.sqrt(deltaAh * deltaAh + deltaBh * deltaBh)
+
+  // Confidence weighting based on valid pixels:
+  // A group with fewer valid pixels (e.g. sparse highlights in a low-key image) receives less weight.
+  const REF_PIXELS = 60
+  const confSA = Math.min(1, sA.validPixels / REF_PIXELS)
+  const confSB = Math.min(1, sB.validPixels / REF_PIXELS)
+  const weightShadows = confSA * confSB
+
+  const confHA = Math.min(1, hA.validPixels / REF_PIXELS)
+  const confHB = Math.min(1, hB.validPixels / REF_PIXELS)
+  const weightHighlights = confHA * confHB
+
+  const totalWeight = weightShadows + weightHighlights
+  if (totalWeight <= 0.001) {
+    // Both images have virtually no valid pixels in either group
+    return 75
+  }
+
+  const weightedDist = (distShadows * weightShadows + distHighlights * weightHighlights) / totalWeight
+
+  // Gentle balance disparity penalty (e.g. pure high-key compared against pure low-key)
+  const totalA = (sA.validPixels + hA.validPixels) || 1
+  const totalB = (sB.validPixels + hB.validPixels) || 1
+  const ratioSA = sA.validPixels / totalA
+  const ratioSB = sB.validPixels / totalB
+  const ratioDiff = Math.abs(ratioSA - ratioSB)
+  const imbalancePenalty = ratioDiff * 8
+
+  return weightedDist + imbalancePenalty
+}
+
+/**
+ * Sorts all artworks by weighted full-palette harmony or split-toning grade relative to the target artwork.
  */
 export function sortArtworksByColorProximity(
   artworks: Artwork[],
-  targetArtwork: Artwork
+  targetArtwork: Artwork,
+  mode: 'color' | 'grade' = 'color'
 ): ScoredArtwork[] {
   const targetColor = targetArtwork.dominantColor || '#ffffff'
   const anchorColors =
@@ -207,6 +240,9 @@ export function sortArtworksByColorProximity(
       ? targetArtwork.palette
       : [targetColor]
   const anchorWeights = targetArtwork.paletteWeights
+  const anchorGrade =
+    targetArtwork.splitToning ||
+    deriveFallbackSplitToningFromPalette(anchorColors, anchorWeights)
 
   const scored: ScoredArtwork[] = artworks.map((art) => {
     // If it's the exact target artwork, distance is 0 and similarity is 100%
@@ -219,14 +255,22 @@ export function sortArtworksByColorProximity(
         ? art.palette
         : [art.dominantColor || '#18181b']
 
-    const minDistance = calculateWeightedPaletteDistance(
-      anchorColors,
-      anchorWeights,
-      candColors,
-      art.paletteWeights
-    )
+    let minDistance: number
+    if (mode === 'grade') {
+      const candGrade =
+        art.splitToning ||
+        deriveFallbackSplitToningFromPalette(candColors, art.paletteWeights)
+      minDistance = calculateSplitToningDistance(anchorGrade, candGrade)
+    } else {
+      minDistance = calculateWeightedPaletteDistance(
+        anchorColors,
+        anchorWeights,
+        candColors,
+        art.paletteWeights
+      )
+    }
 
-    // Normalized similarity percentage: deltaE around 85 is max typical palette difference
+    // Normalized similarity percentage: deltaE around 85 is max typical palette/grade difference
     const similarityPercent = Math.max(0, Math.min(100, Math.round((1 - minDistance / 85) * 100)))
 
     return {
@@ -236,7 +280,7 @@ export function sortArtworksByColorProximity(
     }
   })
 
-  // Sort ascending: smallest distance (closest palette harmony) comes first
+  // Sort ascending: smallest distance (closest palette harmony or grade) comes first
   scored.sort((a, b) => a.distance - b.distance)
 
   // If target artwork is an ephemeral external anchor not in the library, ensure it is anchored at index 0

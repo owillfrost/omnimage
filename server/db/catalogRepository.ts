@@ -6,6 +6,7 @@ import type {
   CatalogItemDetail,
   ItemMetadataPatch,
 } from '../../src/contracts/schemas'
+import type { SplitToningProfile } from '../../src/core/paletteExtractor'
 
 export interface SerializedJsonPayload {
   raw: Buffer
@@ -287,6 +288,7 @@ export class CatalogRepository {
       mtime?: number
       dominantColor?: string | null
       paletteJson?: string | null
+      splitToningJson?: string | null
       tagsJson?: string | null
       foldersJson?: string | null
       url?: string | null
@@ -302,11 +304,11 @@ export class CatalogRepository {
     const insertItem = this.db.prepare(`
       INSERT OR REPLACE INTO items (
         library_id, id, content_hash, name, ext, width, height, duration,
-        btime, mtime, dominant_color, palette_json, tags_json, folders_json,
+        btime, mtime, dominant_color, palette_json, split_toning_json, tags_json, folders_json,
         url, has_annotation, compact_json, media_rel_path, thumb_rel_path, is_deleted
       ) VALUES (
         @library_id, @id, @content_hash, @name, @ext, @width, @height, @duration,
-        @btime, @mtime, @dominant_color, @palette_json, @tags_json, @folders_json,
+        @btime, @mtime, @dominant_color, @palette_json, @split_toning_json, @tags_json, @folders_json,
         @url, @has_annotation, @compact_json, @media_rel_path, @thumb_rel_path, 0
       )
     `)
@@ -337,6 +339,7 @@ export class CatalogRepository {
           mtime: item.mtime || null,
           dominant_color: item.dominantColor || null,
           palette_json: item.paletteJson || null,
+          split_toning_json: item.splitToningJson || null,
           tags_json: item.tagsJson || null,
           folders_json: item.foldersJson || null,
           url: item.url || null,
@@ -449,5 +452,71 @@ export class CatalogRepository {
     tx()
     invalidateCatalogCache()
     return true
+  }
+
+  /**
+   * Returns items that do not yet have a split-toning profile computed.
+   */
+  getItemsPendingSplitToning(libraryId: string, limit = 500): Array<{
+    id: string
+    thumbRelPath: string | null
+    mediaRelPath: string
+    paletteJson: string | null
+    compactJson: string
+  }> {
+    return this.db.prepare(`
+      SELECT id, thumb_rel_path as thumbRelPath, media_rel_path as mediaRelPath,
+             palette_json as paletteJson, compact_json as compactJson
+      FROM items
+      WHERE library_id = ? AND split_toning_json IS NULL AND is_deleted = 0
+      LIMIT ?
+    `).all(libraryId, limit) as any[]
+  }
+
+  /**
+   * Batch updates split-toning profiles and synchronizes compact_json for instant client retrieval.
+   */
+  updateSplitToningBatch(
+    libraryId: string,
+    updates: Array<{ id: string; splitToning: SplitToningProfile }>
+  ): number {
+    if (updates.length === 0) return 0
+
+    const updateStmt = this.db.prepare(`
+      UPDATE items SET
+        split_toning_json = @split_toning_json,
+        compact_json = @compact_json
+      WHERE library_id = @library_id AND id = @id
+    `)
+
+    const getItemStmt = this.db.prepare(`
+      SELECT compact_json FROM items WHERE library_id = ? AND id = ?
+    `)
+
+    let changed = 0
+    const tx = this.db.transaction((batch) => {
+      for (const item of batch) {
+        const row = getItemStmt.get(libraryId, item.id) as { compact_json: string } | undefined
+        if (!row) continue
+        try {
+          const parsed: CompactCatalogItem = JSON.parse(row.compact_json)
+          parsed.splitToning = item.splitToning
+          const newCompact = JSON.stringify(parsed)
+          const info = updateStmt.run({
+            library_id: libraryId,
+            id: item.id,
+            split_toning_json: JSON.stringify(item.splitToning),
+            compact_json: newCompact,
+          })
+          if (info.changes > 0) changed++
+        } catch {
+          // ignore parse error
+        }
+      }
+    })
+
+    tx(updates)
+    invalidateCatalogCache()
+    return changed
   }
 }

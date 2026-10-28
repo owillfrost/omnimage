@@ -24,7 +24,7 @@ https://github.com/user-attachments/assets/75053c9e-3d9e-494c-9a5d-d9fabaa10dc7
 </p>
 
 - **2D Spatial Infinite Grid (120 FPS):** $O(\log N)$ viewport virtualization with instant pan/zoom and masonry explore feed.
-- **Perceptual Color Harmonization:** Multi-color filtering and radial color sorting in perceptual **CIELAB (D65) + HSL** space.
+- **Perceptual Color Harmonization & Grade Mode (Split Toning):** Multi-color filtering and radial sorting in perceptual **CIELAB (D65) + HSL** space, including the new **Grade Mode** for shadows and highlights color grading matching with clipping and letterbox rejection.
 - **Local Semantic & Visual Search (CLIP):** On-device text-to-image and image-to-image similarity search powered by `Xenova/clip-vit-base-patch32` with Int8 vector quantization (512 bytes per item).
 - **Zero-Lock-In Local Storage:**
   - Indexes any local folder into structured `.library` containers (via instant NTFS/POSIX hardlinks or file copy) with 640px WebP thumbnails and 5-color palettes.
@@ -33,6 +33,23 @@ https://github.com/user-attachments/assets/75053c9e-3d9e-494c-9a5d-d9fabaa10dc7
 - **ComfyUI Metadata Inspector:** Automatically extracts positive/negative prompts, seed, sampler, steps, CFG, checkpoint, and full workflow JSON from ComfyUI PNG chunks (`tEXt` / `iTXt`).
 - **Side-by-Side Comparison:** Compare two references with automatic prompt diffing, tag diffing, and perceptual palette delta ($\Delta E$).
 - **Desktop & Web Modes:** Runs as a standalone Electron desktop app (using the privileged `omnimage-media://` zero-socket streaming protocol and native drag-and-drop) or in any modern browser.
+
+---
+
+## What's New
+
+### New: Grade mode
+A new similarity mode, next to Mixed, AI Aesthetic and Palette. Pick an anchor image and find images with a similar color grade: the tint in the shadows and in the highlights, not just the overall palette.
+
+- Shadows are compared with shadows, highlights with highlights, so looks like teal & orange can be told apart from the reverse.
+- Pure blacks, blown-out whites and near-neutral pixels are ignored, so things like letterbox bars don’t wash out the result.
+- Works best with anchors that have a clear grade. With a very neutral anchor, it will favor other neutral images.
+
+#### Upgrading
+This update adds a new column to the library database, and existing images are analyzed in batches from their thumbnails. Back up your library before updating.
+
+#### Thanks
+This came from a great suggestion by @ichelpark.
 
 ---
 

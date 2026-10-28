@@ -1,13 +1,210 @@
+import { rgbToLab } from './colorConversion'
+
 /**
- * Palette Extractor
+ * Palette Extractor & Split Toning Analyzer
  * Extracts dominant color and up to 5-color palette with proportional weights from RGBA pixel data.
- * Pure mathematical implementation for perceptual palette extraction.
+ * Computes split toning (shadows and highlights chromatic averages in CIELAB space) with
+ * clipping rejection and chroma-weighted averaging.
  */
+
+// Luminance band constants for split-toning separation (easily tunable)
+export const SPLIT_TONING_SHADOWS_L_MIN = 5
+export const SPLIT_TONING_SHADOWS_L_MAX = 45
+export const SPLIT_TONING_LIGHTS_L_MIN = 55
+export const SPLIT_TONING_LIGHTS_L_MAX = 95
+
+// Chroma weighting constants (reduces influence of near-neutral grayscale pixels)
+export const SPLIT_TONING_CHROMA_CAP = 32
+export const SPLIT_TONING_CHROMA_EXPONENT = 1.2
+export const SPLIT_TONING_CHROMA_EPSILON = 0.05
+
+export interface ToneGroupStats {
+  L: number           // Weighted average luminance
+  a: number           // Weighted average a* [-128..127]
+  b: number           // Weighted average b* [-128..127]
+  validPixels: number // Valid pixel count in group
+  weightSum: number   // Sum of chroma weights applied
+}
+
+export interface SplitToningProfile {
+  shadows: ToneGroupStats
+  highlights: ToneGroupStats
+  totalValidPixels: number
+  hasShadows: boolean
+  hasHighlights: boolean
+}
 
 export interface ExtractedPalette {
   dominantColor: string
   palette: string[]
   paletteWeights: number[]
+  splitToning?: SplitToningProfile
+}
+
+/**
+ * Extracts split-toning profile (shadows and highlights color grading) from raw RGBA buffer.
+ * - Converts sampled pixels to CIELAB (D65).
+ * - Discards clipped pixels (L < 5 and L > 95) such as letterbox black bars or blown highlights.
+ * - Discards mid-tones (45 < L < 55) to isolate pure shadows and highlights.
+ * - Applies non-linear chroma weighting so near-neutral pixels do not dilute color grade.
+ * - Computes direct vector averages for (a, b) avoiding circular hue averaging artifacts.
+ */
+export function extractSplitToningFromRgba(
+  rgbaData: Uint8Array | Uint8ClampedArray | ArrayLike<number>,
+  width: number,
+  height: number
+): SplitToningProfile {
+  let shadowsCount = 0
+  let shadowsWeightSum = 0
+  let shadowsSumL = 0
+  let shadowsSumA = 0
+  let shadowsSumB = 0
+
+  let lightsCount = 0
+  let lightsWeightSum = 0
+  let lightsSumL = 0
+  let lightsSumA = 0
+  let lightsSumB = 0
+
+  const totalPixels = width * height
+  const step = Math.max(1, Math.floor(totalPixels / 4000))
+
+  for (let i = 0; i < rgbaData.length; i += step * 4) {
+    const alpha = rgbaData[i + 3]
+    if (alpha < 128) continue
+
+    const r = rgbaData[i]
+    const g = rgbaData[i + 1]
+    const b = rgbaData[i + 2]
+
+    const [L, aLab, bLab] = rgbToLab(r, g, b)
+
+    let isShadow = false
+    let isLight = false
+
+    if (L >= SPLIT_TONING_SHADOWS_L_MIN && L <= SPLIT_TONING_SHADOWS_L_MAX) {
+      isShadow = true
+    } else if (L >= SPLIT_TONING_LIGHTS_L_MIN && L <= SPLIT_TONING_LIGHTS_L_MAX) {
+      isLight = true
+    } else {
+      // Discard clipped extremes (<5 or >95) or midtones (45..55)
+      continue
+    }
+
+    const chroma = Math.sqrt(aLab * aLab + bLab * bLab)
+    const chromaRatio = Math.min(1, chroma / SPLIT_TONING_CHROMA_CAP)
+    const weight = Math.pow(chromaRatio, SPLIT_TONING_CHROMA_EXPONENT) + SPLIT_TONING_CHROMA_EPSILON
+
+    if (isShadow) {
+      shadowsCount++
+      shadowsWeightSum += weight
+      shadowsSumL += L * weight
+      shadowsSumA += aLab * weight
+      shadowsSumB += bLab * weight
+    } else if (isLight) {
+      lightsCount++
+      lightsWeightSum += weight
+      lightsSumL += L * weight
+      lightsSumA += aLab * weight
+      lightsSumB += bLab * weight
+    }
+  }
+
+  const shadows: ToneGroupStats = {
+    L: shadowsWeightSum > 0 ? Number((shadowsSumL / shadowsWeightSum).toFixed(2)) : 25,
+    a: shadowsWeightSum > 0 ? Number((shadowsSumA / shadowsWeightSum).toFixed(2)) : 0,
+    b: shadowsWeightSum > 0 ? Number((shadowsSumB / shadowsWeightSum).toFixed(2)) : 0,
+    validPixels: shadowsCount,
+    weightSum: Number(shadowsWeightSum.toFixed(2)),
+  }
+
+  const highlights: ToneGroupStats = {
+    L: lightsWeightSum > 0 ? Number((lightsSumL / lightsWeightSum).toFixed(2)) : 75,
+    a: lightsWeightSum > 0 ? Number((lightsSumA / lightsWeightSum).toFixed(2)) : 0,
+    b: lightsWeightSum > 0 ? Number((lightsSumB / lightsWeightSum).toFixed(2)) : 0,
+    validPixels: lightsCount,
+    weightSum: Number(lightsWeightSum.toFixed(2)),
+  }
+
+  return {
+    shadows,
+    highlights,
+    totalValidPixels: shadowsCount + lightsCount,
+    hasShadows: shadowsCount > 5,
+    hasHighlights: lightsCount > 5,
+  }
+}
+
+/**
+ * Fallback split-toning derivation for legacy items where only hex palette and weights exist.
+ */
+export function deriveFallbackSplitToningFromPalette(
+  palette: string[],
+  paletteWeights?: number[]
+): SplitToningProfile {
+  let shadowsCount = 0
+  let shadowsWeightSum = 0
+  let shadowsSumL = 0
+  let shadowsSumA = 0
+  let shadowsSumB = 0
+
+  let lightsCount = 0
+  let lightsWeightSum = 0
+  let lightsSumL = 0
+  let lightsSumA = 0
+  let lightsSumB = 0
+
+  for (let i = 0; i < palette.length; i++) {
+    const hex = palette[i]
+    const pWeight = paletteWeights && paletteWeights[i] !== undefined ? paletteWeights[i] : 1 / palette.length
+    const clean = hex.replace('#', '').trim()
+    const num = parseInt(clean || '18181b', 16)
+    const r = (num >> 16) & 255
+    const g = (num >> 8) & 255
+    const b = num & 255
+
+    const [L, aLab, bLab] = rgbToLab(r, g, b)
+    if (L < SPLIT_TONING_SHADOWS_L_MIN || L > SPLIT_TONING_LIGHTS_L_MAX) continue
+    if (L > SPLIT_TONING_SHADOWS_L_MAX && L < SPLIT_TONING_LIGHTS_L_MIN) continue
+
+    const chroma = Math.sqrt(aLab * aLab + bLab * bLab)
+    const chromaRatio = Math.min(1, chroma / SPLIT_TONING_CHROMA_CAP)
+    const weight = (Math.pow(chromaRatio, SPLIT_TONING_CHROMA_EXPONENT) + SPLIT_TONING_CHROMA_EPSILON) * pWeight
+
+    if (L <= SPLIT_TONING_SHADOWS_L_MAX) {
+      shadowsCount += Math.max(1, Math.round(pWeight * 100))
+      shadowsWeightSum += weight
+      shadowsSumL += L * weight
+      shadowsSumA += aLab * weight
+      shadowsSumB += bLab * weight
+    } else {
+      lightsCount += Math.max(1, Math.round(pWeight * 100))
+      lightsWeightSum += weight
+      lightsSumL += L * weight
+      lightsSumA += aLab * weight
+      lightsSumB += bLab * weight
+    }
+  }
+
+  return {
+    shadows: {
+      L: shadowsWeightSum > 0 ? Number((shadowsSumL / shadowsWeightSum).toFixed(2)) : 25,
+      a: shadowsWeightSum > 0 ? Number((shadowsSumA / shadowsWeightSum).toFixed(2)) : 0,
+      b: shadowsWeightSum > 0 ? Number((shadowsSumB / shadowsWeightSum).toFixed(2)) : 0,
+      validPixels: shadowsCount,
+      weightSum: Number(shadowsWeightSum.toFixed(2)),
+    },
+    highlights: {
+      L: lightsWeightSum > 0 ? Number((lightsSumL / lightsWeightSum).toFixed(2)) : 75,
+      a: lightsWeightSum > 0 ? Number((lightsSumA / lightsWeightSum).toFixed(2)) : 0,
+      b: lightsWeightSum > 0 ? Number((lightsSumB / lightsWeightSum).toFixed(2)) : 0,
+      validPixels: lightsCount,
+      weightSum: Number(lightsWeightSum.toFixed(2)),
+    },
+    totalValidPixels: shadowsCount + lightsCount,
+    hasShadows: shadowsCount > 0,
+    hasHighlights: lightsCount > 0,
+  }
 }
 
 export function extractPaletteFromRgba(
@@ -61,9 +258,12 @@ export function extractPaletteFromRgba(
   const sumWeights = paletteWeights.reduce((a, b) => a + b, 0) || 1
   const normWeights = paletteWeights.map(w => Number((w / sumWeights).toFixed(3)))
 
+  const splitToning = extractSplitToningFromRgba(rgbaData, width, height)
+
   return {
     dominantColor: palette[0],
     palette,
     paletteWeights: normWeights,
+    splitToning,
   }
 }

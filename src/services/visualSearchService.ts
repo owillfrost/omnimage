@@ -1,4 +1,4 @@
-﻿import type { Artwork } from '../types/artwork'
+import type { Artwork } from '../types/artwork'
 import { getCatalogProvider } from '../providers/providerFactory'
 
 export interface VisualQueryResult {
@@ -78,6 +78,7 @@ export async function queryVisualSearch(options: PerformVisualQueryOptions): Pro
     dominantColor: dominant,
     palette: data.palette || [dominant],
     paletteWeights: data.paletteWeights,
+    splitToning: data.splitToning,
     tags: ['visual-query', 'reverse-image-search'],
     embedding: data.embedding,
     isEphemeral: true,

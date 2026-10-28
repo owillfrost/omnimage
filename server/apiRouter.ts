@@ -10,6 +10,7 @@ import { SidecarManager } from './sidecar/sidecarManager'
 import { FolderScanner } from './importers/folderScanner'
 import { LibraryFileWatcher } from './watcher/fileWatcher'
 import { backgroundIndexer } from './clip/backgroundIndexer'
+import { SplitToningMigrationService } from './db/splitToningMigration'
 import { handleMediaStream, clearMediaPathCache, resolveMediaFilePath } from './media/mediaStreamServer'
 import { extractComfyMetadataFromPngFile } from './metadata/comfyPngParser'
 import {
@@ -42,6 +43,7 @@ export function createCatalogApiMiddleware() {
   const repo = new CatalogRepository(db)
   const importer = new EagleLibraryImporter(db)
   const fileWatcher = new LibraryFileWatcher(db)
+  const splitToningMigrator = new SplitToningMigrationService(db)
 
   return async function catalogApiMiddleware(
     req: IncomingMessage,
@@ -491,6 +493,7 @@ export function createCatalogApiMiddleware() {
           dominantColor: visualResult.paletteData.dominantColor,
           palette: visualResult.paletteData.palette,
           paletteWeights: visualResult.paletteData.paletteWeights,
+          splitToning: visualResult.paletteData.splitToning,
         }))
         return
       }
@@ -568,6 +571,27 @@ export function createCatalogApiMiddleware() {
 
         res.setHeader('Content-Type', 'application/json')
         res.end(JSON.stringify({ status: 'success', message: `Started indexing for ${libraryId}` }))
+        return
+      }
+
+      // 12.1 GET /api/catalog/split-toning-status
+      if (pathname === '/api/catalog/split-toning-status') {
+        res.setHeader('Content-Type', 'application/json; charset=utf-8')
+        res.end(JSON.stringify({ status: 'success', data: splitToningMigrator.getProgress() }))
+        return
+      }
+
+      // 12.2 POST /api/catalog/migrate-split-toning
+      if (pathname === '/api/catalog/migrate-split-toning' && req.method === 'POST') {
+        const bodyBuf = await readRequestBody(req, 1024 * 1024)
+        const body = JSON.parse(bodyBuf.toString('utf-8'))
+        const libraryId = body.library || 'design'
+
+        // Run non-blocking
+        splitToningMigrator.runMigration(libraryId).catch(console.error)
+
+        res.setHeader('Content-Type', 'application/json')
+        res.end(JSON.stringify({ status: 'success', message: `Started split-toning migration for ${libraryId}` }))
         return
       }
 

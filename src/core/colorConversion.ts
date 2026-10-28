@@ -1,4 +1,4 @@
-﻿export function clamp(val: number, min: number, max: number): number {
+export function clamp(val: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, val))
 }
 
@@ -83,6 +83,37 @@ export function rgbToHsv(r: number, g: number, b: number): [number, number, numb
   }
 
   return [Math.round(h), s, v]
+}
+
+/**
+ * Converts sRGB to CIELAB space (D65 standard illuminant).
+ * Used for perceptual color difference calculations matching human vision.
+ */
+export function rgbToLab(r: number, g: number, b: number): [number, number, number] {
+  // sRGB to linear RGB
+  let R = r / 255
+  let G = g / 255
+  let B = b / 255
+
+  R = R > 0.04045 ? Math.pow((R + 0.055) / 1.055, 2.4) : R / 12.92
+  G = G > 0.04045 ? Math.pow((G + 0.055) / 1.055, 2.4) : G / 12.92
+  B = B > 0.04045 ? Math.pow((B + 0.055) / 1.055, 2.4) : B / 12.92
+
+  // Linear RGB to CIE XYZ
+  const X = (R * 0.4124 + G * 0.3576 + B * 0.1805) / 0.95047
+  const Y = (R * 0.2126 + G * 0.7152 + B * 0.0722) / 1.00000
+  const Z = (R * 0.0193 + G * 0.1192 + B * 0.9505) / 1.08883
+
+  const f = (t: number) => (t > 0.008856 ? Math.cbrt(t) : 7.787 * t + 16 / 116)
+  const fx = f(X)
+  const fy = f(Y)
+  const fz = f(Z)
+
+  const L = 116 * fy - 16
+  const a = 500 * (fx - fy)
+  const bVal = 200 * (fy - fz)
+
+  return [L, a, bVal]
 }
 
 export function normalizeHex(input: string): string | null {

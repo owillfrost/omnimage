@@ -1,5 +1,5 @@
 import React, { forwardRef, memo, useEffect, useRef, useState } from 'react'
-import { Sparkles, Eye, Palette, Layers, Pin } from 'lucide-react'
+import { Sparkles, Eye, Palette, Layers, Pin, Sliders } from 'lucide-react'
 import type { Artwork } from '../../types/artwork'
 import type { SimilaritySortMode } from '../../services/similarityService'
 import { MotionVideoPreview } from '../MotionVideoPreview'
@@ -20,31 +20,6 @@ interface SimilarGridProps {
   onCompareSelect?: (item: Artwork) => void
 }
 
-const MODE_OPTIONS: {
-  id: SimilaritySortMode
-  label: string
-  hint: string
-  icon: typeof Layers
-}[] = [
-  {
-    id: 'hybrid',
-    label: 'Hybrid',
-    hint: 'Visual aesthetics + Palette harmony + Tags',
-    icon: Layers,
-  },
-  {
-    id: 'visual',
-    label: 'AI Aesthetics',
-    hint: 'Art direction, style & composition (CLIP)',
-    icon: Eye,
-  },
-  {
-    id: 'color',
-    label: 'Palette',
-    hint: 'Chromatic harmony of 5 weighted colors',
-    icon: Palette,
-  },
-]
 
 /**
  * "Similares" masonry section with incremental (infinite-scroll) rendering,
@@ -66,6 +41,33 @@ export const SimilarGrid = memo(
     ref
   ) {
     const { t } = useI18n()
+
+    const modeOptions = React.useMemo(() => [
+      {
+        id: 'hybrid' as SimilaritySortMode,
+        label: t('nav.modeHybrid'),
+        hint: t('nav.modeHybridHint'),
+        icon: Layers,
+      },
+      {
+        id: 'visual' as SimilaritySortMode,
+        label: t('nav.modeVisual'),
+        hint: t('nav.modeVisualHint'),
+        icon: Eye,
+      },
+      {
+        id: 'color' as SimilaritySortMode,
+        label: t('nav.modeColor'),
+        hint: t('nav.modeColorHint'),
+        icon: Palette,
+      },
+      {
+        id: 'grade' as SimilaritySortMode,
+        label: t('nav.modeGrade'),
+        hint: t('nav.modeGradeHint'),
+        icon: Sliders,
+      },
+    ], [t])
     const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
     const sentinelRef = useRef<HTMLDivElement | null>(null)
 
@@ -114,7 +116,7 @@ export const SimilarGrid = memo(
 
           {/* Mode Selector: Misto | Estética IA | Paleta */}
           <div className="flex items-center gap-1 p-1 rounded-full bg-zinc-900/90 border border-zinc-800/90 self-start sm:self-auto">
-            {MODE_OPTIONS.map(opt => {
+            {modeOptions.map(opt => {
               const Icon = opt.icon
               const isActive = mode === opt.id
               return (

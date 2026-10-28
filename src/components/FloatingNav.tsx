@@ -14,6 +14,7 @@ import {
   FolderOpen,
   Film,
   CornerDownLeft,
+  Sliders,
 } from "lucide-react"
 import { OmnimageLogo } from "./OmnimageLogo"
 import { LibraryToggleSwitch } from "./LibraryToggleSwitch"
@@ -129,6 +130,12 @@ export const FloatingNav: React.FC<FloatingNavProps> = React.memo(({
       label: t('nav.modeColor'),
       hint: t('nav.modeColorHint'),
       icon: Palette,
+    },
+    {
+      id: 'grade' as SimilaritySortMode,
+      label: t('nav.modeGrade'),
+      hint: t('nav.modeGradeHint'),
+      icon: Sliders,
     },
   ], [t])
   const [isVisualSearchOpen, setIsVisualSearchOpen] = React.useState(false)

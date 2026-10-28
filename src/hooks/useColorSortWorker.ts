@@ -1,4 +1,4 @@
-﻿import * as React from 'react'
+import * as React from 'react'
 import type { Artwork } from '../types/artwork'
 import {
   sortArtworksByColorProximity,
@@ -213,6 +213,7 @@ export function useColorSortWorker(
         dominantColor: a.dominantColor || '#18181b',
         palette: a.palette,
         paletteWeights: a.paletteWeights,
+        splitToning: a.splitToning,
         aspectRatio: a.aspectRatio,
         tags: a.tags,
         tokens: extractStyleTokens(a),
@@ -243,7 +244,7 @@ export function useColorSortWorker(
 
       pendingKeysRef.current.add(cacheKey)
 
-      if (activeMode !== 'color') {
+      if (activeMode !== 'color' && activeMode !== 'grade') {
         const libKey = target.libraryId || (target.id.startsWith('google-flow-')
           ? 'google-flow'
           : target.id.startsWith('design-')
@@ -260,6 +261,7 @@ export function useColorSortWorker(
         targetColor: target.dominantColor || '#ffffff',
         targetPalette: target.palette,
         targetPaletteWeights: target.paletteWeights,
+        targetSplitToning: target.splitToning,
         targetAspectRatio: target.aspectRatio,
         targetTags: target.tags,
         targetTokens: extractStyleTokens(target),
@@ -308,11 +310,15 @@ export function useColorSortWorker(
     }
 
     // 3. Fallback synchronous computation while Worker finishes computing
-    const colorCacheKey = `${colorAnchorArtwork.id}:color`
-    let syncScored = listCache.get(colorCacheKey)
+    const syncCacheKey = `${colorAnchorArtwork.id}:${mode === 'grade' ? 'grade' : 'color'}`
+    let syncScored = listCache.get(syncCacheKey)
     if (!syncScored || syncScored.length !== expectedLen) {
-      syncScored = sortArtworksByColorProximity(filteredArtworks, colorAnchorArtwork)
-      listCache.set(colorCacheKey, syncScored)
+      syncScored = sortArtworksByColorProximity(
+        filteredArtworks,
+        colorAnchorArtwork,
+        mode === 'grade' ? 'grade' : 'color'
+      )
+      listCache.set(syncCacheKey, syncScored)
     }
     return syncScored
   }, [colorAnchorArtwork, mode, filteredArtworks, workerResult])
