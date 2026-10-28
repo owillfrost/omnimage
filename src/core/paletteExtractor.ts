@@ -4,7 +4,7 @@ import { rgbToLab } from './colorConversion'
  * Palette Extractor & Split Toning Analyzer
  * Extracts dominant color and up to 5-color palette with proportional weights from RGBA pixel data.
  * Computes split toning (shadows and highlights chromatic averages in CIELAB space) with
- * clipping rejection and chroma-weighted averaging.
+ * clipping rejection, luminance-ramp weighting, skin-tone attenuation, and chroma-weighted averaging.
  */
 
 // Luminance band constants for split-toning separation (easily tunable)
@@ -17,6 +17,24 @@ export const SPLIT_TONING_LIGHTS_L_MAX = 95
 export const SPLIT_TONING_CHROMA_CAP = 32
 export const SPLIT_TONING_CHROMA_EXPONENT = 1.2
 export const SPLIT_TONING_CHROMA_EPSILON = 0.05
+
+// Skin tone protection constants (reduces false highlight grades from warm faces under neutral lighting)
+export const SPLIT_TONING_SKIN_ATTENUATION = 0.12
+
+/**
+ * Detects if a color in CIELAB space falls within the human skin tone cluster (I-line).
+ * Diverse human skin across all ethnicities in CIELAB (D65) clusters tightly in:
+ * L* in [35, 82], a* in [5, 34], b* in [8, 40], Chroma in [10, 46], Hue Angle in [25°, 68°].
+ */
+export function isSkinToneLab(L: number, aLab: number, bLab: number): boolean {
+  if (L < 35 || L > 82) return false
+  if (aLab < 5 || aLab > 34) return false
+  if (bLab < 8 || bLab > 40) return false
+  const chroma = Math.sqrt(aLab * aLab + bLab * bLab)
+  if (chroma < 10 || chroma > 46) return false
+  const hueDeg = (Math.atan2(bLab, aLab) * 180) / Math.PI
+  return hueDeg >= 25 && hueDeg <= 68
+}
 
 export interface ToneGroupStats {
   L: number           // Weighted average luminance
@@ -47,6 +65,8 @@ export interface ExtractedPalette {
  * - Discards clipped pixels (L < 5 and L > 95) such as letterbox black bars or blown highlights.
  * - Discards mid-tones (45 < L < 55) to isolate pure shadows and highlights.
  * - Applies non-linear chroma weighting so near-neutral pixels do not dilute color grade.
+ * - Applies luminance ramp weighting so transition midtones don't outweigh deep tones.
+ * - Attenuates skin-tone highlights to avoid false warm-grade classification on neutral portraits.
  * - Computes direct vector averages for (a, b) avoiding circular hue averaging artifacts.
  */
 export function extractSplitToningFromRgba(
@@ -93,7 +113,20 @@ export function extractSplitToningFromRgba(
 
     const chroma = Math.sqrt(aLab * aLab + bLab * bLab)
     const chromaRatio = Math.min(1, chroma / SPLIT_TONING_CHROMA_CAP)
-    const weight = Math.pow(chromaRatio, SPLIT_TONING_CHROMA_EXPONENT) + SPLIT_TONING_CHROMA_EPSILON
+    let weight = Math.pow(chromaRatio, SPLIT_TONING_CHROMA_EXPONENT) + SPLIT_TONING_CHROMA_EPSILON
+
+    // Luminance distance ramp: softly downweights boundary midtones (near L=45 and L=55)
+    // while giving full authority (1.0) to deep shadows (L <= 28) and clear highlights (L >= 72)
+    const lumRamp = isShadow
+      ? Math.min(1, Math.max(0.25, (48 - L) / 20))
+      : Math.min(1, Math.max(0.25, (L - 52) / 20))
+    weight *= lumRamp
+
+    // Skin tone protection: if pixel falls into human skin tone cluster in highlights,
+    // attenuate its weight so portraits under neutral light don't falsely read as warm grades
+    if (isLight && isSkinToneLab(L, aLab, bLab)) {
+      weight *= SPLIT_TONING_SKIN_ATTENUATION
+    }
 
     if (isShadow) {
       shadowsCount++
@@ -167,11 +200,24 @@ export function deriveFallbackSplitToningFromPalette(
     if (L < SPLIT_TONING_SHADOWS_L_MIN || L > SPLIT_TONING_LIGHTS_L_MAX) continue
     if (L > SPLIT_TONING_SHADOWS_L_MAX && L < SPLIT_TONING_LIGHTS_L_MIN) continue
 
+    const isShadow = L <= SPLIT_TONING_SHADOWS_L_MAX
     const chroma = Math.sqrt(aLab * aLab + bLab * bLab)
     const chromaRatio = Math.min(1, chroma / SPLIT_TONING_CHROMA_CAP)
-    const weight = (Math.pow(chromaRatio, SPLIT_TONING_CHROMA_EXPONENT) + SPLIT_TONING_CHROMA_EPSILON) * pWeight
 
-    if (L <= SPLIT_TONING_SHADOWS_L_MAX) {
+    const lumRamp = isShadow
+      ? Math.min(1, Math.max(0.25, (48 - L) / 20))
+      : Math.min(1, Math.max(0.25, (L - 52) / 20))
+
+    let weight =
+      (Math.pow(chromaRatio, SPLIT_TONING_CHROMA_EXPONENT) + SPLIT_TONING_CHROMA_EPSILON) *
+      pWeight *
+      lumRamp
+
+    if (!isShadow && isSkinToneLab(L, aLab, bLab)) {
+      weight *= SPLIT_TONING_SKIN_ATTENUATION
+    }
+
+    if (isShadow) {
       shadowsCount += Math.max(1, Math.round(pWeight * 100))
       shadowsWeightSum += weight
       shadowsSumL += L * weight
