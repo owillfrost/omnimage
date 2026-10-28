@@ -14,6 +14,7 @@ import type { CatalogFolderNode } from "../contracts/schemas"
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip"
 import { cn } from "@/lib/utils"
+import { useI18n } from "../i18n"
 
 export type FolderNode = CatalogFolderNode
 
@@ -160,6 +161,7 @@ export const FolderTreePicker: React.FC<FolderTreePickerProps> = React.memo(({
   libraryLabel = "Biblioteca",
   disabled = false,
 }) => {
+  const { t } = useI18n()
   const [isOpen, setIsOpen] = React.useState(false)
   const [searchFilter, setSearchFilter] = React.useState("")
 
@@ -247,7 +249,7 @@ export const FolderTreePicker: React.FC<FolderTreePickerProps> = React.memo(({
                 ) : (
                   <>
                     <Folder className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-                    <span className="hidden sm:inline">Pastas</span>
+                    <span className="hidden sm:inline">{t("taxonomy.foldersTab")}</span>
                   </>
                 )}
               </button>
@@ -255,8 +257,8 @@ export const FolderTreePicker: React.FC<FolderTreePickerProps> = React.memo(({
           </TooltipTrigger>
           <TooltipContent side="bottom" className="text-xs">
             {selectedFolderId && activeFolder
-              ? `Pasta ativa: ${activeFolder.name} (${activeFolder.itemCount} itens)`
-              : `Filtrar por pastas (${folders.length} categorias)`}
+              ? t("taxonomy.activeFolderLabel", { name: activeFolder.name, count: activeFolder.itemCount })
+              : t("taxonomy.filterByFoldersCount", { count: folders.length })}
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -269,7 +271,7 @@ export const FolderTreePicker: React.FC<FolderTreePickerProps> = React.memo(({
         <div className="p-3 border-b border-zinc-800/80 flex items-center justify-between gap-2 bg-zinc-900/40">
           <div className="flex items-center gap-1.5 text-xs font-medium text-zinc-300">
             <Layers className="w-3.5 h-3.5 text-amber-400" />
-            <span>Coleções & Pastas</span>
+            <span>{t("taxonomy.foldersTab")}</span>
             <span className="text-[10px] text-zinc-500 font-mono">({folders.length})</span>
           </div>
 
@@ -278,7 +280,7 @@ export const FolderTreePicker: React.FC<FolderTreePickerProps> = React.memo(({
               onClick={() => handleSelect(null)}
               className="text-[11px] text-zinc-400 hover:text-white transition-colors flex items-center gap-1 cursor-pointer font-medium"
             >
-              <span>Ver todas</span>
+              <span>{t("common.all")}</span>
             </button>
           )}
         </div>
@@ -290,7 +292,7 @@ export const FolderTreePicker: React.FC<FolderTreePickerProps> = React.memo(({
               type="text"
               value={searchFilter}
               onChange={(e) => setSearchFilter(e.target.value)}
-              placeholder="Buscar pasta..."
+              placeholder={t("taxonomy.searchFoldersPlaceholder", { library: libraryLabel })}
               className="w-full pl-8 pr-7 py-1.5 rounded-lg bg-zinc-900/80 border border-zinc-800 text-xs text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:border-amber-500/50"
             />
             {searchFilter && (
@@ -317,7 +319,7 @@ export const FolderTreePicker: React.FC<FolderTreePickerProps> = React.memo(({
           >
             <div className="flex items-center gap-2">
               <Layers className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-              <span>Todas as Imagens ({libraryLabel})</span>
+              <span>{t("taxonomy.allFolders", { library: libraryLabel })}</span>
             </div>
             <span className="text-[10px] font-mono text-zinc-500">
               {totalCount.toLocaleString()}
@@ -340,7 +342,7 @@ export const FolderTreePicker: React.FC<FolderTreePickerProps> = React.memo(({
           <input
             type="text"
             id="new-folder-input"
-            placeholder="Nova coleção / pasta..."
+            placeholder={t("taxonomy.newFolderPlaceholder")}
             className="flex-1 px-2.5 py-1 rounded-md bg-zinc-900 border border-zinc-800 text-xs text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:border-amber-400"
             onKeyDown={(e) => {
               if (e.key === 'Enter') {

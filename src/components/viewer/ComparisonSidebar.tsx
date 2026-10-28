@@ -15,6 +15,7 @@ import type { Artwork } from '../../types/artwork'
 import { diffPrompts, diffTags } from '../../core/promptDiff'
 import { diffPalettes } from '../../core/paletteDiff'
 import { useTransientValue } from '../../hooks/useCopyFeedback'
+import { useI18n } from "../../i18n"
 
 interface ComparisonSidebarProps {
   artworkA: Artwork
@@ -53,7 +54,7 @@ async function callItemAction(action: 'reveal' | 'info', rawId: string, lib: str
 const sectionTitle = 'text-[11px] font-semibold uppercase tracking-wider text-zinc-400'
 
 export const ComparisonSidebar: React.FC<ComparisonSidebarProps> = ({
-  artworkA,
+artworkA,
   artworkB,
   selectedColors,
   onToggleColor,
@@ -62,6 +63,7 @@ export const ComparisonSidebar: React.FC<ComparisonSidebarProps> = ({
   onSwapCompare,
   onClearCompare,
 }) => {
+  const { t } = useI18n()
   const [copiedKey, flashCopied] = useTransientValue<string>(2000)
 
   // Compute diffs
@@ -99,7 +101,7 @@ export const ComparisonSidebar: React.FC<ComparisonSidebarProps> = ({
           <div className="flex items-center gap-2">
             <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-mono font-medium bg-amber-500/15 text-zinc-200 border border-zinc-700/80">
               <Sparkles className="w-3 h-3 text-zinc-200" />
-              Comparação Lado a Lado
+              {t('sidebar.sideBySideCompare')}
             </span>
           </div>
 
@@ -107,17 +109,17 @@ export const ComparisonSidebar: React.FC<ComparisonSidebarProps> = ({
             {onSwapCompare && (
               <button
                 onClick={onSwapCompare}
-                title="Inverter Ref A e Ref B (Atalho: X)"
+                title={t("viewer.swapAria")}
                 className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 text-xs transition-all cursor-pointer"
               >
                 <ArrowLeftRight className="w-3.5 h-3.5 text-white" />
-                <span>Inverter (X)</span>
+                <span>{t("viewer.swap")}</span>
               </button>
             )}
             {onClearCompare && (
               <button
                 onClick={onClearCompare}
-                title="Fechar modo de comparação"
+                title={t("viewer.closeSplit")}
                 className="p-1 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
@@ -149,7 +151,7 @@ export const ComparisonSidebar: React.FC<ComparisonSidebarProps> = ({
           {/* Card Ref B */}
           <div className="flex flex-col gap-1 p-2.5 rounded-xl bg-zinc-900/90 border border-zinc-700/80">
             <div className="flex items-center justify-between text-[10px] font-mono">
-              <span className="text-zinc-200 font-semibold">REF B (COMPARAÇÃO)</span>
+              <span className="text-zinc-200 font-semibold">{t("viewer.refBComparison").toUpperCase()}</span>
               <span className="text-zinc-500">{artworkB.source}</span>
             </div>
             <div className="flex items-center gap-2 mt-1">
@@ -171,7 +173,7 @@ export const ComparisonSidebar: React.FC<ComparisonSidebarProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <Palette className="w-3.5 h-3.5 text-zinc-400" />
-            <h3 className={sectionTitle}>Harmonia Cromática</h3>
+            <h3 className={sectionTitle}>{t('sidebar.colorHarmony')}</h3>
           </div>
           <span className="text-[10px] font-mono text-zinc-500">CIELAB D65</span>
         </div>
@@ -188,7 +190,7 @@ export const ComparisonSidebar: React.FC<ComparisonSidebarProps> = ({
               </span>
             </div>
             <span className="text-[10px] text-zinc-500 font-mono">
-              Distância perceptual ΔE = {paletteDiff.dominantDistance}
+              {t("sidebar.perceptualDistance", { dist: paletteDiff.dominantDistance })}
             </span>
           </div>
 
@@ -212,7 +214,7 @@ export const ComparisonSidebar: React.FC<ComparisonSidebarProps> = ({
         <div className="flex flex-col gap-1.5 mt-1">
           {/* Strip A */}
           <div className="flex flex-col gap-0.5">
-            <span className="text-[10px] font-mono text-zinc-200">Paleta Ref A</span>
+            <span className="text-[10px] font-mono text-zinc-200">{t("sidebar.paletteRefA")}</span>
             <div className="flex h-3 w-full rounded-full overflow-hidden border border-zinc-800">
               {paletteDiff.paletteA.map(hex => (
                 <div
@@ -228,7 +230,7 @@ export const ComparisonSidebar: React.FC<ComparisonSidebarProps> = ({
 
           {/* Strip B */}
           <div className="flex flex-col gap-0.5">
-            <span className="text-[10px] font-mono text-zinc-200">Paleta Ref B</span>
+            <span className="text-[10px] font-mono text-zinc-200">{t("sidebar.paletteRefB")}</span>
             <div className="flex h-3 w-full rounded-full overflow-hidden border border-zinc-800">
               {paletteDiff.paletteB.map(hex => (
                 <div
@@ -246,7 +248,7 @@ export const ComparisonSidebar: React.FC<ComparisonSidebarProps> = ({
         {/* Closest Color Pairs List */}
         <div className="flex flex-col gap-1.5 mt-1">
           <span className="text-[10px] text-zinc-500 font-mono uppercase">
-            Correspondência de Tons mais Próximos
+            {t("sidebar.closestPairs")}
           </span>
           <div className="grid grid-cols-1 gap-1.5">
             {paletteDiff.closestPairs.slice(0, 4).map((pair, idx) => {
@@ -327,7 +329,7 @@ export const ComparisonSidebar: React.FC<ComparisonSidebarProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <FileText className="w-3.5 h-3.5 text-zinc-400" />
-            <h3 className={sectionTitle}>Diff de Prompts & Anotações</h3>
+            <h3 className={sectionTitle}>{t('sidebar.promptDiffTitle')}</h3>
           </div>
           {promptDiff.hasPrompts && (
             <span className="text-[10px] font-mono text-zinc-500">
@@ -344,7 +346,7 @@ export const ComparisonSidebar: React.FC<ComparisonSidebarProps> = ({
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-medium text-emerald-300 flex items-center gap-1">
                     <Check className="w-3 h-3 text-emerald-400" />
-                    Termos Compartilhados ({promptDiff.sharedTerms.length})
+                    {t("sidebar.sharedTerms", { count: promptDiff.sharedTerms.length })}
                   </span>
                   <button
                     onClick={() =>
@@ -355,12 +357,12 @@ export const ComparisonSidebar: React.FC<ComparisonSidebarProps> = ({
                     {copiedKey === 'copy-shared-terms' ? (
                       <>
                         <Check className="w-3 h-3" />
-                        <span>Copiado!</span>
+                        <span>{t("common.copied")}</span>
                       </>
                     ) : (
                       <>
                         <Copy className="w-3 h-3" />
-                        <span>Copiar termos</span>
+                        <span>{t("sidebar.copyTerms")}</span>
                       </>
                     )}
                   </button>
@@ -392,7 +394,7 @@ export const ComparisonSidebar: React.FC<ComparisonSidebarProps> = ({
                     ) : (
                       <Copy className="w-3 h-3" />
                     )}
-                    <span>Copiar</span>
+                    <span>{t("common.copy")}</span>
                   </button>
                 </div>
                 <p className="text-xs text-zinc-300 leading-relaxed max-h-32 overflow-y-auto pr-1 whitespace-pre-wrap break-words">
@@ -426,7 +428,7 @@ export const ComparisonSidebar: React.FC<ComparisonSidebarProps> = ({
                     ) : (
                       <Copy className="w-3 h-3" />
                     )}
-                    <span>Copiar</span>
+                    <span>{t("common.copy")}</span>
                   </button>
                 </div>
                 <p className="text-xs text-zinc-300 leading-relaxed max-h-32 overflow-y-auto pr-1 whitespace-pre-wrap break-words">
@@ -448,7 +450,7 @@ export const ComparisonSidebar: React.FC<ComparisonSidebarProps> = ({
           </div>
         ) : (
           <div className="p-3 rounded-xl bg-zinc-900/40 border border-zinc-800 text-[11px] text-zinc-500 italic">
-            Nenhum prompt registrado para estas referências.
+            {t("sidebar.noPromptsRegistered")}
           </div>
         )}
       </div>
@@ -458,7 +460,7 @@ export const ComparisonSidebar: React.FC<ComparisonSidebarProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <Tag className="w-3.5 h-3.5 text-zinc-400" />
-            <h3 className={sectionTitle}>Diff de Tags & Categorias</h3>
+            <h3 className={sectionTitle}>{t("sidebar.tagDiffTitle")}</h3>
           </div>
           <span className="text-[10px] font-mono text-zinc-500">
             {tagDiff.overlapPercentage}% sobreposição
@@ -470,7 +472,7 @@ export const ComparisonSidebar: React.FC<ComparisonSidebarProps> = ({
           <div className="flex flex-col gap-1.5">
             <span className="text-[10px] font-mono text-emerald-400 flex items-center gap-1">
               <Check className="w-3 h-3" />
-              Tags em Comum ({tagDiff.sharedTags.length})
+              {t("sidebar.sharedTags", { count: tagDiff.sharedTags.length })}
             </span>
             <div className="flex flex-wrap gap-1.5">
               {tagDiff.sharedTags.map(tag => (
@@ -493,7 +495,7 @@ export const ComparisonSidebar: React.FC<ComparisonSidebarProps> = ({
         {tagDiff.onlyATags.length > 0 && (
           <div className="flex flex-col gap-1.5">
             <span className="text-[10px] font-mono text-zinc-200">
-              Exclusivas da Ref A ({tagDiff.onlyATags.length})
+              {t("sidebar.uniqueToA", { count: tagDiff.onlyATags.length })}
             </span>
             <div className="flex flex-wrap gap-1.5">
               {tagDiff.onlyATags.map(tag => (
@@ -516,7 +518,7 @@ export const ComparisonSidebar: React.FC<ComparisonSidebarProps> = ({
         {tagDiff.onlyBTags.length > 0 && (
           <div className="flex flex-col gap-1.5">
             <span className="text-[10px] font-mono text-zinc-200">
-              Exclusivas da Ref B ({tagDiff.onlyBTags.length})
+              {t("sidebar.uniqueToB", { count: tagDiff.onlyBTags.length })}
             </span>
             <div className="flex flex-wrap gap-1.5">
               {tagDiff.onlyBTags.map(tag => (
@@ -539,14 +541,14 @@ export const ComparisonSidebar: React.FC<ComparisonSidebarProps> = ({
           tagDiff.onlyATags.length === 0 &&
           tagDiff.onlyBTags.length === 0 && (
             <div className="p-3 rounded-xl bg-zinc-900/40 border border-zinc-800 text-[11px] text-zinc-500 italic">
-              Nenhuma tag cadastrada nas referências comparadas.
+              {t("sidebar.noTagsRegistered")}
             </div>
           )}
       </div>
 
       {/* -- Section 4: Dual Item Actions -------------------------------- */}
       <div className="flex flex-col gap-2.5 pt-2 border-t border-zinc-800/80">
-        <h3 className={sectionTitle}>Ações no Sistema</h3>
+        <h3 className={sectionTitle}>{t('sidebar.systemActions')}</h3>
 
         <div className="grid grid-cols-2 gap-2">
           {/* Ref A Actions */}

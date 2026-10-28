@@ -23,6 +23,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu"
+import { useI18n } from "../i18n"
 import {
   Dialog,
   DialogContent,
@@ -70,6 +71,7 @@ export const LibrarySwitcher: React.FC<LibrarySwitcherProps> = ({
   onSelectLibrary,
   isLoading = false,
 }) => {
+  const { t } = useI18n()
   const [sources, setSources] = React.useState<LibrarySource[]>(DEFAULT_FALLBACK_SOURCES)
   const [isAddOpen, setIsAddOpen] = React.useState(false)
   const [folderPathInput, setFolderPathInput] = React.useState('')
@@ -149,7 +151,7 @@ export const LibrarySwitcher: React.FC<LibrarySwitcherProps> = ({
     const libId = (libraryIdInput.trim() || rawLeaf).replace(/[^a-zA-Z0-9_-]/g, '-')
 
     if (!folderPath) {
-      setErrorMsg('Por favor informe o caminho completo da pasta no computador.')
+      setErrorMsg(t('library.specifyFolderPathError'))
       return
     }
 
@@ -171,7 +173,7 @@ export const LibrarySwitcher: React.FC<LibrarySwitcherProps> = ({
           await loadLibraries()
           onSelectLibrary(libId)
         } else {
-          setErrorMsg(res.error || 'Falha ao criar/indexar pasta .library')
+          setErrorMsg(res.error || t('library.createIndexError'))
         }
       } else {
         const res = await fetch('/api/catalog/scan-folder', {
@@ -187,11 +189,11 @@ export const LibrarySwitcher: React.FC<LibrarySwitcherProps> = ({
           await loadLibraries()
           onSelectLibrary(libId)
         } else {
-          setErrorMsg(json.error || 'Falha ao escanear pasta')
+          setErrorMsg(json.error || t('library.scanFolderError'))
         }
       }
     } catch (err: any) {
-      setErrorMsg(err?.message || 'Erro de conexão com o servidor')
+      setErrorMsg(err?.message || t('library.serverConnectionError'))
     } finally {
       setIsScanning(false)
     }
@@ -358,7 +360,7 @@ export const LibrarySwitcher: React.FC<LibrarySwitcherProps> = ({
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              title="Gerenciar Libraries (.library)"
+              title={t("library.manageTitle")}
               className={cn(
                 "relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs transition-all duration-200 cursor-pointer",
                 !pillSources.some(s => s.id === currentLibrary)
@@ -414,7 +416,7 @@ export const LibrarySwitcher: React.FC<LibrarySwitcherProps> = ({
                   <div className="flex items-center gap-0.5 shrink-0 opacity-80 group-hover:opacity-100">
                     <button
                       type="button"
-                      title="Sincronizar novos arquivos da pasta para a .library"
+                      title={t("library.syncTooltip")}
                       onClick={e => handleSyncExistingLibrary(e, source)}
                       className="p-1 rounded-md hover:bg-zinc-700/80 text-zinc-400 hover:text-white transition-colors"
                     >
@@ -423,7 +425,7 @@ export const LibrarySwitcher: React.FC<LibrarySwitcherProps> = ({
 
                     <button
                       type="button"
-                      title="Ocultar Library da barra principal"
+                      title={t("library.hideTooltip")}
                       onClick={e => handleToggleHidden(e, source, true)}
                       className="p-1 rounded-md hover:bg-zinc-700/80 text-zinc-400 hover:text-zinc-100 transition-colors"
                     >
@@ -432,7 +434,7 @@ export const LibrarySwitcher: React.FC<LibrarySwitcherProps> = ({
 
                     <button
                       type="button"
-                      title="Remover Library do catálogo"
+                      title={t("library.removeTooltip")}
                       onClick={e => handleOpenRemoveDialog(e, source)}
                       className="p-1 rounded-md hover:bg-red-500/20 text-zinc-400 hover:text-red-400 transition-colors"
                     >
@@ -447,7 +449,7 @@ export const LibrarySwitcher: React.FC<LibrarySwitcherProps> = ({
               <>
                 <DropdownMenuSeparator className="bg-zinc-800/80 my-1.5" />
                 <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-500 flex items-center justify-between">
-                  <span>Libraries Ocultas</span>
+                  <span>{t("library.hiddenLibraries")}</span>
                   <span>{hiddenSources.length}</span>
                 </div>
 
@@ -465,7 +467,7 @@ export const LibrarySwitcher: React.FC<LibrarySwitcherProps> = ({
                     <div className="flex items-center gap-0.5 shrink-0">
                       <button
                         type="button"
-                        title="Reexibir Library na barra principal"
+                        title={t("library.unhideTooltip")}
                         onClick={e => handleToggleHidden(e, source, false)}
                         className="p-1 rounded-md hover:bg-zinc-800 text-zinc-400 hover:text-emerald-400 transition-colors"
                       >
@@ -474,7 +476,7 @@ export const LibrarySwitcher: React.FC<LibrarySwitcherProps> = ({
 
                       <button
                         type="button"
-                        title="Remover Library"
+                        title={t("library.removeTooltip")}
                         onClick={e => handleOpenRemoveDialog(e, source)}
                         className="p-1 rounded-md hover:bg-red-500/20 text-zinc-400 hover:text-red-400 transition-colors"
                       >
@@ -493,7 +495,7 @@ export const LibrarySwitcher: React.FC<LibrarySwitcherProps> = ({
               className="cursor-pointer rounded-lg px-2.5 py-2 text-amber-300 hover:text-amber-200 hover:bg-amber-500/10 text-xs font-medium flex items-center gap-2"
             >
               <FolderPlus className="w-3.5 h-3.5 text-amber-400" />
-              <span>Anexar Pasta (Criar .library)...</span>
+              <span>{t("library.attachFolder")}</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -505,7 +507,7 @@ export const LibrarySwitcher: React.FC<LibrarySwitcherProps> = ({
           <DialogHeader>
             <DialogTitle className="text-base font-semibold flex items-center gap-2">
               <FolderPlus className="w-4 h-4 text-amber-400" />
-              <span>Criar ou Anexar Biblioteca (.library)</span>
+              <span>{t("library.createModalTitle")}</span>
             </DialogTitle>
             <DialogDescription className="text-xs text-zinc-400 leading-relaxed">
               Aponte para qualquer pasta de imagens/vídeos. O sistema criará automaticamente uma estrutura{" "}
@@ -518,13 +520,13 @@ export const LibrarySwitcher: React.FC<LibrarySwitcherProps> = ({
           <div className="flex flex-col gap-3 py-2 text-xs">
             <div className="flex flex-col gap-1">
               <div className="flex items-center justify-between">
-                <label className="text-[11px] font-medium text-zinc-300">Pasta de Origem no Computador</label>
+                <label className="text-[11px] font-medium text-zinc-300">{t("library.sourceFolder")}</label>
                 <button
                   type="button"
                   onClick={handlePickDirectory}
                   className="text-[10px] text-zinc-300 hover:text-white underline font-medium cursor-pointer"
                 >
-                  Procurar no PC...
+                  {t("library.browsePc")}
                 </button>
               </div>
               <div className="flex gap-2">
@@ -546,7 +548,7 @@ export const LibrarySwitcher: React.FC<LibrarySwitcherProps> = ({
             </div>
 
             <div className="flex flex-col gap-1">
-              <label className="text-[11px] font-medium text-zinc-300">Nome da Library</label>
+              <label className="text-[11px] font-medium text-zinc-300">{t("library.libraryName")}</label>
               <input
                 type="text"
                 placeholder="Comfy"
@@ -557,7 +559,7 @@ export const LibrarySwitcher: React.FC<LibrarySwitcherProps> = ({
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-medium text-zinc-300">Modo de Ingestão de Arquivos na .library</label>
+              <label className="text-[11px] font-medium text-zinc-300">{t("library.ingestionMode")}</label>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
@@ -569,8 +571,8 @@ export const LibrarySwitcher: React.FC<LibrarySwitcherProps> = ({
                       : "bg-zinc-900/60 border-zinc-800 text-zinc-400 hover:text-zinc-200"
                   )}
                 >
-                  <div className="font-semibold text-[11px]">Hardlink Instantâneo</div>
-                  <div className="text-[10px] opacity-80">0 bytes extras no mesmo disco (Recomendado)</div>
+                  <div className="font-semibold text-[11px]">{t("library.hardlinkMode")}</div>
+                  <div className="text-[10px] opacity-80">{t("library.hardlinkDesc")}</div>
                 </button>
 
                 <button
@@ -583,15 +585,15 @@ export const LibrarySwitcher: React.FC<LibrarySwitcherProps> = ({
                       : "bg-zinc-900/60 border-zinc-800 text-zinc-400 hover:text-zinc-200"
                   )}
                 >
-                  <div className="font-semibold text-[11px]">Cópia Física Completa</div>
-                  <div className="text-[10px] opacity-80">Duplica os arquivos dentro da .library</div>
+                  <div className="font-semibold text-[11px]">{t("library.copyMode")}</div>
+                  <div className="text-[10px] opacity-80">{t("library.copyDesc")}</div>
                 </button>
               </div>
             </div>
 
             {previewLibraryPath && (
               <div className="p-2.5 rounded-lg bg-zinc-900/90 border border-zinc-800 text-[11px] text-zinc-400 font-mono break-all">
-                <span className="text-zinc-500 block mb-0.5 font-sans">Estrutura .library gerenciada:</span>
+                <span className="text-zinc-500 block mb-0.5 font-sans">{t("library.managedPath")}</span>
                 <span className="text-emerald-400">{previewLibraryPath}</span>
               </div>
             )}
@@ -620,10 +622,10 @@ export const LibrarySwitcher: React.FC<LibrarySwitcherProps> = ({
               {isScanning ? (
                 <>
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  <span>Construindo .library...</span>
+                  <span>{t("library.building")}</span>
                 </>
               ) : (
-                <span>Criar & Indexar .library</span>
+                <span>{t("library.createAndIndex")}</span>
               )}
             </button>
           </DialogFooter>
@@ -636,7 +638,7 @@ export const LibrarySwitcher: React.FC<LibrarySwitcherProps> = ({
           <DialogHeader>
             <DialogTitle className="text-base font-semibold flex items-center gap-2 text-red-400">
               <AlertTriangle className="w-4 h-4 text-red-400" />
-              <span>Remover Library &ldquo;{libraryToRemove?.name}&rdquo;</span>
+              <span>{t("library.removeModalTitle", { name: libraryToRemove?.name || "" })}</span>
             </DialogTitle>
             <DialogDescription className="text-xs text-zinc-400 leading-relaxed">
               Isso removerá a biblioteca da listagem e limpará seu índice em memória (SQLite). Seus arquivos originais na pasta de origem nunca são apagados.
@@ -659,7 +661,7 @@ export const LibrarySwitcher: React.FC<LibrarySwitcherProps> = ({
                       className="mt-0.5 accent-red-500"
                     />
                     <span className="text-[11px] text-red-200 leading-snug">
-                      Excluir também a pasta <code className="font-mono">{libraryToRemove.name}</code> gerada no disco (miniaturas e metadados).
+                      {t("library.deleteFilesCheckbox", { name: libraryToRemove.name })}
                     </span>
                   </label>
                 )}
@@ -683,12 +685,12 @@ export const LibrarySwitcher: React.FC<LibrarySwitcherProps> = ({
               {isRemoving ? (
                 <>
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  <span>Removendo...</span>
+                  <span>{t("library.removing")}</span>
                 </>
               ) : (
                 <>
                   <Trash2 className="w-3.5 h-3.5" />
-                  <span>Confirmar Remoção</span>
+                  <span>{t("library.confirmRemove")}</span>
                 </>
               )}
             </button>

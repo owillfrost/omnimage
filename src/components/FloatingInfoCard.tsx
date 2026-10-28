@@ -1,5 +1,6 @@
 import * as React from "react"
 import { ChevronUp, X, FolderOpen } from "lucide-react"
+import { useI18n } from "../i18n"
 
 interface FloatingInfoCardProps {
   isEagleConnected?: boolean
@@ -12,6 +13,7 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
   totalCount,
   currentLibraryName = "Design",
 }) => {
+  const { t } = useI18n()
   const [isExpanded, setIsExpanded] = React.useState(true)
 
   return (
@@ -27,7 +29,7 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                 }`}
               />
               <span className="text-xs font-bold tracking-wider text-zinc-100 uppercase">
-                {isEagleConnected ? "Gallery" : "Conectando"}
+                {isEagleConnected ? "Gallery" : t("infoCard.loadingTitle")}
               </span>
             </div>
             <span className="text-[11px] text-zinc-400 font-medium">Omnimage</span>
@@ -52,42 +54,40 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
             {isEagleConnected ? (
               <>
                 <p className="text-xs leading-relaxed text-zinc-300">
-                  Visualizando sua biblioteca local (
-                  <span className="text-white font-medium">{currentLibraryName}</span>) conectada em tempo real.
+                  {t("infoCard.viewingLibrary", { name: currentLibraryName })}
                 </p>
 
                 <div className="rounded-2xl bg-zinc-900/60 border border-zinc-800/80 p-3.5 space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-zinc-200 flex items-center gap-1.5">
                       <FolderOpen className="w-3.5 h-3.5 text-blue-400" />
-                      Biblioteca Conectada
+                      {t('infoCard.connectedTitle')}
                     </span>
                     <span className="text-[10px] text-blue-400 font-mono">
-                      {totalCount} ITENS
+                      {totalCount} {t('common.items').toUpperCase()}
                     </span>
                   </div>
                   <p className="text-[11px] text-zinc-400 leading-normal">
-                    Arraste a tela livremente. As imagens e miniaturas locais são transmitidas com zero perda e suporte a filtro cromático por IA.
+                    {t("infoCard.connectedDesc")}
                   </p>
                 </div>
               </>
             ) : (
               <>
                 <p className="text-xs leading-relaxed text-zinc-300">
-                  Conectando à sua biblioteca local (
-                  <span className="text-white font-medium">{currentLibraryName}</span>)...
+                  {t("infoCard.connectingLibrary", { name: currentLibraryName })}
                 </p>
 
                 <div className="rounded-2xl bg-zinc-900/60 border border-zinc-800/80 p-3.5 space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-zinc-200 flex items-center gap-1.5">
                       <FolderOpen className="w-3.5 h-3.5 text-amber-400" />
-                      Carregando
+                      {t('infoCard.loadingTitle')}
                     </span>
-                    <span className="text-[10px] text-amber-400 font-mono">AGUARDE</span>
+                    <span className="text-[10px] text-amber-400 font-mono">{t('infoCard.loadingWait')}</span>
                   </div>
                   <p className="text-[11px] text-zinc-400 leading-normal">
-                    Lendo arquivos locais no disco e sincronizando metadados.
+                    {t("infoCard.loadingDesc")}
                   </p>
                 </div>
               </>

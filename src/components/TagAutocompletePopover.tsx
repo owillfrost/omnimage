@@ -13,6 +13,7 @@ import { parseSearchQuery, toggleTagInQuery } from "../core/tagFilter"
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip"
 import { cn } from "@/lib/utils"
+import { useI18n } from "../i18n"
 
 export interface TagAutocompletePopoverProps {
   tags: EagleTagFacet[]
@@ -23,12 +24,13 @@ export interface TagAutocompletePopoverProps {
 }
 
 export const TagAutocompletePopover: React.FC<TagAutocompletePopoverProps> = React.memo(({
-  tags = [],
+tags = [],
   tagsGroups = [],
   searchQuery,
   onSearchQueryChange,
   disabled = false,
 }) => {
+  const { t } = useI18n()
   const [isOpen, setIsOpen] = React.useState(false)
   const [filterText, setFilterText] = React.useState("")
   const [selectedGroupId, setSelectedGroupId] = React.useState<string | null>(null)
@@ -120,7 +122,7 @@ export const TagAutocompletePopover: React.FC<TagAutocompletePopoverProps> = Rea
                     ? "text-blue-400 bg-blue-500/10 hover:bg-blue-500/20"
                     : "text-zinc-400 hover:text-zinc-100"
                 )}
-                aria-label="Filtro inteligente de tags do Eagle"
+                aria-label={t("taxonomy.filterAria")}
               >
                 <Tag className="w-4 h-4" />
                 {totalActiveTags > 0 && (
@@ -161,7 +163,7 @@ export const TagAutocompletePopover: React.FC<TagAutocompletePopoverProps> = Rea
             <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
-              placeholder="Buscar ou filtrar tags (#tag / -tag)..."
+              placeholder={t("taxonomy.searchTagsPlaceholder")}
               value={filterText}
               onChange={(e) => setFilterText(e.target.value)}
               className="w-full pl-8 pr-7 py-1 text-xs rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:border-zinc-700"
@@ -218,7 +220,7 @@ export const TagAutocompletePopover: React.FC<TagAutocompletePopoverProps> = Rea
           {/* Active Tag Chips (Directly removable) */}
           {(parsed.includedTags.length > 0 || parsed.excludedTags.length > 0) && (
             <div className="flex flex-wrap items-center gap-1 p-1.5 mb-2 rounded-lg bg-zinc-900/80 border border-zinc-800/80">
-              <span className="text-[10px] font-medium text-zinc-500 mr-1">Filtros:</span>
+              <span className="text-[10px] font-medium text-zinc-500 mr-1">{t("taxonomy.activeTagsLabel")}</span>
               {parsed.includedTags.map((tag) => (
                 <span
                   key={tag}
@@ -269,7 +271,7 @@ export const TagAutocompletePopover: React.FC<TagAutocompletePopoverProps> = Rea
           <div className="max-h-68 overflow-y-auto space-y-1 pr-1 -mr-1 scrollbar-thin scrollbar-thumb-zinc-800">
             {filteredTags.length === 0 ? (
               <div className="py-6 text-center text-xs text-zinc-500">
-                Nenhuma tag encontrada para &quot;{filterText}&quot;.
+                {t("taxonomy.noTagsFound", { query: filterText })}
               </div>
             ) : (
               filteredTags.map((tag) => {
@@ -331,7 +333,7 @@ export const TagAutocompletePopover: React.FC<TagAutocompletePopoverProps> = Rea
                           e.stopPropagation()
                           handleIncludeTag(tag.name)
                         }}
-                        title={isIncluded ? "Remover filtro" : "Incluir tag (+)"}
+                        title={isIncluded ? t("taxonomy.removeTag") : t("taxonomy.includeTag")}
                         className={cn(
                           "p-1 rounded-md transition-colors cursor-pointer",
                           isIncluded
@@ -345,7 +347,7 @@ export const TagAutocompletePopover: React.FC<TagAutocompletePopoverProps> = Rea
                       <button
                         type="button"
                         onClick={(e) => handleExcludeTag(tag.name, e)}
-                        title={isExcluded ? "Remover exclusão" : "Excluir tag (-)"}
+                        title={isExcluded ? t("taxonomy.removeExclude") : t("taxonomy.excludeTag")}
                         className={cn(
                           "p-1 rounded-md transition-colors cursor-pointer",
                           isExcluded
@@ -365,7 +367,7 @@ export const TagAutocompletePopover: React.FC<TagAutocompletePopoverProps> = Rea
           {/* Footer instructions */}
           <div className="pt-2 mt-2 border-t border-zinc-900 flex items-center justify-between text-[10px] text-zinc-500">
             <span>
-              Clique no item para <span className="text-emerald-400">+incluir</span> ou <span className="text-rose-400">-excluir</span>
+              {t("taxonomy.tagsHint")}
             </span>
             <span className="font-mono text-zinc-400">#tag ou -tag</span>
           </div>

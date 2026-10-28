@@ -3,6 +3,7 @@ import type { Artwork } from "../types/artwork"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog"
 import { Button } from "./ui/button"
 import { ExternalLink, Download, Bookmark, Palette, Sparkles } from "lucide-react"
+import { useI18n } from "../i18n"
 
 interface ArtworkDialogProps {
   artwork: Artwork | null
@@ -21,6 +22,7 @@ export const ArtworkDialog: React.FC<ArtworkDialogProps> = ({
   onOrganizeByColor,
   isCurrentAnchor,
 }) => {
+  const { t } = useI18n()
   if (!artwork) return null
 
   return (
@@ -49,7 +51,7 @@ export const ArtworkDialog: React.FC<ArtworkDialogProps> = ({
             <DialogHeader className="space-y-2 text-left">
               <div className="flex items-center gap-2">
                 <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-mono uppercase tracking-wider text-emerald-400">
-                  Your References
+                  {t('artworkDialog.yourReferences')}
                 </span>
                 <span className="text-[11px] text-zinc-500 font-medium">
                   {artwork.source}
@@ -66,17 +68,17 @@ export const ArtworkDialog: React.FC<ArtworkDialogProps> = ({
             {/* Metadata Grid */}
             <div className="space-y-3 border-t border-b border-zinc-800/70 py-4 text-xs">
               <div className="flex justify-between py-1">
-                <span className="text-zinc-500">Date</span>
+                <span className="text-zinc-500">{t('artworkDialog.date')}</span>
                 <span className="text-zinc-200 font-medium">{artwork.date || 'Unknown'}</span>
               </div>
               <div className="flex justify-between py-1">
-                <span className="text-zinc-500">Medium</span>
+                <span className="text-zinc-500">{t('artworkDialog.medium')}</span>
                 <span className="text-zinc-200 font-medium text-right max-w-[180px] truncate">{artwork.medium}</span>
               </div>
               {artwork.culture && artwork.culture !== 'Local Asset' && (
                 <div className="pt-2">
                   <span className="text-[11px] text-zinc-500 font-medium block mb-1">
-                    {artwork.source.includes('Prompt') || artwork.source.includes('Google') ? 'Prompt / Annotation' : 'Culture / Notes'}
+                    {artwork.source.includes('Prompt') || artwork.source.includes('Google') ? t('artworkDialog.promptAnnotation') : t('artworkDialog.cultureNotes')}
                   </span>
                   <div className="p-2.5 rounded-lg bg-zinc-900/80 border border-zinc-800 text-[11px] font-mono text-zinc-300 max-h-36 overflow-y-auto whitespace-pre-wrap leading-relaxed select-text">
                     {artwork.culture}
@@ -85,7 +87,7 @@ export const ArtworkDialog: React.FC<ArtworkDialogProps> = ({
               )}
               {artwork.department && (
                 <div className="flex justify-between py-1">
-                  <span className="text-zinc-500">Department</span>
+                  <span className="text-zinc-500">{t('artworkDialog.department')}</span>
                   <span className="text-zinc-200 font-medium text-right max-w-[180px] truncate">{artwork.department}</span>
                 </div>
               )}
@@ -96,7 +98,7 @@ export const ArtworkDialog: React.FC<ArtworkDialogProps> = ({
               <div className="space-y-2">
                 <div className="flex items-center gap-1.5 text-xs text-zinc-400">
                   <Palette className="w-3.5 h-3.5" />
-                  <span>Color Palette</span>
+                  <span>{t('artworkDialog.colorPalette')}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   {artwork.palette.map((color, idx) => (
@@ -108,7 +110,7 @@ export const ArtworkDialog: React.FC<ArtworkDialogProps> = ({
                       }}
                       className="group relative w-7 h-7 rounded-full border border-white/20 transition-transform hover:scale-110 active:scale-95"
                       style={{ backgroundColor: color }}
-                      title={`Filter by ${color}`}
+                      title={t("artworkDialog.filterByColor", { color })}
                     >
                       <span className="sr-only">{color}</span>
                     </button>
@@ -129,7 +131,7 @@ export const ArtworkDialog: React.FC<ArtworkDialogProps> = ({
               }}
             >
               <Sparkles className="w-4 h-4 mr-2 text-amber-400" />
-              {isCurrentAnchor ? "Grid já harmonizado nesta obra" : "Harmonizar grid ao redor desta obra"}
+              {isCurrentAnchor ? t("artworkDialog.gridAlreadyHarmonized") : t("artworkDialog.harmonizeGrid")}
             </Button>
 
             <Button
@@ -137,7 +139,7 @@ export const ArtworkDialog: React.FC<ArtworkDialogProps> = ({
               onClick={() => alert(`Salvo "${artwork.title}" na sua coleção Omnimage!`)}
             >
               <Bookmark className="w-4 h-4 mr-2" />
-              Salvar no Omnimage
+              {t('artworkDialog.saveToOmnimage')}
             </Button>
 
             <div className="grid grid-cols-2 gap-2">
@@ -149,7 +151,7 @@ export const ArtworkDialog: React.FC<ArtworkDialogProps> = ({
                 className="inline-flex items-center justify-center gap-1.5 h-9 rounded-full border border-zinc-800 text-xs font-medium text-zinc-300 hover:text-white hover:bg-zinc-800 active:scale-95 transition-all"
               >
                 <Download className="w-3.5 h-3.5" />
-                Download HD
+                {t('artworkDialog.downloadHd')}
               </a>
 
               <a

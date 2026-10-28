@@ -22,6 +22,7 @@ import { useTransientValue } from '../../hooks/useCopyFeedback'
 import { useItemDetail, resolveArtworkLibAndId } from '../../hooks/useItemDetail'
 import { ComparisonSidebar } from './ComparisonSidebar'
 import { getCatalogProvider } from '../../providers/providerFactory'
+import { useI18n } from "../../i18n"
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 
@@ -38,6 +39,8 @@ const actionBtn =
 // ── Section 1 — Catalog Actions ──────────────────────────────────────────
 
 function CatalogActions({ artwork }: { artwork: Artwork }) {
+  const { t } = useI18n()
+
   const { lib, rawId } = resolveArtworkLibAndId(artwork)
   const [loading, setLoading] = useState<'reveal' | 'info' | null>(null)
   const [done, flashDone] = useTransientValue<'reveal' | 'info'>(2500)
@@ -46,16 +49,16 @@ function CatalogActions({ artwork }: { artwork: Artwork }) {
     return (
       <div className="flex flex-col gap-2.5">
         <div className="flex items-center justify-between">
-          <h3 className={sectionTitle}>Busca Semântica IA</h3>
+          <h3 className={sectionTitle}>{t("sidebar.aiSemanticSearch")}</h3>
           <span className="text-[10px] font-mono text-amber-400">CLIP ViT-B/32</span>
         </div>
         <div className="p-3 rounded-xl bg-zinc-900/90 border border-amber-500/25 text-xs text-zinc-300 space-y-1.5 shadow-sm">
           <div className="flex items-center gap-1.5 text-amber-300 font-medium">
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            <span>Âncora de Conceito Estético</span>
+            <span>{t("sidebar.aestheticAnchor")}</span>
           </div>
           <p className="text-[11px] text-zinc-400 leading-relaxed">
-            Vetor de 512 dimensões Int8 projetado pelo modelo CLIP para encontrar referências no acervo pela essência visual, mesmo sem nenhuma tag cadastrada.
+            {t("sidebar.clipVectorDesc")}
           </p>
         </div>
       </div>
@@ -85,7 +88,7 @@ function CatalogActions({ artwork }: { artwork: Artwork }) {
   return (
     <div className="flex flex-col gap-2.5">
       <div className="flex items-center justify-between">
-        <h3 className={sectionTitle}>Ações do Arquivo</h3>
+        <h3 className={sectionTitle}>{t('sidebar.fileActions')}</h3>
         <span className="text-[10px] font-mono text-zinc-600">{rawId}</span>
       </div>
 
@@ -97,7 +100,7 @@ function CatalogActions({ artwork }: { artwork: Artwork }) {
         >
           <span className="flex items-center gap-2">
             <FolderOpen className="w-4 h-4 text-white" />
-            {label('reveal', 'Mostrar na Pasta (Explorer)', 'Abrindo Explorer...', 'Aberto no Explorer!')}
+            {label('reveal', t('sidebar.showInExplorer'), t('sidebar.openingExplorer'), t('sidebar.openedInExplorer'))}
           </span>
           {done === 'reveal' && <Check className="w-3.5 h-3.5 text-white" />}
         </button>
@@ -109,7 +112,7 @@ function CatalogActions({ artwork }: { artwork: Artwork }) {
         >
           <span className="flex items-center gap-2">
             <Copy className="w-4 h-4 text-white" />
-            {label('info', 'Copiar Caminho Local', 'Obtendo caminho...', 'Caminho Copiado!')}
+            {label('info', t('sidebar.copyLocalPath'), t('sidebar.gettingPath'), t('sidebar.pathCopied'))}
           </span>
           {done === 'info' && <Check className="w-3.5 h-3.5 text-white" />}
         </button>
@@ -122,7 +125,7 @@ function CatalogActions({ artwork }: { artwork: Artwork }) {
             className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white text-xs font-medium transition-all"
           >
             <Maximize2 className="w-3.5 h-3.5 text-white" />
-            <span>Arquivo Original</span>
+            <span>{t('sidebar.originalFile')}</span>
           </a>
 
           {artwork.sourceUrl && artwork.sourceUrl !== '#' ? (
@@ -133,12 +136,12 @@ function CatalogActions({ artwork }: { artwork: Artwork }) {
               className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white text-xs font-medium transition-all"
             >
               <Globe className="w-3.5 h-3.5 text-white" />
-              <span>URL de Referência</span>
+              <span>{t('sidebar.referenceUrl')}</span>
             </a>
           ) : (
             <div className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-zinc-900/40 border border-zinc-900 text-zinc-600 text-xs">
               <Globe className="w-3.5 h-3.5 text-white" />
-              <span>Sem URL</span>
+              <span>{t('sidebar.noUrl')}</span>
             </div>
           )}
         </div>
@@ -150,14 +153,16 @@ function CatalogActions({ artwork }: { artwork: Artwork }) {
 // ── Section 2 — Color Palette ────────────────────────────────────────────
 
 function PalettePanel({
+
   artwork,
   selectedColors,
   onToggleColor,
 }: {
-  artwork: Artwork
+artwork: Artwork
   selectedColors: string[]
   onToggleColor: (hex: string) => void
 }) {
+  const { t } = useI18n()
   const [copiedHex, flashCopied] = useTransientValue<string>(1800)
 
   // Deduplicated palette list starting with dominantColor
@@ -210,7 +215,7 @@ function PalettePanel({
                 />
                 <div className="flex flex-col">
                   <span className="text-xs font-mono font-medium text-zinc-200">{hex.toUpperCase()}</span>
-                  {index === 0 && <span className="text-[10px] text-zinc-500">Tom Dominante</span>}
+                  {index === 0 && <span className="text-[10px] text-zinc-500">{t('sidebar.dominantShade')}</span>}
                 </div>
               </div>
 
@@ -218,12 +223,12 @@ function PalettePanel({
                 <button
                   onClick={() => handleCopyHex(hex)}
                   className="flex items-center gap-1 px-2 py-1 rounded-lg bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 text-[11px] font-mono transition-colors cursor-pointer"
-                  title="Copiar código HEX"
+                  title={t("sidebar.copyHex")}
                 >
                   {isCopied ? (
                     <>
                       <Check className="w-3 h-3 text-white" />
-                      <span className="text-emerald-300">Copiado!</span>
+                      <span className="text-emerald-300">{t("sidebar.hexCopied")}</span>
                     </>
                   ) : (
                     <>
@@ -238,10 +243,10 @@ function PalettePanel({
                   className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all cursor-pointer ${
                     isSelected ? 'bg-white text-zinc-950 border border-white font-medium' : 'bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 border border-transparent'
                   }`}
-                  title="Filtrar acervo por este tom cromático"
+                  title={t("sidebar.filterShade")}
                 >
                   <Filter className="w-3 h-3 text-white" />
-                  <span>{isSelected ? 'Ativo' : 'Filtrar tom'}</span>
+                  <span>{isSelected ? t('sidebar.filterShadeActive') : t('sidebar.filterShade')}</span>
                 </button>
               </div>
             </div>
@@ -255,6 +260,7 @@ function PalettePanel({
 // ── Section 3 — Design Essentials & Inline CRUD Editor ────────────────────
 
 function DesignEssentials({
+
   artwork,
   onSearchTag,
   folderNameMap,
@@ -267,6 +273,7 @@ function DesignEssentials({
   onSelectFolder?: (folderId: string | null) => void
   onClose: () => void
 }) {
+  const { t } = useI18n()
   const { lib, rawId } = resolveArtworkLibAndId(artwork)
   const { detail } = useItemDetail(artwork)
   const comfy = detail?.comfy?.hasWorkflow ? detail.comfy : null
@@ -377,13 +384,13 @@ function DesignEssentials({
   return (
     <div className="flex flex-col gap-3 pt-2 border-t border-zinc-800/80">
       <div className="flex items-center justify-between">
-        <h3 className={sectionTitle}>Design Essentials & Metadados</h3>
+        <h3 className={sectionTitle}>{t('sidebar.designEssentials')}</h3>
         <button
           onClick={() => setIsEditing(!isEditing)}
           className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 text-[11px] transition-colors cursor-pointer"
         >
           <Edit3 className="w-3 h-3 text-zinc-400" />
-          <span>{isEditing ? 'Fechar Edição' : 'Editar'}</span>
+          <span>{isEditing ? t('sidebar.closeEdit') : t('sidebar.edit')}</span>
         </button>
       </div>
 
@@ -391,7 +398,7 @@ function DesignEssentials({
       {isEditing ? (
         <div className="flex flex-col gap-3 p-3.5 rounded-xl bg-zinc-900 border border-amber-500/40 text-xs">
           <div className="flex flex-col gap-1">
-            <label className="text-[10px] uppercase font-semibold text-zinc-400">Título / Nome</label>
+            <label className="text-[10px] uppercase font-semibold text-zinc-400">{t('sidebar.titleLabel')}</label>
             <input
               type="text"
               value={title}
@@ -401,7 +408,7 @@ function DesignEssentials({
           </div>
 
           <div className="flex flex-col gap-1">
-            <label className="text-[10px] uppercase font-semibold text-zinc-400">URL de Referência</label>
+            <label className="text-[10px] uppercase font-semibold text-zinc-400">{t('sidebar.refUrlLabel')}</label>
             <input
               type="text"
               value={url}
@@ -412,18 +419,18 @@ function DesignEssentials({
           </div>
 
           <div className="flex flex-col gap-1">
-            <label className="text-[10px] uppercase font-semibold text-zinc-400">Prompt / Anotação Completa</label>
+            <label className="text-[10px] uppercase font-semibold text-zinc-400">{t('sidebar.fullPromptLabel')}</label>
             <textarea
               rows={4}
               value={prompt}
               onChange={e => setPrompt(e.target.value)}
-              placeholder="Prompt detalhado da arte gerativa..."
+              placeholder={t("sidebar.promptPlaceholder")}
               className="px-2.5 py-1.5 rounded-lg bg-zinc-950 border border-zinc-800 text-zinc-100 text-xs leading-relaxed focus:outline-none focus:border-amber-400 resize-y"
             />
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-[10px] uppercase font-semibold text-zinc-400">Tags do Item</label>
+            <label className="text-[10px] uppercase font-semibold text-zinc-400">{t("sidebar.itemTagsLabel")}</label>
             <div className="flex flex-wrap gap-1.5 mb-1">
               {tags.map(tag => (
                 <span
@@ -448,7 +455,7 @@ function DesignEssentials({
                 value={newTagInput}
                 onChange={e => setNewTagInput(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
-                placeholder="Nova tag..."
+                placeholder={t("sidebar.newTagPlaceholder")}
                 className="flex-1 px-2 py-1 rounded-md bg-zinc-950 border border-zinc-800 text-zinc-200 text-xs focus:outline-none focus:border-amber-400"
               />
               <button
@@ -476,7 +483,7 @@ function DesignEssentials({
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white hover:bg-zinc-200 text-zinc-950 font-semibold text-xs shadow-md transition-all active:scale-[0.98]"
             >
               <Save className="w-3.5 h-3.5" />
-              <span>{isSaving ? 'Salvando...' : 'Salvar (Dual-Write)'}</span>
+              <span>{isSaving ? t('sidebar.saving') : t('sidebar.saveDualWrite')}</span>
             </button>
           </div>
         </div>
@@ -485,7 +492,7 @@ function DesignEssentials({
           {saveSuccess && (
             <div className="flex items-center gap-1.5 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs">
               <Check className="w-3.5 h-3.5 text-white" />
-              <span>Metadados sincronizados no Sidecar e SQLite!</span>
+              <span>{t("sidebar.metaSynced")}</span>
             </div>
           )}
 
@@ -517,12 +524,12 @@ function DesignEssentials({
                     {copiedWorkflow ? (
                       <>
                         <Check className="w-3.5 h-3.5 text-emerald-400" />
-                        <span className="text-emerald-300">Workflow Copiado!</span>
+                        <span className="text-emerald-300">{t("viewer.workflowCopied")}</span>
                       </>
                     ) : (
                       <>
                         <Workflow className="w-3.5 h-3.5 text-amber-400" />
-                        <span>Copiar Workflow</span>
+                        <span>{t("viewer.copyWorkflow")}</span>
                       </>
                     )}
                   </button>
@@ -538,12 +545,12 @@ function DesignEssentials({
                     {copiedPrompt ? (
                       <>
                         <Check className="w-3.5 h-3.5 text-emerald-400" />
-                        <span className="text-emerald-300">Prompt Copiado!</span>
+                        <span className="text-emerald-300">{t("viewer.promptCopied")}</span>
                       </>
                     ) : (
                       <>
                         <Copy className="w-3.5 h-3.5 text-amber-400" />
-                        <span>Copiar Prompt</span>
+                        <span>{t("viewer.copyPrompt")}</span>
                       </>
                     )}
                   </button>
@@ -598,11 +605,11 @@ function DesignEssentials({
                       className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-[10px] transition-colors cursor-pointer"
                     >
                       {copiedNegPrompt ? (
-                        <span className="text-emerald-300">Copiado!</span>
+                        <span className="text-emerald-300">{t("sidebar.hexCopied")}</span>
                       ) : (
                         <>
                           <Copy className="w-2.5 h-2.5 text-zinc-400" />
-                          <span>Copiar</span>
+                          <span>{t("common.copy")}</span>
                         </>
                       )}
                     </button>
@@ -618,7 +625,7 @@ function DesignEssentials({
           {prompt && (
             <div className="flex flex-col gap-2 p-3.5 rounded-xl bg-zinc-900/90 border border-zinc-800/90">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-medium text-zinc-400">Prompt / Anotação</span>
+                <span className="text-[11px] font-medium text-zinc-400">{t("sidebar.promptAnnotation")}</span>
                 <button
                   onClick={handleCopyPrompt}
                   className="flex items-center gap-1 px-2 py-1 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-[11px] transition-colors cursor-pointer"
@@ -626,12 +633,12 @@ function DesignEssentials({
                   {copiedPrompt ? (
                     <>
                       <Check className="w-3 h-3 text-white" />
-                      <span className="text-emerald-300">Copiado!</span>
+                      <span className="text-emerald-300">{t("sidebar.hexCopied")}</span>
                     </>
                   ) : (
                     <>
                       <Copy className="w-3 h-3 text-white" />
-                      <span>Copiar Prompt</span>
+                      <span>{t("viewer.copyPrompt")}</span>
                     </>
                   )}
                 </button>
@@ -648,7 +655,7 @@ function DesignEssentials({
             <div className="flex flex-col gap-2">
               <span className="text-[11px] text-zinc-400 flex items-center gap-1.5">
                 <Folder className="w-3 h-3 text-amber-400" />
-                Coleções ({artwork.folders.length})
+                {t("sidebar.collectionsLabel", { count: artwork.folders.length })}
               </span>
               <div className="flex flex-wrap gap-1.5">
                 {artwork.folders.map(folderId => {
@@ -661,7 +668,7 @@ function DesignEssentials({
                         onClose()
                       }}
                       className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-xs transition-all cursor-pointer"
-                      title="Filtrar galeria por esta pasta"
+                      title={t("sidebar.filterByFolder")}
                     >
                       <Folder className="w-3 h-3 text-amber-400 shrink-0" />
                       <span>{name}</span>
@@ -676,7 +683,7 @@ function DesignEssentials({
             <div className="flex flex-col gap-2">
               <span className="text-[11px] text-zinc-400 flex items-center gap-1.5">
                 <Tag className="w-3 h-3 text-white" />
-                Tags e Categorias ({tags.length})
+                {t("sidebar.tagsCategoriesLabel", { count: tags.length })}
               </span>
               <div className="flex flex-wrap gap-1.5">
                 {tags.map(tag => (
@@ -778,7 +785,7 @@ export interface ViewerSidebarProps {
  * or tabbed individual views (Diff | Ref A | Ref B).
  */
 export const ViewerSidebar = memo(function ViewerSidebar({
-  artwork,
+artwork,
   compareArtwork,
   selectedColors,
   onToggleColor,
@@ -789,6 +796,7 @@ export const ViewerSidebar = memo(function ViewerSidebar({
   onSwapCompare,
   onClearCompare,
 }: ViewerSidebarProps) {
+  const { t } = useI18n()
   const [sidebarTab, setSidebarTab] = useState<'diff' | 'refA' | 'refB'>('diff')
 
   return (
@@ -805,7 +813,7 @@ export const ViewerSidebar = memo(function ViewerSidebar({
                 : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
-            Diff Comparativo
+            {t('sidebar.diffTab')}
           </button>
           <button
             type="button"
@@ -816,7 +824,7 @@ export const ViewerSidebar = memo(function ViewerSidebar({
                 : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
-            Referência A
+            {t('sidebar.refATab')}
           </button>
           <button
             type="button"
@@ -827,7 +835,7 @@ export const ViewerSidebar = memo(function ViewerSidebar({
                 : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
-            Referência B
+            {t('sidebar.refBTab')}
           </button>
         </div>
       )}

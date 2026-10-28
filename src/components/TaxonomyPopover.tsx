@@ -21,6 +21,7 @@ import { parseSearchQuery, toggleTagInQuery } from "../core/tagFilter"
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip"
 import { cn } from "@/lib/utils"
+import { useI18n } from "../i18n"
 
 export type TaxonomyTab = 'folders' | 'tags' | 'media'
 
@@ -171,7 +172,7 @@ const FolderTreeItem: React.FC<FolderTreeItemProps> = ({
 }
 
 export const EagleTaxonomyPopover: React.FC<EagleTaxonomyPopoverProps> = React.memo(({
-  folders = [],
+folders = [],
   selectedFolderId,
   onSelectFolder,
   tags = [],
@@ -190,6 +191,7 @@ export const EagleTaxonomyPopover: React.FC<EagleTaxonomyPopoverProps> = React.m
   videoCount = 0,
   imageCount = 0,
 }) => {
+  const { t } = useI18n()
   const [internalOpen, setInternalOpen] = React.useState(false)
   const [internalTab, setInternalTab] = React.useState<TaxonomyTab>('folders')
   const [filterText, setFilterText] = React.useState("")
@@ -306,7 +308,7 @@ export const EagleTaxonomyPopover: React.FC<EagleTaxonomyPopoverProps> = React.m
                     ? "text-white bg-zinc-800 hover:bg-zinc-700"
                     : "text-zinc-400 hover:text-zinc-100"
                 )}
-                aria-label="Filtrar por Pastas, Smart Tags e Tipo de Mídia"
+                aria-label={t("taxonomy.filterAria")}
               >
                 <SlidersHorizontal className="w-4 h-4" />
                 {totalActiveFilters > 0 && (
@@ -349,7 +351,7 @@ export const EagleTaxonomyPopover: React.FC<EagleTaxonomyPopoverProps> = React.m
                 )}
               >
                 <Folder className={cn("w-3.5 h-3.5", currentTab === 'folders' ? "text-amber-400" : "text-zinc-500")} />
-                <span>Pastas</span>
+                <span>{t("taxonomy.foldersTab")}</span>
                 <span className="text-[10px] font-mono text-zinc-500">
                   ({folders.length})
                 </span>
@@ -371,7 +373,7 @@ export const EagleTaxonomyPopover: React.FC<EagleTaxonomyPopoverProps> = React.m
                 )}
               >
                 <Tag className={cn("w-3.5 h-3.5", currentTab === 'tags' ? "text-emerald-400" : "text-zinc-500")} />
-                <span>Tags</span>
+                <span>{t("taxonomy.tagsTab")}</span>
                 <span className="text-[10px] font-mono text-zinc-500">
                   ({tags.length})
                 </span>
@@ -395,7 +397,7 @@ export const EagleTaxonomyPopover: React.FC<EagleTaxonomyPopoverProps> = React.m
                 )}
               >
                 <Film className={cn("w-3.5 h-3.5", currentTab === 'media' ? "text-amber-400" : "text-zinc-500")} />
-                <span>Mídia</span>
+                <span>{t("taxonomy.mediaTab")}</span>
                 {videoCount > 0 && (
                   <span className="text-[10px] font-mono text-zinc-500">
                     ({videoCount})
@@ -424,7 +426,7 @@ export const EagleTaxonomyPopover: React.FC<EagleTaxonomyPopoverProps> = React.m
                   }
                 }}
                 className="text-[10px] text-zinc-400 hover:text-white px-2 py-1 rounded-lg hover:bg-zinc-900 transition-colors cursor-pointer shrink-0"
-                title="Limpar filtro da aba atual"
+                title={t("taxonomy.clearCurrentTab")}
               >
                 Limpar
               </button>
@@ -437,11 +439,7 @@ export const EagleTaxonomyPopover: React.FC<EagleTaxonomyPopoverProps> = React.m
               <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
-                placeholder={
-                  currentTab === 'folders'
-                    ? `Buscar pasta em ${libraryLabel}...`
-                    : "Filtrar tags ou categorias (#tag / -tag)..."
-                }
+                placeholder={currentTab === "folders" ? t("taxonomy.searchFoldersPlaceholder", { library: libraryLabel }) : t("taxonomy.searchTagsPlaceholder")}
                 value={filterText}
                 onChange={(e) => setFilterText(e.target.value)}
                 className="w-full pl-8 pr-7 py-1.5 text-xs rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:border-zinc-700"
@@ -474,7 +472,7 @@ export const EagleTaxonomyPopover: React.FC<EagleTaxonomyPopoverProps> = React.m
                 >
                   <div className="flex items-center gap-2">
                     <Folder className="w-3.5 h-3.5 text-zinc-400" />
-                    <span>Todas as Pastas ({libraryLabel})</span>
+                    <span>{t("taxonomy.allFolders", { library: libraryLabel })}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="text-[10px] font-mono text-zinc-500">
@@ -490,7 +488,7 @@ export const EagleTaxonomyPopover: React.FC<EagleTaxonomyPopoverProps> = React.m
               <div className="max-h-68 overflow-y-auto space-y-0.5 pr-1 -mr-1 scrollbar-thin scrollbar-thumb-zinc-800">
                 {folders.length === 0 ? (
                   <div className="py-6 text-center text-xs text-zinc-500">
-                    Nenhuma pasta encontrada nesta biblioteca.
+                    {t("taxonomy.noFoldersFound")}
                   </div>
                 ) : (
                   folders.map((folder) => (
@@ -507,14 +505,14 @@ export const EagleTaxonomyPopover: React.FC<EagleTaxonomyPopoverProps> = React.m
               </div>
 
               <div className="pt-2 mt-2 border-t border-zinc-900 flex items-center justify-between text-[10px] text-zinc-500">
-                <span>{folders.length} coleções mapeadas</span>
+                <span>{t("taxonomy.collectionsMapped", { count: folders.length })}</span>
                 {selectedFolderId && (
                   <button
                     type="button"
                     onClick={() => handleSelectFolder(null)}
                     className="text-zinc-400 hover:text-white hover:underline cursor-pointer"
                   >
-                    Resetar pasta
+                    {t("taxonomy.resetFolder")}
                   </button>
                 )}
               </div>
@@ -565,7 +563,7 @@ export const EagleTaxonomyPopover: React.FC<EagleTaxonomyPopoverProps> = React.m
               {/* Active Tag Chips Summary inside Popover */}
               {(parsed.includedTags.length > 0 || parsed.excludedTags.length > 0) && (
                 <div className="flex flex-wrap items-center gap-1 p-1.5 mb-2 rounded-lg bg-zinc-900/80 border border-zinc-800/80">
-                  <span className="text-[10px] font-medium text-zinc-500 mr-1">Ativas:</span>
+                  <span className="text-[10px] font-medium text-zinc-500 mr-1">{t("taxonomy.activeTagsLabel")}</span>
                   {parsed.includedTags.map((tag) => (
                     <span
                       key={tag}
@@ -616,7 +614,7 @@ export const EagleTaxonomyPopover: React.FC<EagleTaxonomyPopoverProps> = React.m
               <div className="max-h-68 overflow-y-auto space-y-1 pr-1 -mr-1 scrollbar-thin scrollbar-thumb-zinc-800">
                 {filteredTags.length === 0 ? (
                   <div className="py-6 text-center text-xs text-zinc-500">
-                    Nenhuma tag encontrada para &quot;{filterText}&quot;.
+                    {t("taxonomy.noTagsFound", { query: filterText })}
                   </div>
                 ) : (
                   filteredTags.map((tag) => {
@@ -677,7 +675,7 @@ export const EagleTaxonomyPopover: React.FC<EagleTaxonomyPopoverProps> = React.m
                               e.stopPropagation()
                               handleIncludeTag(tag.name)
                             }}
-                            title={isIncluded ? "Remover filtro" : "Incluir tag (+)"}
+                            title={isIncluded ? t("taxonomy.removeTag") : t("taxonomy.includeTag")}
                             className={cn(
                               "p-1 rounded-md transition-colors cursor-pointer",
                               isIncluded
@@ -691,7 +689,7 @@ export const EagleTaxonomyPopover: React.FC<EagleTaxonomyPopoverProps> = React.m
                           <button
                             type="button"
                             onClick={(e) => handleExcludeTag(tag.name, e)}
-                            title={isExcluded ? "Remover exclusão" : "Excluir tag (-)"}
+                            title={isExcluded ? t("taxonomy.removeExclude") : t("taxonomy.excludeTag")}
                             className={cn(
                               "p-1 rounded-md transition-colors cursor-pointer",
                               isExcluded
@@ -710,7 +708,7 @@ export const EagleTaxonomyPopover: React.FC<EagleTaxonomyPopoverProps> = React.m
 
               <div className="pt-2 mt-2 border-t border-zinc-900 flex items-center justify-between text-[10px] text-zinc-500">
                 <span>
-                  Clique para <span className="text-emerald-400">+incluir</span> ou <span className="text-rose-400">-excluir</span>
+                  {t("taxonomy.tagsHint")}
                 </span>
                 <span className="font-mono text-zinc-400">#tag / -tag</span>
               </div>
@@ -724,8 +722,8 @@ export const EagleTaxonomyPopover: React.FC<EagleTaxonomyPopoverProps> = React.m
                 {[
                   {
                     id: 'all' as MediaTypeFilter,
-                    label: 'Todas as Mídias',
-                    description: 'Imagens estáticas e vídeos do acervo',
+                    label: t('taxonomy.allMedia'),
+                    description: t('taxonomy.allMediaDesc'),
                     count: totalCount,
                     icon: LayoutGrid,
                     color: 'text-zinc-300',
@@ -733,8 +731,8 @@ export const EagleTaxonomyPopover: React.FC<EagleTaxonomyPopoverProps> = React.m
                   },
                   {
                     id: 'video' as MediaTypeFilter,
-                    label: 'Apenas Vídeos',
-                    description: 'Preview nativo no hover & motion scrubbing',
+                    label: t('taxonomy.onlyVideos'),
+                    description: t('taxonomy.onlyVideosDesc'),
                     count: videoCount,
                     icon: Film,
                     color: 'text-amber-400',
@@ -742,8 +740,8 @@ export const EagleTaxonomyPopover: React.FC<EagleTaxonomyPopoverProps> = React.m
                   },
                   {
                     id: 'image' as MediaTypeFilter,
-                    label: 'Apenas Imagens',
-                    description: 'Obras visuais estáticas (PNG, JPG, WEBP)',
+                    label: t('taxonomy.onlyImages'),
+                    description: t('taxonomy.onlyImagesDesc'),
                     count: imageCount,
                     icon: ImageIcon,
                     color: 'text-sky-400',
@@ -803,10 +801,10 @@ export const EagleTaxonomyPopover: React.FC<EagleTaxonomyPopoverProps> = React.m
               {/* Informative footer */}
               <div className="mt-2 pt-2 border-t border-zinc-900 flex flex-col gap-1 text-[10px] text-zinc-500">
                 <div>
-                  <strong className="text-zinc-400 font-medium">Motion Scrubbing:</strong> Passe o mouse por 350ms sobre um card de vídeo e mova horizontalmente para navegar quadro a quadro.
+                  {t("taxonomy.motionScrubbingHint")}
                 </div>
                 <div>
-                  <strong className="text-zinc-400 font-medium">Atalho global:</strong> Pressione <kbd className="px-1 py-0.5 rounded bg-zinc-800 text-[10px] text-zinc-300 font-mono">V</kbd> para alternar rapidamente entre vídeos e todas as mídias.
+                  <strong className="text-zinc-400 font-medium">{t("taxonomy.globalShortcutPrefix")}:</strong> {t("taxonomy.mediaShortcutHint")}
                 </div>
               </div>
             </div>

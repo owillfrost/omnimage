@@ -30,34 +30,9 @@ import { parseSearchQuery, removeTagFromQuery } from "../core/tagFilter"
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip"
 import { cn } from "@/lib/utils"
+import { useI18n } from "../i18n"
 
 export type ActiveTab = 'canvas' | 'explore'
-
-const ANCHOR_MODE_OPTIONS: {
-  id: SimilaritySortMode
-  label: string
-  hint: string
-  icon: typeof Layers
-}[] = [
-  {
-    id: 'hybrid',
-    label: 'Misto',
-    hint: 'Estética visual + Harmonia de paleta + Tags',
-    icon: Layers,
-  },
-  {
-    id: 'visual',
-    label: 'Estética IA',
-    hint: 'Direção de arte, estilo & composição (CLIP)',
-    icon: Eye,
-  },
-  {
-    id: 'color',
-    label: 'Paleta',
-    hint: 'Harmonia cromática das 5 cores ponderadas',
-    icon: Palette,
-  },
-]
 
 export interface FloatingNavProps {
   searchQuery: string
@@ -134,6 +109,28 @@ export const FloatingNav: React.FC<FloatingNavProps> = React.memo(({
   videoCount = 0,
   imageCount = 0,
 }) => {
+  const { t } = useI18n()
+
+  const anchorModeOptions = React.useMemo(() => [
+    {
+      id: 'hybrid' as SimilaritySortMode,
+      label: t('nav.modeHybrid'),
+      hint: t('nav.modeHybridHint'),
+      icon: Layers,
+    },
+    {
+      id: 'visual' as SimilaritySortMode,
+      label: t('nav.modeVisual'),
+      hint: t('nav.modeVisualHint'),
+      icon: Eye,
+    },
+    {
+      id: 'color' as SimilaritySortMode,
+      label: t('nav.modeColor'),
+      hint: t('nav.modeColorHint'),
+      icon: Palette,
+    },
+  ], [t])
   const [isVisualSearchOpen, setIsVisualSearchOpen] = React.useState(false)
   const [isTaxonomyOpen, setIsTaxonomyOpen] = React.useState(false)
   const [taxonomyTab, setTaxonomyTab] = React.useState<TaxonomyTab>('folders')
@@ -171,7 +168,7 @@ export const FloatingNav: React.FC<FloatingNavProps> = React.memo(({
   const handleProcessFile = React.useCallback(
     async (file: File) => {
       if (!file.type.startsWith('image/')) {
-        setErrorMessage('Por favor selecione um arquivo de imagem válido (PNG, JPG, WEBP, etc).')
+        setErrorMessage(t('nav.visualSearchInvalidFile'))
         return
       }
       setIsSubmitting(true)
@@ -280,9 +277,7 @@ export const FloatingNav: React.FC<FloatingNavProps> = React.memo(({
                 />
               </TooltipTrigger>
               <TooltipContent>
-                {isEagleConnected
-                  ? `Catálogo conectado (${totalCount.toLocaleString()} itens)`
-                  : "Conectando ao catálogo..."}
+                {isEagleConnected ? t("nav.catalogConnected", { count: totalCount.toLocaleString() }) : t("nav.connectingCatalog")}
               </TooltipContent>
             </Tooltip>
           </div>
@@ -339,7 +334,7 @@ export const FloatingNav: React.FC<FloatingNavProps> = React.memo(({
                       ? "bg-amber-500/15 text-amber-400 border border-amber-500/35 shadow-xs hover:bg-amber-500/25 hover:border-amber-400/50"
                       : "bg-zinc-900/60 text-zinc-400 border border-zinc-800/80 hover:text-zinc-200 hover:bg-zinc-800/70 hover:border-zinc-700/80"
                   )}
-                  aria-label="Alternar modo de busca (Literal vs Busca IA)"
+                  aria-label={t("nav.searchModeToggleAria")}
                 >
                   {searchMode === 'semantic' ? (
                     <Sparkles className="w-3.5 h-3.5" />
@@ -349,9 +344,7 @@ export const FloatingNav: React.FC<FloatingNavProps> = React.memo(({
                 </button>
               </TooltipTrigger>
               <TooltipContent>
-                {searchMode === 'semantic'
-                  ? "Busca Semântica IA ativa (CLIP ViT-B/32). Clique para alternar para Busca Literal por texto/tags."
-                  : "Busca Literal ativa. Clique para alternar para Busca Semântica IA (CLIP Zero-Shot)."}
+                {searchMode === "semantic" ? t("nav.searchModeSemanticActive") : t("nav.searchModeLiteralActive")}
               </TooltipContent>
             </Tooltip>
 
@@ -363,7 +356,7 @@ export const FloatingNav: React.FC<FloatingNavProps> = React.memo(({
                   setIsTaxonomyOpen(true)
                 }}
                 className="flex items-center gap-1.5 bg-amber-500/15 border border-amber-500/35 hover:border-amber-400/60 rounded-full pl-2 pr-1 py-0.5 text-xs text-amber-200 mr-1.5 shrink-0 shadow-xs cursor-pointer transition-colors"
-                title={`Filtrando pela pasta "${activeFolder.name}". Clique para trocar ou remover.`}
+                title={t("nav.filterFolderActive", { name: activeFolder.name })}
               >
                 <FolderOpen
                   className="w-3 h-3 shrink-0"
@@ -379,7 +372,7 @@ export const FloatingNav: React.FC<FloatingNavProps> = React.memo(({
                     onSelectFolder?.(null)
                   }}
                   className="p-0.5 rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer"
-                  title="Limpar filtro de pasta"
+                  title={t("nav.clearFolderFilter")}
                 >
                   <X className="w-2.5 h-2.5" />
                 </button>
@@ -399,7 +392,7 @@ export const FloatingNav: React.FC<FloatingNavProps> = React.memo(({
                     ? "bg-amber-500/15 border border-amber-500/35 hover:border-amber-400/60 text-amber-200"
                     : "bg-sky-500/15 border border-sky-500/35 hover:border-sky-400/60 text-sky-200"
                 )}
-                title={mediaTypeFilter === 'video' ? "Filtrando por Vídeos. Clique para trocar ou no '×' para remover." : "Filtrando por Imagens. Clique para trocar ou no '×' para remover."}
+                title={mediaTypeFilter === "video" ? t("nav.filterVideosActive") : t("nav.filterImagesActive")}
               >
                 {mediaTypeFilter === 'video' ? (
                   <Film className="w-3 h-3 text-amber-400 shrink-0" />
@@ -407,7 +400,7 @@ export const FloatingNav: React.FC<FloatingNavProps> = React.memo(({
                   <ImageIcon className="w-3 h-3 text-sky-400 shrink-0" />
                 )}
                 <span className="text-[11px] font-medium">
-                  {mediaTypeFilter === 'video' ? `Vídeos (${videoCount.toLocaleString()})` : `Imagens (${imageCount.toLocaleString()})`}
+                  {mediaTypeFilter === "video" ? t("nav.filterVideosBadge", { count: (videoCount ?? 0).toLocaleString() }) : t("nav.filterImagesBadge", { count: (imageCount ?? 0).toLocaleString() })}
                 </span>
                 <button
                   type="button"
@@ -419,7 +412,7 @@ export const FloatingNav: React.FC<FloatingNavProps> = React.memo(({
                     "p-0.5 rounded-full hover:bg-white/20 transition-colors cursor-pointer",
                     mediaTypeFilter === 'video' ? "text-amber-300" : "text-sky-300"
                   )}
-                  title="Remover filtro de mídia"
+                  title={t("nav.clearMediaFilter")}
                 >
                   <X className="w-2.5 h-2.5" />
                 </button>
@@ -444,7 +437,7 @@ export const FloatingNav: React.FC<FloatingNavProps> = React.memo(({
                     onResetColorAnchor?.()
                   }}
                   className="p-0.5 rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors ml-0.5 cursor-pointer"
-                  title="Restaurar grid original (Esc)"
+                  title={t("nav.restoreOriginalGrid")}
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -471,7 +464,7 @@ export const FloatingNav: React.FC<FloatingNavProps> = React.memo(({
                         onSearchChange(removeTagFromQuery(searchQuery, tag))
                       }}
                       className="text-emerald-400 hover:text-white rounded-full p-0.5 cursor-pointer leading-none"
-                      title={`Remover tag #${tag}`}
+                      title={t("nav.removeTagFilter", { tag })}
                     >
                       <X className="w-2.5 h-2.5" />
                     </button>
@@ -494,7 +487,7 @@ export const FloatingNav: React.FC<FloatingNavProps> = React.memo(({
                         onSearchChange(removeTagFromQuery(searchQuery, tag))
                       }}
                       className="text-rose-400 hover:text-white rounded-full p-0.5 cursor-pointer leading-none"
-                      title={`Remover exclusão -${tag}`}
+                      title={t("nav.removeExcludeFilter", { tag })}
                     >
                       <X className="w-2.5 h-2.5" />
                     </button>
@@ -523,7 +516,7 @@ export const FloatingNav: React.FC<FloatingNavProps> = React.memo(({
                         onToggleColor(hex)
                       }}
                       className="text-zinc-400 hover:text-white rounded-full p-0.5 transition-colors leading-none cursor-pointer"
-                      title={`Remover cor ${hex}`}
+                      title={t("nav.removeColorFilter", { hex })}
                     >
                       <X className="w-2.5 h-2.5" />
                     </button>
@@ -542,7 +535,7 @@ export const FloatingNav: React.FC<FloatingNavProps> = React.memo(({
                       onClearColors()
                     }}
                     className="p-0.5 rounded-full text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors cursor-pointer"
-                    title="Limpar todas as cores"
+                    title={t("nav.clearAllColors")}
                   >
                     <X className="w-3 h-3" />
                   </button>
@@ -565,11 +558,11 @@ export const FloatingNav: React.FC<FloatingNavProps> = React.memo(({
                 placeholder={
                   searchMode === 'semantic'
                     ? totalCount
-                      ? `Busca IA em ${totalCount}+ obras (ex: brutalist poster, neon glassmorphism)...`
-                      : "Busca semântica IA (ex: brutalist poster, neon lighting)..."
+                      ? t('nav.searchPlaceholderSemantic', { count: totalCount })
+                      : t('nav.searchPlaceholderSemanticFallback')
                     : totalCount
-                    ? `Buscar ${totalCount}+ referências (#tag, -tag, título)...`
-                    : "Buscar na galeria..."
+                    ? t('nav.searchPlaceholderLiteral', { count: totalCount })
+                    : t('nav.searchPlaceholderLiteralFallback')
                 }
                 className="w-full bg-transparent text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none truncate"
               />
@@ -585,9 +578,9 @@ export const FloatingNav: React.FC<FloatingNavProps> = React.memo(({
                   type="button"
                   onClick={() => onSemanticSearch?.(searchQuery.trim())}
                   className="hidden sm:inline-flex items-center gap-1 text-[11px] text-zinc-200 font-medium px-2 py-0.5 rounded-full bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 transition-all cursor-pointer mr-1 shrink-0 animate-in fade-in"
-                  title="Executar busca semântica (Enter)"
+                  title={t("nav.executeSemanticSearch")}
                 >
-                  <span>Buscar</span>
+                  <span>{t("common.search")}</span>
                   <CornerDownLeft className="w-3 h-3 text-zinc-400" />
                 </button>
               )}
@@ -603,7 +596,7 @@ export const FloatingNav: React.FC<FloatingNavProps> = React.memo(({
                     }
                   }}
                   className="text-zinc-500 hover:text-zinc-200 p-1 mr-1 transition-colors shrink-0 cursor-pointer"
-                  title="Limpar busca"
+                  title={t("nav.clearSearch")}
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -625,13 +618,13 @@ export const FloatingNav: React.FC<FloatingNavProps> = React.memo(({
                             ? "text-white bg-zinc-800 animate-pulse"
                             : "text-zinc-400 hover:text-zinc-100"
                         )}
-                        aria-label="Busca por Imagem (CLIP ViT-B/32)"
+                        aria-label={t("nav.visualSearchAria")}
                       >
                         <ImageIcon className="w-4 h-4" />
                       </button>
                     </PopoverTrigger>
                   </TooltipTrigger>
-                  <TooltipContent>Busca por Imagem Externa (ou Ctrl+V)</TooltipContent>
+                  <TooltipContent>{t("nav.visualSearchTooltip")}</TooltipContent>
                 </Tooltip>
                 <PopoverContent
                   align="end"
@@ -642,12 +635,12 @@ export const FloatingNav: React.FC<FloatingNavProps> = React.memo(({
                     <div className="flex items-center justify-between">
                       <h4 className="text-xs font-semibold text-zinc-200 uppercase tracking-wider flex items-center gap-1.5">
                         <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                        Busca por Imagem Externa
+                        {t("nav.visualSearchTitle")}
                       </h4>
                       <span className="text-[10px] text-zinc-500 font-mono">CLIP ViT-B/32</span>
                     </div>
                     <p className="text-xs text-zinc-400 leading-relaxed">
-                      Arraste uma imagem, cole da área de transferência (<kbd className="px-1 py-0.5 rounded bg-zinc-800 text-[10px] text-zinc-300 font-mono">Ctrl+V</kbd>) ou insira uma URL para organizar o acervo por similaridade visual.
+                      {t("nav.visualSearchDesc")}
                     </p>
 
                     {/* Dropzone */}
@@ -677,17 +670,17 @@ export const FloatingNav: React.FC<FloatingNavProps> = React.memo(({
                       {isSubmitting ? (
                         <div className="flex flex-col items-center justify-center py-2">
                           <Loader2 className="w-6 h-6 text-amber-400 animate-spin mb-2" />
-                          <span className="text-xs font-medium text-zinc-200">Extraindo vetor visual CLIP...</span>
-                          <span className="text-[10px] text-zinc-500 mt-0.5">512 dimensões Int8</span>
+                          <span className="text-xs font-medium text-zinc-200">{t("nav.visualSearchExtracting")}</span>
+                          <span className="text-[10px] text-zinc-500 mt-0.5">{t("nav.visualSearchDimensions")}</span>
                         </div>
                       ) : (
                         <>
                           <UploadCloud className="w-7 h-7 text-zinc-500 mx-auto mb-1.5 transition-colors" />
                           <span className="text-xs font-medium text-zinc-300 block">
-                            Clique ou arraste uma imagem aqui
+                            {t("nav.visualSearchDropHere")}
                           </span>
                           <span className="text-[10px] text-zinc-500 mt-1 block">
-                            PNG, JPG, WEBP, GIF, AVIF (até 25MB)
+                            {t("nav.visualSearchFormats")}
                           </span>
                         </>
                       )}
@@ -697,12 +690,12 @@ export const FloatingNav: React.FC<FloatingNavProps> = React.memo(({
                     <form onSubmit={handleUrlSubmit} className="space-y-1.5 pt-1">
                       <label className="text-[11px] font-medium text-zinc-400 flex items-center gap-1">
                         <LinkIcon className="w-3 h-3 text-zinc-500" />
-                        Ou colar URL da imagem:
+                        {t("nav.visualSearchUrlLabel")}
                       </label>
                       <div className="flex items-center gap-1.5">
                         <input
                           type="url"
-                          placeholder="https://exemplo.com/referencia.jpg"
+                          placeholder={t("nav.visualSearchUrlPlaceholder")}
                           value={urlInput}
                           onChange={(e) => setUrlInput(e.target.value)}
                           disabled={isSubmitting}
@@ -727,8 +720,8 @@ export const FloatingNav: React.FC<FloatingNavProps> = React.memo(({
                     )}
 
                     <div className="pt-1 text-[10px] text-zinc-500 border-t border-zinc-900 flex items-center justify-between">
-                      <span>Atalho global:</span>
-                      <span className="font-mono text-zinc-400">Ctrl+V em qualquer tela</span>
+                      <span>{t("nav.visualSearchGlobalShortcut")}</span>
+                      <span className="font-mono text-zinc-400">{t("nav.visualSearchGlobalShortcutDesc")}</span>
                     </div>
                   </div>
                 </PopoverContent>
@@ -773,20 +766,20 @@ export const FloatingNav: React.FC<FloatingNavProps> = React.memo(({
               {colorAnchorArtwork.isTextQuery ? (
                 <span className="text-[11px] font-medium text-amber-400 pl-2.5 pr-1 flex items-center gap-1.5">
                   <Sparkles className="w-3 h-3 text-amber-400" />
-                  <span className="hidden sm:inline">Busca IA:</span>
+                  <span className="hidden sm:inline">{t("nav.anchorAiSearch")}</span>
                 </span>
               ) : colorAnchorArtwork.isEphemeral ? (
                 <span className="text-[11px] font-medium text-amber-400 pl-2.5 pr-1 flex items-center gap-1.5">
                   <Sparkles className="w-3 h-3 text-amber-400" />
-                  <span className="hidden sm:inline">Busca Visual:</span>
+                  <span className="hidden sm:inline">{t("nav.anchorVisualSearch")}</span>
                 </span>
               ) : (
                 <span className="text-[11px] font-medium text-zinc-400 pl-2.5 pr-1 flex items-center gap-1.5">
                   <Sparkles className="w-3 h-3 text-amber-400" />
-                  <span className="hidden sm:inline">Harmonização:</span>
+                  <span className="hidden sm:inline">{t("nav.anchorHarmonization")}</span>
                 </span>
               )}
-              {ANCHOR_MODE_OPTIONS.map((opt) => {
+              {anchorModeOptions.map((opt) => {
                 const Icon = opt.icon
                 const isActive = anchorMode === opt.id
                 return (
@@ -813,7 +806,7 @@ export const FloatingNav: React.FC<FloatingNavProps> = React.memo(({
                   type="button"
                   onClick={onResetColorAnchor}
                   className="p-1 rounded-full text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/80 transition-colors ml-0.5 cursor-pointer"
-                  title="Desafixar âncora e voltar ao grid normal (Esc)"
+                  title={t("nav.unpinAnchor")}
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>

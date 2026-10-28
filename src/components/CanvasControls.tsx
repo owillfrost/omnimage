@@ -1,8 +1,9 @@
-﻿import * as React from "react"
+import * as React from "react"
 import { RotateCcw, Compass, Grid3x3, LayoutGrid, Maximize2, Shuffle, CircleHelp, RefreshCw } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip"
 import { AsciiReveal } from "./ui/AsciiReveal"
 import type { GridSizeMode } from "../core/infiniteGrid"
+import { useI18n } from "../i18n"
 
 export interface CanvasControlsProps {
   onCenterView: () => void
@@ -17,16 +18,6 @@ export interface CanvasControlsProps {
   centerLabel?: string
 }
 
-const GRID_SIZE_OPTIONS: {
-  mode: GridSizeMode
-  tooltip: string
-  icon: React.ComponentType<{ className?: string }>
-}[] = [
-  { mode: "small", tooltip: "Grid Pequeno (Compacto)", icon: Grid3x3 },
-  { mode: "default", tooltip: "Grid Padrão (Médio)", icon: LayoutGrid },
-  { mode: "large", tooltip: "Grid Largo (Amplo)", icon: Maximize2 },
-]
-
 export const CanvasControls: React.FC<CanvasControlsProps> = React.memo(({
   onCenterView,
   onShuffle,
@@ -37,8 +28,18 @@ export const CanvasControls: React.FC<CanvasControlsProps> = React.memo(({
   totalCount,
   gridSize,
   onGridSizeChange,
-  centerLabel = "Recenter Grid",
+  centerLabel,
 }) => {
+  const { t } = useI18n()
+
+  const gridOptions = React.useMemo(() => [
+    { mode: "small" as GridSizeMode, tooltip: t('canvas.gridSmall'), icon: Grid3x3 },
+    { mode: "default" as GridSizeMode, tooltip: t('canvas.gridDefault'), icon: LayoutGrid },
+    { mode: "large" as GridSizeMode, tooltip: t('canvas.gridLarge'), icon: Maximize2 },
+  ], [t])
+
+  const effectiveCenterLabel = centerLabel || t('common.recenterGrid')
+
   return (
     <TooltipProvider>
       <div className="fixed bottom-6 right-6 z-30 flex items-center gap-2 pointer-events-none">
@@ -55,7 +56,7 @@ export const CanvasControls: React.FC<CanvasControlsProps> = React.memo(({
             <span data-ascii-digits className="text-zinc-100 font-semibold">{visibleCount}</span>
             <span className="text-zinc-500">/</span>
             <span data-ascii-digits className="text-zinc-400">{totalCount}</span>
-            <span className="text-zinc-400 text-[11px] ml-0.5">works in view</span>
+            <span className="text-zinc-400 text-[11px] ml-0.5">{t('common.worksInView')}</span>
           </AsciiReveal>
         </div>
 
@@ -63,9 +64,9 @@ export const CanvasControls: React.FC<CanvasControlsProps> = React.memo(({
         <div
           className="pointer-events-auto bg-zinc-950/90 backdrop-blur-2xl border border-zinc-800 rounded-full p-1 shadow-2xl flex items-center gap-0.5"
           role="group"
-          aria-label="Grid Density Controls"
+          aria-label={t('canvas.gridControlsAria')}
         >
-          {GRID_SIZE_OPTIONS.map(({ mode, tooltip, icon: Icon }) => {
+          {gridOptions.map(({ mode, tooltip, icon: Icon }) => {
             const isActive = gridSize === mode
             return (
               <Tooltip key={mode}>
@@ -100,12 +101,12 @@ export const CanvasControls: React.FC<CanvasControlsProps> = React.memo(({
                   onClick={onRefresh}
                   disabled={isRefreshing}
                   className="p-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-full active:scale-95 transition-all cursor-pointer disabled:opacity-50"
-                  aria-label="Atualizar Biblioteca do Eagle (?refresh=1)"
+                  aria-label={t('canvas.refreshEagle')}
                 >
                   <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin text-blue-400" : ""}`} />
                 </button>
               </TooltipTrigger>
-              <TooltipContent>Atualizar do Eagle (?refresh=1)</TooltipContent>
+              <TooltipContent>{t('canvas.refreshEagle')}</TooltipContent>
             </Tooltip>
           )}
 
@@ -116,12 +117,12 @@ export const CanvasControls: React.FC<CanvasControlsProps> = React.memo(({
                   type="button"
                   onClick={onShuffle}
                   className="p-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-full active:scale-95 transition-all cursor-pointer"
-                  aria-label="Visualização Randômica (Embaralhar)"
+                  aria-label={t('canvas.shuffleAria')}
                 >
                   <Shuffle className="w-4 h-4" />
                 </button>
               </TooltipTrigger>
-              <TooltipContent>Visualização Randômica (Embaralhar)</TooltipContent>
+              <TooltipContent>{t('canvas.shuffleAria')}</TooltipContent>
             </Tooltip>
           )}
 
@@ -131,12 +132,12 @@ export const CanvasControls: React.FC<CanvasControlsProps> = React.memo(({
                 type="button"
                 onClick={onCenterView}
                 className="p-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-full active:scale-95 transition-all cursor-pointer"
-                aria-label={centerLabel}
+                aria-label={effectiveCenterLabel}
               >
                 <RotateCcw className="w-4 h-4" />
               </button>
             </TooltipTrigger>
-            <TooltipContent>{centerLabel}</TooltipContent>
+            <TooltipContent>{effectiveCenterLabel}</TooltipContent>
           </Tooltip>
 
           {onOpenShortcuts && (
@@ -146,12 +147,12 @@ export const CanvasControls: React.FC<CanvasControlsProps> = React.memo(({
                   type="button"
                   onClick={onOpenShortcuts}
                   className="p-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-full active:scale-95 transition-all cursor-pointer"
-                  aria-label="Atalhos (?)"
+                  aria-label={t('canvas.shortcutsButton')}
                 >
                   <CircleHelp className="w-4 h-4" />
                 </button>
               </TooltipTrigger>
-              <TooltipContent>Atalhos (?)</TooltipContent>
+              <TooltipContent>{t('canvas.shortcutsButton')}</TooltipContent>
             </Tooltip>
           )}
         </div>
