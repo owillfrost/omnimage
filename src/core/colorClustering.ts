@@ -172,8 +172,22 @@ export function calculateWeightedPaletteDistance(
 
 export interface GradeTuningOptions {
   balance?: number // -100 (100% shadows) to +100 (100% highlights), default 0
+  sensitivity?: number // 0.0 to 1.0 (default 0.75): controls score falloff curve & cutoff threshold
+  protectSkinTones?: boolean // default true: toggles between highlightsProtected and highlightsRaw
+  excludeNeutrals?: boolean // default false: penalizes candidate items with near-zero chroma
   shadowOverride?: { a: number; b: number }
   highlightOverride?: { a: number; b: number }
+}
+
+/**
+ * Detects if a split-toning profile is near-neutral (monochrome, grayscale, or un-toned).
+ * Used by UI to disable 'Exclude Neutrals' or display an advisory tooltip.
+ */
+export function isAnchorNeutral(profile?: SplitToningProfile): boolean {
+  if (!profile) return true
+  const chromaShadows = Math.hypot(profile.shadows.a, profile.shadows.b)
+  const chromaHighlights = Math.hypot(profile.highlights.a, profile.highlights.b)
+  return (chromaShadows + chromaHighlights) < 6.0
 }
 
 /**
@@ -189,10 +203,23 @@ export function calculateSplitToningDistance(
 ): number {
   if (!profileA || !profileB) return 50
 
+  const protectSkin = tuning?.protectSkinTones !== false
   const sA = profileA.shadows
   const sB = profileB.shadows
-  const hA = profileA.highlights
-  const hB = profileB.highlights
+  const hA = protectSkin
+    ? (profileA.highlightsProtected || profileA.highlights)
+    : (profileA.highlightsRaw || profileA.highlights)
+  const hB = protectSkin
+    ? (profileB.highlightsProtected || profileB.highlights)
+    : (profileB.highlightsRaw || profileB.highlights)
+
+  // Exclude neutrals filter: if candidate has virtually zero chroma, apply heavy distance penalty
+  if (tuning?.excludeNeutrals) {
+    const candChroma = Math.hypot(sB.a, sB.b) + Math.hypot(hB.a, hB.b)
+    if (candChroma < 5.0) {
+      return 999
+    }
+  }
 
   const shadowA_a = tuning?.shadowOverride ? tuning.shadowOverride.a : sA.a
   const shadowA_b = tuning?.shadowOverride ? tuning.shadowOverride.b : sA.b
@@ -290,7 +317,22 @@ export function sortArtworksByColorProximity(
     }
 
     // Normalized similarity percentage: deltaE around 85 is max typical palette/grade difference
-    const similarityPercent = Math.max(0, Math.min(100, Math.round((1 - minDistance / 85) * 100)))
+    let similarityPercent = 0
+    if (minDistance >= 990) {
+      similarityPercent = 0
+    } else if (mode === 'grade' && tuning?.sensitivity !== undefined) {
+      const sens = tuning.sensitivity
+      // Exponent stretches similarities across the 0..100 spectrum
+      const exponent = 0.8 + sens * 2.4
+      const normalized = Math.max(0, Math.min(1, 1 - minDistance / 85))
+      const stretched = Math.pow(normalized, exponent)
+      let sim = Math.round(stretched * 100)
+      const minCutoff = Math.max(0, Math.round((sens - 0.4) * 50))
+      if (sim < minCutoff) sim = 0
+      similarityPercent = Math.max(0, Math.min(100, sim))
+    } else {
+      similarityPercent = Math.max(0, Math.min(100, Math.round((1 - minDistance / 85) * 100)))
+    }
 
     return {
       artwork: art,

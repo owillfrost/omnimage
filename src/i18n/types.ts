@@ -80,6 +80,16 @@ export interface TranslationDictionary {
     gradeHighlightsOnly: string
     gradeBalanced: string
     gradeResetTuning: string
+    gradeSensitivity: string
+    gradeSensitivityHint: string
+    gradeProtectSkin: string
+    gradeProtectSkinHint: string
+    gradeExcludeNeutrals: string
+    gradeExcludeNeutralsHint: string
+    gradeAnchorNeutralWarning: string
+    gradeAdvancedPreviewNotice: string
+    searchControlsInstant: string
+    analysisControlsDatabase: string
   }
   canvas: {
     gridSmall: string

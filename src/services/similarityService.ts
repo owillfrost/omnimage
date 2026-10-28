@@ -39,7 +39,10 @@ function buildCacheKey(targetId: string, mode: SimilaritySortMode, gradeTuning?:
   const bal = gradeTuning.balance ?? 0
   const s = gradeTuning.shadowOverride ? `${gradeTuning.shadowOverride.a},${gradeTuning.shadowOverride.b}` : ''
   const h = gradeTuning.highlightOverride ? `${gradeTuning.highlightOverride.a},${gradeTuning.highlightOverride.b}` : ''
-  return `${targetId}:grade:b${bal}:s${s}:h${h}`
+  const sens = gradeTuning.sensitivity ?? 0.75
+  const skin = gradeTuning.protectSkinTones ?? true ? '1' : '0'
+  const neut = gradeTuning.excludeNeutrals ? '1' : '0'
+  return `${targetId}:grade:b${bal}:s${s}:h${h}:se${sens}:sk${skin}:n${neut}`
 }
 
 class SimilarityWorkerManager {
