@@ -59,6 +59,7 @@ export interface FloatingNavProps {
   onAnchorModeChange?: (mode: SimilaritySortMode) => void
   gradeTuning?: GradeTuningOptions
   onGradeTuningChange?: (tuning: GradeTuningOptions) => void
+  onToggleSearchSettings?: () => void
   activeTab?: ActiveTab
   onSelectTab?: (tab: ActiveTab) => void
   onVisualSearch?: (artwork: Artwork) => void
@@ -98,7 +99,8 @@ export const FloatingNav: React.FC<FloatingNavProps> = React.memo(({
   anchorMode = 'hybrid',
   onAnchorModeChange,
   gradeTuning,
-  onGradeTuningChange,
+  onGradeTuningChange: _onGradeTuningChange,
+  onToggleSearchSettings,
   activeTab = 'canvas',
   onSelectTab,
   onVisualSearch,
@@ -147,7 +149,6 @@ export const FloatingNav: React.FC<FloatingNavProps> = React.memo(({
   ], [t])
   const [isVisualSearchOpen, setIsVisualSearchOpen] = React.useState(false)
   const [isTaxonomyOpen, setIsTaxonomyOpen] = React.useState(false)
-  const [isGradeTunerOpen, setIsGradeTunerOpen] = React.useState(false)
   const [taxonomyTab, setTaxonomyTab] = React.useState<TaxonomyTab>('folders')
   const [urlInput, setUrlInput] = React.useState('')
   const [isSubmitting, setIsSubmitting] = React.useState(false)
@@ -826,157 +827,39 @@ export const FloatingNav: React.FC<FloatingNavProps> = React.memo(({
                 if (opt.id === 'grade' && isActive) {
                   const currentBalance = gradeTuning?.balance ?? 0
                   return (
-                    <Popover key={opt.id} open={isGradeTunerOpen} onOpenChange={setIsGradeTunerOpen}>
-                      <PopoverTrigger asChild>
-                        <button
-                          type="button"
-                          className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-zinc-100 text-zinc-950 shadow-xs transition-all cursor-pointer group"
-                          title={opt.hint}
-                        >
-                          <div className="flex items-center -space-x-1 mr-0.5">
-                            <span
-                              className="w-2.5 h-2.5 rounded-full border border-black/20 shadow-xs shrink-0"
-                              style={{ backgroundColor: shadowHex }}
-                              title={`${t("nav.gradeShadows")}: ${shadowHex}`}
-                            />
-                            <span
-                              className="w-2.5 h-2.5 rounded-full border border-black/20 shadow-xs shrink-0"
-                              style={{ backgroundColor: highlightHex }}
-                              title={`${t("nav.gradeHighlights")}: ${highlightHex}`}
-                            />
-                          </div>
-                          <span>{opt.label}</span>
-                          {currentBalance !== 0 && (
-                            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-zinc-900/10 text-zinc-900 font-bold">
-                              {currentBalance > 0 ? `+${currentBalance}%` : `${currentBalance}%`}
-                            </span>
-                          )}
-                          <Sliders className="w-3 h-3 text-zinc-500 group-hover:text-zinc-900 transition-colors ml-0.5" />
-                        </button>
-                      </PopoverTrigger>
-                      <PopoverContent
-                        align="center"
-                        sideOffset={10}
-                        className="w-80 p-3.5 bg-zinc-950/95 border border-zinc-800 backdrop-blur-2xl shadow-2xl rounded-2xl text-zinc-200"
-                      >
-                        <div className="space-y-3">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-1.5">
-                              <Sliders className="w-3.5 h-3.5 text-zinc-300" />
-                              <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-200">
-                                {t("nav.gradeTunerTitle")}
-                              </h4>
-                            </div>
-                            <span className="text-[10px] font-mono text-zinc-500">CIELAB D65</span>
-                          </div>
-
-                          {/* Gradient Strip */}
-                          <div
-                            className="h-2.5 w-full rounded-full border border-zinc-800 shadow-inner"
-                            style={{
-                              background: `linear-gradient(to right, ${shadowHex}, ${highlightHex})`,
-                            }}
-                          />
-
-                          {/* Dual Swatch Info */}
-                          <div className="grid grid-cols-2 gap-2">
-                            <div className="flex items-center gap-2 p-2 rounded-xl bg-zinc-900/70 border border-zinc-800/80">
-                              <span
-                                className="w-5 h-5 rounded-md border border-white/10 shrink-0"
-                                style={{ backgroundColor: shadowHex }}
-                              />
-                              <div className="flex flex-col min-w-0">
-                                <span className="text-[10px] font-medium text-zinc-400">{t("nav.gradeShadows")}</span>
-                                <span className="text-[11px] font-mono text-zinc-200 truncate">{shadowHex}</span>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2 p-2 rounded-xl bg-zinc-900/70 border border-zinc-800/80">
-                              <span
-                                className="w-5 h-5 rounded-md border border-white/10 shrink-0"
-                                style={{ backgroundColor: highlightHex }}
-                              />
-                              <div className="flex flex-col min-w-0">
-                                <span className="text-[10px] font-medium text-zinc-400">{t("nav.gradeHighlights")}</span>
-                                <span className="text-[11px] font-mono text-zinc-200 truncate">{highlightHex}</span>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Balance Slider */}
-                          <div className="space-y-1.5 pt-1 border-t border-zinc-900">
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="text-zinc-400 font-medium">{t("nav.gradeBalance")}</span>
-                              <span className="font-mono text-zinc-200 text-[11px]">
-                                {currentBalance === -100
-                                  ? t("nav.gradeShadowsOnly")
-                                  : currentBalance === 100
-                                  ? t("nav.gradeHighlightsOnly")
-                                  : currentBalance === 0
-                                  ? t("nav.gradeBalanced")
-                                  : currentBalance < 0
-                                  ? `${Math.abs(currentBalance)}% ${t("nav.gradeShadows")}`
-                                  : `${currentBalance}% ${t("nav.gradeHighlights")}`}
-                              </span>
-                            </div>
-
-                            <input
-                              type="range"
-                              min={-100}
-                              max={100}
-                              step={5}
-                              value={currentBalance}
-                              onChange={(e) => {
-                                onGradeTuningChange?.({
-                                  ...gradeTuning,
-                                  balance: Number(e.target.value),
-                                })
-                              }}
-                              className="w-full accent-white cursor-pointer h-1.5 bg-zinc-800 rounded-lg"
-                            />
-
-                            {/* Quick Presets */}
-                            <div className="flex items-center justify-between pt-1 text-[10px]">
-                              <button
-                                type="button"
-                                onClick={() => onGradeTuningChange?.({ ...gradeTuning, balance: -100 })}
-                                className={cn(
-                                  "px-2 py-0.5 rounded-md border transition-colors cursor-pointer",
-                                  currentBalance === -100
-                                    ? "bg-zinc-800 text-white border-zinc-600 font-semibold"
-                                    : "text-zinc-400 hover:text-zinc-200 border-transparent hover:bg-zinc-900"
-                                )}
-                              >
-                                {t("nav.gradeShadowsOnly")}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => onGradeTuningChange?.({ ...gradeTuning, balance: 0 })}
-                                className={cn(
-                                  "px-2 py-0.5 rounded-md border transition-colors cursor-pointer",
-                                  currentBalance === 0
-                                    ? "bg-zinc-800 text-white border-zinc-600 font-semibold"
-                                    : "text-zinc-400 hover:text-zinc-200 border-transparent hover:bg-zinc-900"
-                                )}
-                              >
-                                {t("nav.gradeBalanced")}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => onGradeTuningChange?.({ ...gradeTuning, balance: 100 })}
-                                className={cn(
-                                  "px-2 py-0.5 rounded-md border transition-colors cursor-pointer",
-                                  currentBalance === 100
-                                    ? "bg-zinc-800 text-white border-zinc-600 font-semibold"
-                                    : "text-zinc-400 hover:text-zinc-200 border-transparent hover:bg-zinc-900"
-                                )}
-                              >
-                                {t("nav.gradeHighlightsOnly")}
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </PopoverContent>
-                    </Popover>
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => {
+                        if (onToggleSearchSettings) {
+                          onToggleSearchSettings()
+                        } else {
+                          onAnchorModeChange?.(opt.id)
+                        }
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-zinc-100 text-zinc-950 shadow-xs transition-all cursor-pointer group"
+                      title={t("nav.searchSettingsTitle")}
+                    >
+                      <div className="flex items-center -space-x-1 mr-0.5">
+                        <span
+                          className="w-2.5 h-2.5 rounded-full border border-black/20 shadow-xs shrink-0"
+                          style={{ backgroundColor: shadowHex }}
+                          title={`${t("nav.gradeShadows")}: ${shadowHex}`}
+                        />
+                        <span
+                          className="w-2.5 h-2.5 rounded-full border border-black/20 shadow-xs shrink-0"
+                          style={{ backgroundColor: highlightHex }}
+                          title={`${t("nav.gradeHighlights")}: ${highlightHex}`}
+                        />
+                      </div>
+                      <span>{opt.label}</span>
+                      {currentBalance !== 0 && (
+                        <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-zinc-900/10 text-zinc-900 font-bold">
+                          {currentBalance > 0 ? `+${currentBalance}%` : `${currentBalance}%`}
+                        </span>
+                      )}
+                      <Sliders className="w-3 h-3 text-zinc-500 group-hover:text-zinc-900 transition-colors ml-0.5" />
+                    </button>
                   )
                 }
 

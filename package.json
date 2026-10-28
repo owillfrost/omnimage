@@ -13,6 +13,7 @@
     "desktop:build": "npm run build && npm run build:electron && npx electron-builder --win",
     "test": "vitest run",
     "test:watch": "vitest",
+    "migrate:grade": "vite-node scripts/migrateGrade.ts",
     "preview": "vite preview"
   },
   "dependencies": {

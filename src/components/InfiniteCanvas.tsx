@@ -75,7 +75,13 @@ export const InfiniteCanvas: React.FC = () => {
   // Active anchor artwork & similarity mode ('hybrid' | 'visual' | 'color' | 'grade') for radial reorganization in Canvas mode
   const [colorAnchorArtwork, setColorAnchorArtwork] = React.useState<Artwork | null>(null)
   const [anchorMode, setAnchorMode] = React.useState<SimilaritySortMode>('hybrid')
-  const [gradeTuning, setGradeTuning] = React.useState<GradeTuningOptions>({ balance: 0 })
+  const [gradeTuning, setGradeTuning] = React.useState<GradeTuningOptions>({
+    balance: 0,
+    sensitivity: 0.75,
+    protectSkinTones: true,
+    excludeNeutrals: false,
+  })
+  const [isSearchSettingsOpen, setIsSearchSettingsOpen] = React.useState(true)
 
   // Anchor Breadcrumb Trail (Rabbit Hole navigation)
   const {
@@ -995,6 +1001,7 @@ export const InfiniteCanvas: React.FC = () => {
         onAnchorModeChange={setAnchorMode}
         gradeTuning={gradeTuning}
         onGradeTuningChange={setGradeTuning}
+        onToggleSearchSettings={() => setIsSearchSettingsOpen((prev) => !prev)}
         activeTab={activeTab}
         onSelectTab={setActiveTab}
         onVisualSearch={handleApplyVisualSearchAnchor}
@@ -1094,7 +1101,7 @@ export const InfiniteCanvas: React.FC = () => {
       ) : (
         /* View Mode 2: Explore Tab (Pure Vertical Scroll + Fullscreen Eagle Inspector) */
         <ExploreFeedView
-          artworks={filteredArtworks}
+          artworks={canvasNavigationArtworks}
           gridSize={gridSize}
           onSelectArtwork={handleOpenFullscreen}
           onVisibleCountChange={setExploreVisibleCount}
@@ -1116,13 +1123,21 @@ export const InfiniteCanvas: React.FC = () => {
         onSelectFolder={setSelectedFolderId}
       />
 
-      {/* Floating Bottom-Left Info Card */}
+      {/* Floating Bottom-Left Search Settings & Info Card */}
       <FloatingInfoCard
         isEagleConnected={isEagleConnected}
         totalCount={allArtworks.length}
         currentLibraryName={
-          currentLibrary === 'google-flow' ? 'Prompts' : 'Design'
+          currentLibrary === 'google-flow' ? 'Prompts' : currentLibrary === 'Comfy' ? 'Comfy' : 'Design'
         }
+        activeTab={activeTab}
+        anchorArtwork={colorAnchorArtwork}
+        anchorMode={anchorMode}
+        onSelectAnchorMode={setAnchorMode}
+        gradeTuning={gradeTuning}
+        onGradeTuningChange={setGradeTuning}
+        isOpen={isSearchSettingsOpen}
+        onToggleOpen={() => setIsSearchSettingsOpen((prev) => !prev)}
       />
 
       {/* Floating Bottom-Center Recently Viewed Dock (Visual History Trail & Rabbit Hole Navigation) */}

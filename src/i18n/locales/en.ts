@@ -90,6 +90,12 @@ export const en: TranslationDictionary = {
     gradeAdvancedPreviewNotice: 'Modifying extraction parameters is an anchor preview; consistency requires re-analyzing the library.',
     searchControlsInstant: 'Search Controls (Instant)',
     analysisControlsDatabase: 'Analysis Controls (Requires Library Re-index)',
+    searchSettingsTitle: 'Search Settings',
+    searchSettingsNoAnchor: 'Select an image as anchor to tune grade search in real-time.',
+    gradeAdvancedSection: 'Advanced Extraction (Preview)',
+    gradeShadowThreshold: 'Shadows Upper L*',
+    gradeHighlightThreshold: 'Highlights Lower L*',
+    gradeResetAdvanced: 'Reset to defaults',
   },
   canvas: {
     gridSmall: 'Small Grid (Compact)',
