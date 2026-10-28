@@ -72,6 +72,14 @@ export interface TranslationDictionary {
     modeColorHint: string
     modeGrade: string
     modeGradeHint: string
+    gradeTunerTitle: string
+    gradeShadows: string
+    gradeHighlights: string
+    gradeBalance: string
+    gradeShadowsOnly: string
+    gradeHighlightsOnly: string
+    gradeBalanced: string
+    gradeResetTuning: string
   }
   canvas: {
     gridSmall: string
@@ -239,6 +247,9 @@ export interface TranslationDictionary {
     clipVectorDesc: string
     promptAnnotation: string
     filterByFolder: string
+    splitToningTitle: string
+    shadowTint: string
+    highlightTint: string
   }
   library: {
     manageTitle: string
