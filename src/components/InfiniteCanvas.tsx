@@ -940,8 +940,12 @@ export const InfiniteCanvas: React.FC = () => {
   }, [activeTab, setViewport, centerView])
 
   const calibratedAccent = React.useMemo(() => {
-    return calibrateAnchorAccent(colorAnchorArtwork?.dominantColor)
-  }, [colorAnchorArtwork?.dominantColor])
+    const rawColor =
+      colorAnchorArtwork?.dominantColor ||
+      colorAnchorArtwork?.palette?.[0] ||
+      null
+    return calibrateAnchorAccent(rawColor)
+  }, [colorAnchorArtwork?.dominantColor, colorAnchorArtwork?.palette])
 
   const activeAmbientColor =
     selectedColors[selectedColors.length - 1] || (colorAnchorArtwork ? calibratedAccent.accent : null)

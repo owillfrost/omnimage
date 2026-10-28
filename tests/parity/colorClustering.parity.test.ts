@@ -11,6 +11,7 @@ import {
   getCachedLab,
   getCachedHsl,
 } from '../../src/core/colorClustering'
+import { calibrateAnchorAccent } from '../../src/core/colorConversion'
 import type { Artwork } from '../../src/types/artwork'
 
 describe('Color Clustering & Perceptual Color Parity Tests', () => {
@@ -167,5 +168,36 @@ describe('Color Clustering & Perceptual Color Parity Tests', () => {
     // Red item should be closer than blue item
     expect(sorted[1].artwork.id).toBe('item-red')
     expect(sorted[2].artwork.id).toBe('item-blue')
+  })
+
+  describe('calibrateAnchorAccent tests', () => {
+    it('returns neutral zinc fallback when input is null or undefined or invalid', () => {
+      const fallbackNull = calibrateAnchorAccent(null)
+      expect(fallbackNull.accent).toBe('#a1a1aa')
+      expect(fallbackNull.bright).toBe('#f4f4f5')
+      expect(fallbackNull.subtle).toContain('rgba(161, 161, 170')
+
+      const fallbackUndef = calibrateAnchorAccent(undefined)
+      expect(fallbackUndef.accent).toBe('#a1a1aa')
+
+      const fallbackInvalid = calibrateAnchorAccent('not-a-hex')
+      expect(fallbackInvalid.accent).toBe('#a1a1aa')
+    })
+
+    it('lifts pure black and dark tones to ensure healthy contrast against #09090b', () => {
+      const darkCalibrated = calibrateAnchorAccent('#050505')
+      // Accent must not be black or dark grey; value is clamped to >= 0.52
+      expect(darkCalibrated.accent).not.toBe('#050505')
+      expect(darkCalibrated.accent).toMatch(/^#[0-9a-fA-F]{6}$/)
+      expect(darkCalibrated.bright).toMatch(/^#[0-9a-fA-F]{6}$/)
+      expect(darkCalibrated.subtle).toMatch(/^rgba\(\d+,\s*\d+,\s*\d+,\s*0\.14\)$/)
+    })
+
+    it('clamps pure neon colors to prevent visual blinding while maintaining hue', () => {
+      const neonGreen = calibrateAnchorAccent('#00ff00')
+      expect(neonGreen.accent).toMatch(/^#[0-9a-fA-F]{6}$/)
+      expect(neonGreen.bright).toMatch(/^#[0-9a-fA-F]{6}$/)
+      expect(neonGreen.subtle).toMatch(/^rgba\(\d+,\s*\d+,\s*\d+,\s*0\.14\)$/)
+    })
   })
 })

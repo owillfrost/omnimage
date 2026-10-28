@@ -163,22 +163,47 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
 
   return (
     <aside className="fixed bottom-6 left-6 z-30 pointer-events-none w-88 sm:w-96 max-w-[calc(100vw-3rem)] select-none">
-      <div className="pointer-events-auto bg-zinc-950/95 backdrop-blur-2xl border border-zinc-800/80 rounded-[28px] overflow-hidden shadow-2xl transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] flex flex-col max-h-[calc(100vh-6rem)]">
+      <div
+        className="pointer-events-auto bg-zinc-950/95 backdrop-blur-2xl border rounded-[28px] overflow-hidden shadow-2xl transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] flex flex-col max-h-[calc(100vh-6rem)]"
+        style={
+          anchorArtwork
+            ? {
+                borderColor: "var(--anchor-accent-subtle)",
+                boxShadow: "0 12px 36px -10px var(--anchor-accent-subtle), 0 20px 25px -5px rgba(0, 0, 0, 0.5)",
+              }
+            : {
+                borderColor: "rgba(39, 39, 42, 0.8)",
+              }
+        }
+      >
         {/* Card Header */}
         <div className="p-4 flex items-center justify-between border-b border-zinc-800/60 bg-zinc-900/40 shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="bg-zinc-800/80 border border-zinc-700/60 rounded-full px-2.5 py-1 flex items-center gap-1.5 shadow-xs">
               <span
-                className={`w-2 h-2 rounded-full ${
-                  anchorArtwork ? (isGradeMode ? "bg-blue-400" : "bg-emerald-400") : isEagleConnected ? "bg-blue-400" : "bg-amber-400 animate-pulse"
+                className={`w-2 h-2 rounded-full transition-colors duration-300 ${
+                  !anchorArtwork
+                    ? isEagleConnected
+                      ? "bg-blue-400"
+                      : "bg-amber-400 animate-pulse"
+                    : ""
                 }`}
+                style={
+                  anchorArtwork
+                    ? { backgroundColor: "var(--anchor-accent)" }
+                    : undefined
+                }
               />
               <span className="text-[11px] font-bold tracking-wider text-zinc-100 uppercase">
                 {anchorArtwork ? t("nav.searchSettingsTitle") : isEagleConnected ? "Gallery" : t("infoCard.loadingTitle")}
               </span>
             </div>
             {anchorArtwork && isGradeMode && hasAnyOverride && (
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" title="Tuning active" />
+              <span
+                className="w-1.5 h-1.5 rounded-full animate-pulse transition-colors duration-300"
+                style={{ backgroundColor: "var(--anchor-accent)" }}
+                title="Tuning active"
+              />
             )}
             <span className="text-[10px] text-zinc-500 font-mono">Omnimage</span>
           </div>
@@ -248,7 +273,16 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                       <span className="font-semibold text-zinc-100 truncate text-[11px]">
                         {anchorArtwork.title || "Anchor Reference"}
                       </span>
-                      <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-md bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase font-bold">
+                      <span
+                        className="text-[9px] font-mono px-1.5 py-0.5 rounded-md uppercase font-bold transition-colors duration-300"
+                        style={{
+                          backgroundColor: "var(--anchor-accent-subtle)",
+                          color: "var(--anchor-accent-bright)",
+                          borderColor: "var(--anchor-accent-subtle)",
+                          borderWidth: 1,
+                          borderStyle: "solid",
+                        }}
+                      >
                         {anchorMode}
                       </span>
                     </div>
@@ -314,7 +348,12 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                     <div className="space-y-1.5 p-3 rounded-2xl bg-zinc-900/40 border border-zinc-800/60">
                       <div className="flex items-center justify-between text-zinc-300">
                         <span className="font-medium text-[11px]">{t("nav.gradeSensitivity")}</span>
-                        <span className="font-mono text-[11px] text-blue-400 font-bold">{sensitivityPct}%</span>
+                        <span
+                          className="font-mono text-[11px] font-bold transition-colors duration-300"
+                          style={{ color: "var(--anchor-accent-bright)" }}
+                        >
+                          {sensitivityPct}%
+                        </span>
                       </div>
                       <input
                         type="range"
@@ -323,7 +362,8 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                         step="1"
                         value={sensitivityPct}
                         onChange={handleSensitivityChange}
-                        className="w-full accent-blue-400 h-1.5 bg-zinc-800 rounded-lg cursor-pointer"
+                        style={{ accentColor: "var(--anchor-accent)" }}
+                        className="w-full h-1.5 bg-zinc-800 rounded-lg cursor-pointer transition-colors duration-300"
                       />
                       <div className="flex items-center justify-between text-[10px] text-zinc-500 font-mono">
                         <span>Amplo</span>
@@ -371,7 +411,8 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                         step="5"
                         value={balanceVal}
                         onChange={handleBalanceChange}
-                        className="w-full accent-blue-400 h-1.5 bg-zinc-800 rounded-lg cursor-pointer"
+                        style={{ accentColor: "var(--anchor-accent)" }}
+                        className="w-full h-1.5 bg-zinc-800 rounded-lg cursor-pointer transition-colors duration-300"
                       />
                       <div className="flex items-center justify-between gap-1 pt-1">
                         <button
@@ -417,7 +458,10 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                     >
                       <div className="space-y-0.5 pr-2">
                         <div className="flex items-center gap-1.5 font-medium text-[11px] text-zinc-200">
-                          <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />
+                          <ShieldCheck
+                            className="w-3.5 h-3.5 transition-colors duration-300"
+                            style={{ color: "var(--anchor-accent)" }}
+                          />
                           <span>{t("nav.gradeProtectSkin")}</span>
                         </div>
                         <p className="text-[10px] text-zinc-400 leading-normal">
@@ -425,9 +469,11 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                         </p>
                       </div>
                       <div
-                        className={`w-9 h-5 rounded-full p-0.5 transition-colors shrink-0 ${
-                          protectSkin ? "bg-blue-500" : "bg-zinc-700"
-                        }`}
+                        className="w-9 h-5 rounded-full p-0.5 transition-all duration-300 shrink-0"
+                        style={{
+                          backgroundColor: protectSkin ? "var(--anchor-accent)" : "#3f3f46",
+                          boxShadow: protectSkin ? "0 0 10px -2px var(--anchor-accent-subtle)" : undefined,
+                        }}
                       >
                         <div
                           className={`w-4 h-4 rounded-full bg-white transition-transform ${
@@ -445,7 +491,10 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                       >
                         <div className="space-y-0.5 pr-2">
                           <div className="flex items-center gap-1.5 font-medium text-[11px] text-zinc-200">
-                            <Filter className="w-3.5 h-3.5 text-blue-400" />
+                            <Filter
+                              className="w-3.5 h-3.5 transition-colors duration-300"
+                              style={{ color: "var(--anchor-accent)" }}
+                            />
                             <span>{t("nav.gradeExcludeNeutrals")}</span>
                           </div>
                           <p className="text-[10px] text-zinc-400 leading-normal">
@@ -453,9 +502,11 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                           </p>
                         </div>
                         <div
-                          className={`w-9 h-5 rounded-full p-0.5 transition-colors shrink-0 ${
-                            excludeNeutrals ? "bg-blue-500" : "bg-zinc-700"
-                          }`}
+                          className="w-9 h-5 rounded-full p-0.5 transition-all duration-300 shrink-0"
+                          style={{
+                            backgroundColor: excludeNeutrals ? "var(--anchor-accent)" : "#3f3f46",
+                            boxShadow: excludeNeutrals ? "0 0 10px -2px var(--anchor-accent-subtle)" : undefined,
+                          }}
                         >
                           <div
                             className={`w-4 h-4 rounded-full bg-white transition-transform ${
@@ -491,8 +542,18 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                       {isAdvancedOpen && (
                         <div className="space-y-3 pt-2 pb-1 animate-in fade-in-50 duration-200">
                           {/* Notice Box: Live Preview vs Library Re-index */}
-                          <div className="p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-200 text-[10px] flex items-start gap-2 leading-relaxed">
-                            <Info className="w-3.5 h-3.5 text-blue-400 shrink-0 mt-0.5" />
+                          <div
+                            className="p-2.5 rounded-xl text-[10px] flex items-start gap-2 leading-relaxed transition-colors duration-300"
+                            style={{
+                              backgroundColor: "var(--anchor-accent-subtle)",
+                              border: "1px solid var(--anchor-accent-subtle)",
+                              color: "var(--anchor-accent-bright)",
+                            }}
+                          >
+                            <Info
+                              className="w-3.5 h-3.5 shrink-0 mt-0.5"
+                              style={{ color: "var(--anchor-accent)" }}
+                            />
                             <span>{t("nav.gradeAdvancedPreviewNotice")}</span>
                           </div>
 
@@ -561,10 +622,13 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                         <button
                           type="button"
                           onClick={() => onSelectAnchorMode("grade")}
-                          className="w-full mt-2 py-2 px-3 rounded-xl bg-zinc-800/80 hover:bg-zinc-800 text-zinc-200 text-[11px] font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                          className="w-full mt-2 py-2 px-3 rounded-xl bg-zinc-800/80 hover:bg-zinc-800 text-zinc-200 text-[11px] font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer border border-transparent hover:border-[var(--anchor-accent-subtle)]"
                         >
                           <span>{t("nav.switchToGradeMode")}</span>
-                          <ArrowRight className="w-3.5 h-3.5 text-blue-400" />
+                          <ArrowRight
+                            className="w-3.5 h-3.5 transition-colors duration-300"
+                            style={{ color: "var(--anchor-accent-bright)" }}
+                          />
                         </button>
                       )}
                     </div>
@@ -614,10 +678,13 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                         <button
                           type="button"
                           onClick={() => onSelectAnchorMode("grade")}
-                          className="w-full mt-2 py-2 px-3 rounded-xl bg-zinc-800/80 hover:bg-zinc-800 text-zinc-200 text-[11px] font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                          className="w-full mt-2 py-2 px-3 rounded-xl bg-zinc-800/80 hover:bg-zinc-800 text-zinc-200 text-[11px] font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer border border-transparent hover:border-[var(--anchor-accent-subtle)]"
                         >
                           <span>{t("nav.switchToGradeMode")}</span>
-                          <ArrowRight className="w-3.5 h-3.5 text-blue-400" />
+                          <ArrowRight
+                            className="w-3.5 h-3.5 transition-colors duration-300"
+                            style={{ color: "var(--anchor-accent-bright)" }}
+                          />
                         </button>
                       )}
                     </div>
@@ -646,10 +713,13 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                         <button
                           type="button"
                           onClick={() => onSelectAnchorMode("grade")}
-                          className="w-full mt-2 py-2 px-3 rounded-xl bg-zinc-800/80 hover:bg-zinc-800 text-zinc-200 text-[11px] font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                          className="w-full mt-2 py-2 px-3 rounded-xl bg-zinc-800/80 hover:bg-zinc-800 text-zinc-200 text-[11px] font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer border border-transparent hover:border-[var(--anchor-accent-subtle)]"
                         >
                           <span>{t("nav.switchToGradeMode")}</span>
-                          <ArrowRight className="w-3.5 h-3.5 text-blue-400" />
+                          <ArrowRight
+                            className="w-3.5 h-3.5 transition-colors duration-300"
+                            style={{ color: "var(--anchor-accent-bright)" }}
+                          />
                         </button>
                       )}
                     </div>
