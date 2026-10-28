@@ -462,8 +462,16 @@ export const FloatingNav: React.FC<FloatingNavProps> = React.memo(({
 
             {/* Active Chromatic / Image Anchor Badge (Rendered ONLY for Image anchors, avoiding text duplication) */}
             {colorAnchorArtwork && !colorAnchorArtwork.isTextQuery && (
-              <div className="flex items-center gap-1.5 bg-zinc-900/90 border border-amber-500/30 rounded-full pl-2 pr-1.5 py-0.5 text-xs text-zinc-200 mr-1.5 shrink-0 shadow-sm animate-in fade-in duration-200">
-                <Sparkles className="w-3 h-3 text-amber-400 shrink-0" />
+              <div
+                className="flex items-center gap-1.5 bg-zinc-900/90 rounded-full pl-2 pr-1.5 py-0.5 text-xs text-zinc-200 mr-1.5 shrink-0 shadow-sm animate-in fade-in duration-200 transition-colors duration-300"
+                style={{
+                  border: '1px solid var(--anchor-accent-subtle)',
+                }}
+              >
+                <Sparkles
+                  className="w-3 h-3 shrink-0 transition-colors duration-300"
+                  style={{ color: 'var(--anchor-accent-bright)' }}
+                />
                 <span
                   className="w-2.5 h-2.5 rounded-full border border-white/20 shrink-0"
                   style={{ backgroundColor: colorAnchorArtwork.dominantColor || '#ffffff' }}
@@ -803,20 +811,26 @@ export const FloatingNav: React.FC<FloatingNavProps> = React.memo(({
 
           {/* Mode Selector when in Color Anchor Mode */}
           {colorAnchorArtwork && activeTab === 'canvas' && (
-            <div className="pointer-events-auto flex items-center gap-1.5 p-1 rounded-full bg-zinc-950/90 backdrop-blur-2xl border border-zinc-800/90 shadow-2xl animate-in fade-in slide-in-from-top-1 duration-200">
+            <div
+              className="pointer-events-auto flex items-center gap-1.5 p-1 rounded-full bg-zinc-950/90 backdrop-blur-2xl border shadow-2xl animate-in fade-in slide-in-from-top-1 duration-200 transition-colors duration-300"
+              style={{
+                borderColor: 'var(--anchor-accent-subtle)',
+                boxShadow: '0 8px 30px -8px var(--anchor-accent-subtle)',
+              }}
+            >
               {colorAnchorArtwork.isTextQuery ? (
-                <span className="text-[11px] font-medium text-amber-400 pl-2.5 pr-1 flex items-center gap-1.5">
-                  <Sparkles className="w-3 h-3 text-amber-400" />
+                <span className="text-[11px] font-medium pl-2.5 pr-1 flex items-center gap-1.5" style={{ color: 'var(--anchor-accent-bright)' }}>
+                  <Sparkles className="w-3 h-3" style={{ color: 'var(--anchor-accent-bright)' }} />
                   <span className="hidden sm:inline">{t("nav.anchorAiSearch")}</span>
                 </span>
               ) : colorAnchorArtwork.isEphemeral ? (
-                <span className="text-[11px] font-medium text-amber-400 pl-2.5 pr-1 flex items-center gap-1.5">
-                  <Sparkles className="w-3 h-3 text-amber-400" />
+                <span className="text-[11px] font-medium pl-2.5 pr-1 flex items-center gap-1.5" style={{ color: 'var(--anchor-accent-bright)' }}>
+                  <Sparkles className="w-3 h-3" style={{ color: 'var(--anchor-accent-bright)' }} />
                   <span className="hidden sm:inline">{t("nav.anchorVisualSearch")}</span>
                 </span>
               ) : (
                 <span className="text-[11px] font-medium text-zinc-400 pl-2.5 pr-1 flex items-center gap-1.5">
-                  <Sparkles className="w-3 h-3 text-amber-400" />
+                  <Sparkles className="w-3 h-3" style={{ color: 'var(--anchor-accent-bright)' }} />
                   <span className="hidden sm:inline">{t("nav.anchorHarmonization")}</span>
                 </span>
               )}
