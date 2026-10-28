@@ -16,8 +16,11 @@ import {
   X,
   Save,
   Workflow,
+  Sliders,
 } from 'lucide-react'
 import type { Artwork } from '../../types/artwork'
+import { labToHex } from '../../core/colorConversion'
+import { deriveFallbackSplitToningFromPalette } from '../../core/paletteExtractor'
 import { useTransientValue } from '../../hooks/useCopyFeedback'
 import { useItemDetail, resolveArtworkLibAndId } from '../../hooks/useItemDetail'
 import { ComparisonSidebar } from './ComparisonSidebar'
@@ -168,6 +171,10 @@ artwork: Artwork
   // Deduplicated palette list starting with dominantColor
   const allColors = Array.from(new Set([artwork.dominantColor, ...(artwork.palette || [])].filter(Boolean)))
 
+  const gradeProfile = artwork.splitToning || deriveFallbackSplitToningFromPalette(allColors, artwork.paletteWeights)
+  const shadowHex = gradeProfile ? labToHex(gradeProfile.shadows.L, gradeProfile.shadows.a, gradeProfile.shadows.b) : null
+  const highlightHex = gradeProfile ? labToHex(gradeProfile.highlights.L, gradeProfile.highlights.a, gradeProfile.highlights.b) : null
+
   const handleCopyHex = async (hex: string) => {
     try {
       await navigator.clipboard.writeText(hex.toUpperCase())
@@ -253,6 +260,53 @@ artwork: Artwork
           )
         })}
       </div>
+
+      {/* Split Toning / Grade Analysis */}
+      {gradeProfile && shadowHex && highlightHex && (
+        <div className="flex flex-col gap-2 pt-2.5 mt-1 border-t border-zinc-800/80">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+              <Sliders className="w-3 h-3 text-zinc-400" />
+              <span>{t("sidebar.splitToningTitle")}</span>
+            </span>
+            <span className="text-[10px] font-mono text-zinc-500">CIELAB D65</span>
+          </div>
+
+          {/* Gradient strip between shadow tint and highlight tint */}
+          <div
+            className="h-2.5 w-full rounded-full border border-zinc-800 shadow-inner"
+            style={{
+              background: `linear-gradient(to right, ${shadowHex}, ${highlightHex})`,
+            }}
+          />
+
+          <div className="grid grid-cols-2 gap-2 mt-0.5">
+            {/* Shadows */}
+            <div className="flex items-center gap-2 p-1.5 rounded-xl bg-zinc-900/60 border border-zinc-800/80">
+              <span
+                className="w-4 h-4 rounded-md border border-white/10 shrink-0"
+                style={{ backgroundColor: shadowHex }}
+              />
+              <div className="flex flex-col min-w-0">
+                <span className="text-[10px] font-medium text-zinc-400">{t("sidebar.shadowTint")}</span>
+                <span className="text-[11px] font-mono text-zinc-200 truncate">{shadowHex}</span>
+              </div>
+            </div>
+
+            {/* Highlights */}
+            <div className="flex items-center gap-2 p-1.5 rounded-xl bg-zinc-900/60 border border-zinc-800/80">
+              <span
+                className="w-4 h-4 rounded-md border border-white/10 shrink-0"
+                style={{ backgroundColor: highlightHex }}
+              />
+              <div className="flex flex-col min-w-0">
+                <span className="text-[10px] font-medium text-zinc-400">{t("sidebar.highlightTint")}</span>
+                <span className="text-[11px] font-mono text-zinc-200 truncate">{highlightHex}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

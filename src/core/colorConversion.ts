@@ -116,6 +116,40 @@ export function rgbToLab(r: number, g: number, b: number): [number, number, numb
   return [L, a, bVal]
 }
 
+/**
+ * Converts CIELAB (D65 standard illuminant) to sRGB [0..255].
+ */
+export function labToRgb(L: number, a: number, b: number): [number, number, number] {
+  const fy = (L + 16) / 116
+  const fx = a / 500 + fy
+  const fz = fy - b / 200
+
+  const invF = (t: number) => (t > 0.206897 ? t * t * t : (t - 16 / 116) / 7.787)
+  const X = 0.95047 * invF(fx)
+  const Y = 1.00000 * invF(fy)
+  const Z = 1.08883 * invF(fz)
+
+  const rLin = X * 3.2406 + Y * -1.5372 + Z * -0.4986
+  const gLin = X * -0.9689 + Y * 1.8758 + Z * 0.0415
+  const bLin = X * 0.0557 + Y * -0.2040 + Z * 1.0570
+
+  const gamma = (c: number) => (c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(Math.max(0, c), 1 / 2.4) - 0.055)
+
+  return [
+    clamp(Math.round(gamma(rLin) * 255), 0, 255),
+    clamp(Math.round(gamma(gLin) * 255), 0, 255),
+    clamp(Math.round(gamma(bLin) * 255), 0, 255),
+  ]
+}
+
+/**
+ * Converts CIELAB (D65 standard illuminant) to Hex color string.
+ */
+export function labToHex(L: number, a: number, b: number): string {
+  const [r, g, bVal] = labToRgb(L, a, b)
+  return rgbToHex(r, g, bVal)
+}
+
 export function normalizeHex(input: string): string | null {
   const rgb = hexToRgbStrict(input)
   if (!rgb) return null

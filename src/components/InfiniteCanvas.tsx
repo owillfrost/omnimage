@@ -14,6 +14,7 @@ export type EagleLibraryKey = string
 const fetchCatalogTaxonomy = (lib: string, refresh = false) => getCatalogProvider().fetchTaxonomy(lib, refresh)
 import { parseSearchQuery, matchesTagFilters } from "../core/tagFilter"
 import type { SimilaritySortMode } from "../services/similarityService"
+import type { GradeTuningOptions } from "../core/colorClustering"
 import {
   buildInfiniteGridModel,
   getVisibleVirtualCards,
@@ -71,9 +72,10 @@ export const InfiniteCanvas: React.FC = () => {
   const [colorFilterMode, setColorFilterMode] = React.useState<ColorFilterMode>('OR')
   const [mediaTypeFilter, setMediaTypeFilter] = React.useState<MediaTypeFilter>('all')
 
-  // Active anchor artwork & similarity mode ('hybrid' | 'visual' | 'color') for radial reorganization in Canvas mode
+  // Active anchor artwork & similarity mode ('hybrid' | 'visual' | 'color' | 'grade') for radial reorganization in Canvas mode
   const [colorAnchorArtwork, setColorAnchorArtwork] = React.useState<Artwork | null>(null)
   const [anchorMode, setAnchorMode] = React.useState<SimilaritySortMode>('hybrid')
+  const [gradeTuning, setGradeTuning] = React.useState<GradeTuningOptions>({ balance: 0 })
 
   // Anchor Breadcrumb Trail (Rabbit Hole navigation)
   const {
@@ -388,11 +390,12 @@ export const InfiniteCanvas: React.FC = () => {
     mediaTypeFilter,
   ])
 
-  // Radial Chromatic / Aesthetic / Hybrid Sorting via parallel Web Worker (with predictive pointer-down pre-sorting)
+  // Radial Chromatic / Aesthetic / Hybrid / Grade Sorting via parallel Web Worker (with predictive pointer-down pre-sorting)
   const { scoredArtworks, prefetchAnchorSort } = useColorSortWorker(
     filteredArtworks,
     colorAnchorArtwork,
-    anchorMode
+    anchorMode,
+    gradeTuning
   )
 
   // Ordered artworks list for Fullscreen navigation
@@ -700,6 +703,7 @@ export const InfiniteCanvas: React.FC = () => {
   )
 
   const handleResetColorAnchor = React.useCallback(() => {
+    setGradeTuning({ balance: 0 })
     exitAnchorToCardPosition()
   }, [exitAnchorToCardPosition])
 
@@ -712,6 +716,7 @@ export const InfiniteCanvas: React.FC = () => {
       setColorAnchorArtwork(artwork)
       pushAnchorToTrail(artwork)
       setAnchorMode(artwork.isTextQuery ? 'visual' : 'hybrid')
+      setGradeTuning({ balance: 0 })
 
       const cardWidth = gridPreset.cardWidth
       const clampedAspect = Math.max(0.55, Math.min(2.0, artwork.aspectRatio || 1.0))
@@ -988,6 +993,8 @@ export const InfiniteCanvas: React.FC = () => {
         onResetColorAnchor={handleResetColorAnchor}
         anchorMode={anchorMode}
         onAnchorModeChange={setAnchorMode}
+        gradeTuning={gradeTuning}
+        onGradeTuningChange={setGradeTuning}
         activeTab={activeTab}
         onSelectTab={setActiveTab}
         onVisualSearch={handleApplyVisualSearchAnchor}
