@@ -13,6 +13,7 @@ import {
   FileImage,
 } from 'lucide-react'
 import type { Artwork } from '../../types/artwork'
+import { useI18n } from "../../i18n"
 
 const ZOOM_LEVELS = [1, 1.5, 2.5]
 
@@ -65,6 +66,7 @@ export const ImageStage = memo(function ImageStage({
   onSwapCompare,
   onToggleSyncZoomPan,
 }: ImageStageProps) {
+  const { t } = useI18n()
   // Shared / Primary zoom and pan
   const [zoom, setZoom] = useState(1)
   const [pan, setPan] = useState({ x: 0, y: 0 })
@@ -159,7 +161,7 @@ export const ImageStage = memo(function ImageStage({
               e.stopPropagation()
               onPrev()
             }}
-            title="Anterior (←)"
+            title={t("viewer.prev")}
             className={`${navBtnClass} left-4 md:left-6`}
           >
             <ChevronLeft className="w-5 h-5 text-white" />
@@ -169,7 +171,7 @@ export const ImageStage = memo(function ImageStage({
               e.stopPropagation()
               onNext()
             }}
-            title="Próxima (→)"
+            title={t("viewer.next")}
             className={`${navBtnClass} right-4 md:right-6`}
           >
             <ChevronRight className="w-5 h-5 text-white" />
@@ -181,13 +183,11 @@ export const ImageStage = memo(function ImageStage({
       {isPinned && !isComparing && (
         <div className="absolute top-22 z-20 flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/15 border border-amber-500/40 backdrop-blur-xl text-xs text-amber-200 shadow-xl animate-in fade-in slide-in-from-top-2">
           <Pin className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
-          <span>
-            <strong>Ref A Fixada:</strong> Clique em qualquer obra em Similares abaixo para abrir lado a lado.
-          </span>
+          <span>{t("viewer.refAPinned")}</span>
           <button
             onClick={onTogglePin}
             className="ml-1 text-zinc-400 hover:text-white cursor-pointer"
-            title="Cancelar fixação"
+            title={t("viewer.cancelPin")}
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -252,7 +252,7 @@ export const ImageStage = memo(function ImageStage({
             <div className="flex items-center gap-2">
               <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-200 text-[11px] font-mono font-medium">
                 <span className="w-2 h-2 rounded-full" style={{ backgroundColor: artwork.dominantColor }} />
-                <span>Ref A (Base)</span>
+                <span>{t("viewer.refABase")}</span>
               </span>
               <span className="text-xs text-zinc-400 truncate max-w-[200px] hidden sm:inline">
                 {artwork.title}
@@ -264,11 +264,11 @@ export const ImageStage = memo(function ImageStage({
               {onSwapCompare && (
                 <button
                   onClick={onSwapCompare}
-                  title="Inverter posições (Atalho: X)"
+                  title={t("viewer.swapAria")}
                   className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-zinc-900/80 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 text-xs transition-all cursor-pointer"
                 >
                   <ArrowLeftRight className="w-3 h-3 text-white" />
-                  <span className="hidden md:inline">Inverter (X)</span>
+                  <span className="hidden md:inline">{t("viewer.swap")}</span>
                 </button>
               )}
             </div>
@@ -282,12 +282,12 @@ export const ImageStage = memo(function ImageStage({
                   className="w-2 h-2 rounded-full"
                   style={{ backgroundColor: compareArtwork.dominantColor }}
                 />
-                <span>Ref B (Comparação)</span>
+                <span>{t("viewer.refBCompare")}</span>
               </span>
               {onClearCompare && (
                 <button
                   onClick={onClearCompare}
-                  title="Sair do modo de comparação (Esc)"
+                  title={t("viewer.exitCompare")}
                   className="p-1 rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer"
                 >
                   <X className="w-4 h-4" />
@@ -434,7 +434,7 @@ export const ImageStage = memo(function ImageStage({
         {/* Reset Zoom & Pan */}
         <button
           onClick={() => handleZoomChange(1)}
-          title="Resetar Zoom & Posição"
+          title={t("viewer.resetZoomPan")}
           className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs text-zinc-400 hover:text-white hover:bg-zinc-800/60 transition-all cursor-pointer"
         >
           <RotateCcw className="w-3.5 h-3.5 text-white" />
@@ -447,11 +447,7 @@ export const ImageStage = memo(function ImageStage({
         {!isComparing ? (
           <button
             onClick={onTogglePin}
-            title={
-              isPinned
-                ? 'Cancelar fixação da Referência A'
-                : 'Fixar para Comparar (P): selecione outra obra em Similares para abrir lado a lado'
-            }
+            title={t("viewer.pinTooltip")}
             className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-all cursor-pointer ${
               isPinned
                 ? 'bg-amber-500/20 text-amber-300 border border-amber-500/50 shadow-sm'
@@ -461,12 +457,12 @@ export const ImageStage = memo(function ImageStage({
             {isPinned ? (
               <>
                 <PinOff className="w-3.5 h-3.5 text-amber-400" />
-                <span>Fixado (P)</span>
+                <span>{t("viewer.pinnedBadge")}</span>
               </>
             ) : (
               <>
                 <Pin className="w-3.5 h-3.5 text-zinc-400" />
-                <span>Comparar (P)</span>
+                <span>{t("viewer.compareBadge")}</span>
               </>
             )}
           </button>
@@ -476,11 +472,7 @@ export const ImageStage = memo(function ImageStage({
             {/* Sync Zoom & Pan Toggle */}
             <button
               onClick={onToggleSyncZoomPan}
-              title={
-                isSyncZoomPan
-                  ? 'Zoom & Pan Sincronizados (clique para mover separadamente)'
-                  : 'Zoom & Pan Independentes (clique para sincronizar)'
-              }
+              title={isSyncZoomPan ? t("viewer.syncZoomTooltip") : t("viewer.freeZoomTooltip")}
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all cursor-pointer ${
                 isSyncZoomPan
                   ? 'bg-zinc-800 text-zinc-200 border border-zinc-700'
@@ -490,12 +482,12 @@ export const ImageStage = memo(function ImageStage({
               {isSyncZoomPan ? (
                 <>
                   <Link2 className="w-3.5 h-3.5 text-zinc-300" />
-                  <span className="hidden sm:inline">Sync</span>
+                  <span className="hidden sm:inline">{t("viewer.syncZoom")}</span>
                 </>
               ) : (
                 <>
                   <Unlink className="w-3.5 h-3.5 text-zinc-500" />
-                  <span className="hidden sm:inline">Livre</span>
+                  <span className="hidden sm:inline">{t("viewer.freeZoom")}</span>
                 </>
               )}
             </button>
@@ -504,7 +496,7 @@ export const ImageStage = memo(function ImageStage({
             {onSwapCompare && (
               <button
                 onClick={onSwapCompare}
-                title="Inverter Ref A e Ref B (Atalho: X)"
+                title={t("viewer.swapAria")}
                 className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs text-zinc-400 hover:text-white hover:bg-zinc-800/60 transition-all cursor-pointer"
               >
                 <ArrowLeftRight className="w-3.5 h-3.5 text-white" />
@@ -516,11 +508,11 @@ export const ImageStage = memo(function ImageStage({
             {onClearCompare && (
               <button
                 onClick={onClearCompare}
-                title="Desafixar e fechar comparação dividida (Esc)"
+                title={t("viewer.exitCompare")}
                 className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-500/15 transition-all cursor-pointer"
               >
                 <X className="w-3.5 h-3.5 text-rose-400" />
-                <span className="hidden sm:inline">Fechar Split</span>
+                <span className="hidden sm:inline">{t("viewer.closeSplit")}</span>
               </button>
             )}
           </>
@@ -530,10 +522,10 @@ export const ImageStage = memo(function ImageStage({
       {/* Bottom Visual Hint for Similares (positioned bottom-right) */}
       <button
         onClick={onScrollToSimilar}
-        title="Rolar para ver referências similares"
+        title={t("viewer.similar")}
         className="absolute bottom-5 right-6 md:right-10 z-20 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-zinc-900/85 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 border border-zinc-800/80 backdrop-blur-md text-xs font-medium transition-all cursor-pointer shadow-lg group"
       >
-        <span>Similares</span>
+        <span>{t("viewer.similar")}</span>
         <ChevronDown className="w-3.5 h-3.5 text-white group-hover:translate-y-0.5 transition-transform" />
       </button>
     </div>

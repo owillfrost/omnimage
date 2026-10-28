@@ -9,6 +9,7 @@ import { useTransientValue } from '../hooks/useCopyFeedback'
 import { ImageStage } from './viewer/ImageStage'
 import { SimilarGrid } from './viewer/SimilarGrid'
 import { ViewerSidebar } from './viewer/ViewerSidebar'
+import { useI18n } from "../i18n"
 
 export interface ExploreFullscreenViewerProps {
   artwork: Artwork | null
@@ -29,7 +30,7 @@ export interface ExploreFullscreenViewerProps {
  * - ViewerSidebar→ Eagle actions, color palette & comparative diffs (Palette & Prompt diff)
  */
 export const ExploreFullscreenViewer: React.FC<ExploreFullscreenViewerProps> = ({
-  artwork,
+artwork,
   artworks,
   onClose,
   onSelectArtwork,
@@ -39,6 +40,7 @@ export const ExploreFullscreenViewer: React.FC<ExploreFullscreenViewerProps> = (
   folderNameMap,
   onSelectFolder,
 }) => {
+  const { t } = useI18n()
   const [fullLoaded, setFullLoaded] = useState(false)
   const [similarityMode, setSimilarityMode] = useState<SimilaritySortMode>('hybrid')
   const centerScrollRef = useRef<HTMLDivElement | null>(null)
@@ -213,10 +215,10 @@ export const ExploreFullscreenViewer: React.FC<ExploreFullscreenViewerProps> = (
               <button
                 onClick={handleSwapCompare}
                 className="text-zinc-400 hover:text-white flex items-center gap-1 cursor-pointer"
-                title="Inverter posições (Atalho: X)"
+                title={t("viewer.swapAria")}
               >
                 <ArrowLeftRight className="w-3 h-3 text-white" />
-                <span className="text-[11px] hidden sm:inline">Inverter (X)</span>
+                <span className="text-[11px] hidden sm:inline">{t("viewer.swap")}</span>
               </button>
             </div>
           )}
@@ -238,12 +240,12 @@ export const ExploreFullscreenViewer: React.FC<ExploreFullscreenViewerProps> = (
                     {copiedTopAction === 'workflow' ? (
                       <>
                         <Check className="w-3.5 h-3.5 text-emerald-400" />
-                        <span className="text-emerald-300">Workflow Copiado!</span>
+                        <span className="text-emerald-300">{t("viewer.workflowCopied")}</span>
                       </>
                     ) : (
                       <>
                         <Workflow className="w-3.5 h-3.5 text-amber-400" />
-                        <span>Copiar Workflow</span>
+                        <span>{t("viewer.copyWorkflow")}</span>
                       </>
                     )}
                   </button>
@@ -252,18 +254,18 @@ export const ExploreFullscreenViewer: React.FC<ExploreFullscreenViewerProps> = (
                 {comfyPromptText && (
                   <button
                     onClick={handleCopyTopPrompt}
-                    title="Copiar Prompt extraído do ComfyUI"
+                    title={t("viewer.copyComfyPrompt")}
                     className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-800/90 hover:bg-zinc-700 text-zinc-200 hover:text-white text-xs font-medium transition-colors cursor-pointer"
                   >
                     {copiedTopAction === 'prompt' ? (
                       <>
                         <Check className="w-3.5 h-3.5 text-emerald-400" />
-                        <span className="text-emerald-300">Prompt Copiado!</span>
+                        <span className="text-emerald-300">{t("viewer.promptCopied")}</span>
                       </>
                     ) : (
                       <>
                         <Copy className="w-3.5 h-3.5 text-amber-400" />
-                        <span>Copiar Prompt</span>
+                        <span>{t("viewer.copyPrompt")}</span>
                       </>
                     )}
                   </button>
@@ -274,20 +276,20 @@ export const ExploreFullscreenViewer: React.FC<ExploreFullscreenViewerProps> = (
             {compareArtwork && (
               <button
                 onClick={handleClearCompare}
-                title="Sair do modo de comparação"
+                title={t("viewer.closeSplit")}
                 className="pointer-events-auto flex items-center gap-1.5 px-3 py-2 rounded-full bg-zinc-900/85 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800/80 backdrop-blur-md transition-all cursor-pointer shadow-lg text-xs"
               >
-                <span>Fechar Split</span>
+                <span>{t("viewer.closeSplit")}</span>
               </button>
             )}
 
             <button
               onClick={onClose}
-              title="Fechar (Esc)"
+              title={t("viewer.close") + " (Esc)"}
               className="pointer-events-auto flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-zinc-900/85 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800/80 backdrop-blur-md transition-all cursor-pointer shadow-lg"
             >
               <X className="w-4 h-4 text-white" />
-              <span className="text-xs font-medium hidden sm:inline">Fechar</span>
+              <span className="text-xs font-medium hidden sm:inline">{t("viewer.close")}</span>
             </button>
           </div>
         </div>

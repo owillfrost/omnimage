@@ -14,6 +14,7 @@ import {
 } from "../core/colorConversion"
 import { useColorPickerDrag } from "../hooks/useColorPickerDrag"
 import { cn } from "@/lib/utils"
+import { useI18n } from "../i18n"
 
 export interface ColorFilterPayload {
   colors: string[]
@@ -33,6 +34,7 @@ export const MultiColorPickerPopover: React.FC<MultiColorPickerPopoverProps> = (
   maxColors = MAX_FILTER_COLORS,
   onFilterChange,
 }) => {
+  const { t } = useI18n()
   // Continuous HSV state for the 2D picker
   const [hsv, setHsv] = React.useState<[number, number, number]>([215, 0.72, 0.96])
   const currentColor = React.useMemo(() => hsvToHex(hsv[0], hsv[1], hsv[2]), [hsv])
@@ -253,7 +255,7 @@ export const MultiColorPickerPopover: React.FC<MultiColorPickerPopoverProps> = (
             <button
               type="button"
               className="relative p-2 rounded-full text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60 active:scale-95 transition-all cursor-pointer"
-              aria-label="Filtrar por cores"
+              aria-label={t("colorPicker.title")}
             >
               <Palette className="w-4 h-4" />
               {selectedColors.length > 0 && (
@@ -284,17 +286,17 @@ export const MultiColorPickerPopover: React.FC<MultiColorPickerPopoverProps> = (
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold tracking-wide text-zinc-100">
-                Filtrar por cores
+                {t("colorPicker.title")}
               </span>
               <span className="text-[10px] text-zinc-500">
-                Arraste para filtrar ao vivo
+                {t("colorPicker.dragLive")}
               </span>
             </div>
 
             <div
               className="flex items-center gap-1 bg-zinc-900/90 p-1 rounded-xl border border-zinc-800/80"
               role="tablist"
-              aria-label="Modo de combinação de cores"
+              aria-label={t("colorPicker.title")}
             >
               <button
                 type="button"
@@ -308,7 +310,7 @@ export const MultiColorPickerPopover: React.FC<MultiColorPickerPopoverProps> = (
                     : "text-zinc-400 hover:text-zinc-200"
                 )}
               >
-                Qualquer (OR)
+                {t("colorPicker.modeAny")}
               </button>
               <button
                 type="button"
@@ -322,7 +324,7 @@ export const MultiColorPickerPopover: React.FC<MultiColorPickerPopoverProps> = (
                     : "text-zinc-400 hover:text-zinc-200"
                 )}
               >
-                Combinar (AND)
+                {t("colorPicker.modeCombine")}
               </button>
             </div>
           </div>
@@ -389,7 +391,7 @@ export const MultiColorPickerPopover: React.FC<MultiColorPickerPopoverProps> = (
 
             {/* Quick 4-Accent Preset Swatches */}
             <div className="flex items-center gap-1.5 pt-1">
-              <span className="text-[10px] text-zinc-500 font-medium mr-1">Presets:</span>
+              <span className="text-[10px] text-zinc-500 font-medium mr-1">{t("colorPicker.presets")}</span>
               <div className="flex items-center gap-1.5 flex-1">
                 {ACCENT_PRESET_COLORS.map((preset) => {
                   const isSelected = selectedColors.some(
@@ -448,7 +450,7 @@ export const MultiColorPickerPopover: React.FC<MultiColorPickerPopoverProps> = (
                   }}
                   maxLength={7}
                   spellCheck={false}
-                  aria-label="Código HEX da cor"
+                  aria-label={t("colorPicker.hexAria")}
                   className="w-full bg-transparent text-xs font-mono text-zinc-100 focus:outline-none uppercase tracking-wider"
                 />
               </div>
@@ -458,7 +460,7 @@ export const MultiColorPickerPopover: React.FC<MultiColorPickerPopoverProps> = (
                 <button
                   type="button"
                   onClick={handlePickScreenColor}
-                  title="Capturar cor da tela (Conta-gotas)"
+                  title={t("colorPicker.eyeDropper")}
                   className="p-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white transition-colors shrink-0 cursor-pointer"
                 >
                   <Pipette className="w-3.5 h-3.5" />
@@ -471,9 +473,7 @@ export const MultiColorPickerPopover: React.FC<MultiColorPickerPopoverProps> = (
                 disabled={isAtMaxLimit}
                 onClick={handleAddColorSlot}
                 title={
-                  isAtMaxLimit
-                    ? `Limite máximo de ${maxColors} cores atingido`
-                    : "Adicionar mais uma cor para combinar no filtro"
+                  isAtMaxLimit ? t("colorPicker.maxColorsReached", { count: maxColors }) : t("colorPicker.addColorHint")
                 }
                 className={cn(
                   "inline-flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-medium border transition-all shrink-0",
@@ -483,7 +483,7 @@ export const MultiColorPickerPopover: React.FC<MultiColorPickerPopoverProps> = (
                 )}
               >
                 <Plus className="w-3.5 h-3.5 shrink-0 text-zinc-400" />
-                <span>Adicionar</span>
+                <span>{t("colorPicker.addColor")}</span>
               </button>
             </div>
           </div>
@@ -492,7 +492,7 @@ export const MultiColorPickerPopover: React.FC<MultiColorPickerPopoverProps> = (
           <div className="pt-2.5 border-t border-zinc-800/80 space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-medium text-zinc-400">
-                <strong className="text-zinc-200">{selectedColors.length}</strong> de {maxColors} cores selecionadas
+                {t("colorPicker.selectedColorsCount", { count: selectedColors.length, max: maxColors })}
               </span>
               {selectedColors.length > 0 && (
                 <button
@@ -500,7 +500,7 @@ export const MultiColorPickerPopover: React.FC<MultiColorPickerPopoverProps> = (
                   onClick={handleClearAll}
                   className="text-[11px] font-medium text-zinc-400 hover:text-zinc-100 transition-colors cursor-pointer"
                 >
-                  Limpar todas
+                  {t("colorPicker.clearAll")}
                 </button>
               )}
             </div>
@@ -508,7 +508,7 @@ export const MultiColorPickerPopover: React.FC<MultiColorPickerPopoverProps> = (
             {selectedColors.length === 0 ? (
               <div className="py-2.5 px-3 rounded-xl border border-dashed border-zinc-800/80 bg-zinc-900/30 text-center">
                 <span className="text-[11px] text-zinc-500">
-                  Arraste no seletor acima para filtrar automaticamente por cor.
+                  {t("colorPicker.dragInstruction")}
                 </span>
               </div>
             ) : (
@@ -519,7 +519,7 @@ export const MultiColorPickerPopover: React.FC<MultiColorPickerPopoverProps> = (
                     <div
                       key={`${hex}-${idx}`}
                       onClick={() => handleSelectChipSlot(hex, idx)}
-                      title="Clique para ajustar este tom ao vivo no seletor"
+                      title={t("colorPicker.adjustLiveHint")}
                       className={cn(
                         "group inline-flex items-center gap-1.5 rounded-full pl-2 pr-1.5 py-1 text-[11px] font-mono shadow-xs cursor-pointer transition-all border",
                         isFocusedSlot
@@ -539,7 +539,7 @@ export const MultiColorPickerPopover: React.FC<MultiColorPickerPopoverProps> = (
                           handleRemoveColor(hex)
                         }}
                         className="p-0.5 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-700/70 transition-colors"
-                        aria-label={`Remover cor ${hex}`}
+                        aria-label={t("nav.removeColorFilter", { hex })}
                       >
                         <X className="w-3 h-3" />
                       </button>

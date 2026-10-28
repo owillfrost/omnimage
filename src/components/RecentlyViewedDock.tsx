@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react"
 import type { Artwork } from "../types/artwork"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip"
 import { cn } from "@/lib/utils"
+import { useI18n } from "../i18n"
 
 export interface RecentlyViewedDockProps {
   items: Artwork[]
@@ -35,6 +36,7 @@ export const RecentlyViewedDock: React.FC<RecentlyViewedDockProps> = React.memo(
 }) => {
   if (!items || items.length === 0) return null
 
+  const { t } = useI18n()
   const hasNavigation = Boolean(onGoBack || onGoForward)
 
   return (
@@ -59,7 +61,7 @@ export const RecentlyViewedDock: React.FC<RecentlyViewedDockProps> = React.memo(
                       ? "text-zinc-300 hover:text-white hover:bg-zinc-800/80 active:scale-90"
                       : "text-zinc-650 opacity-30 cursor-not-allowed"
                   )}
-                  aria-label="Voltar para âncora anterior (Alt + ←)"
+                  aria-label={t("dock.shortcutAltLeft")}
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </button>
@@ -68,12 +70,12 @@ export const RecentlyViewedDock: React.FC<RecentlyViewedDockProps> = React.memo(
                 {prevTitle ? (
                   <div className="space-y-0.5">
                     <span className="font-medium text-zinc-100 block truncate max-w-[200px]">
-                      Voltar: {prevTitle}
+                      {t("dock.backToPrev", { title: prevTitle })}
                     </span>
-                    <span className="text-[10px] text-zinc-400 font-mono">Atalho: Alt + ←</span>
+                    <span className="text-[10px] text-zinc-400 font-mono">{t("dock.shortcutAltLeft")}</span>
                   </div>
                 ) : (
-                  <span className="text-zinc-400">Primeira âncora da jornada (Alt + ←)</span>
+                  <span className="text-zinc-400">{t("dock.firstAnchor")}</span>
                 )}
               </TooltipContent>
             </Tooltip>
@@ -113,7 +115,7 @@ export const RecentlyViewedDock: React.FC<RecentlyViewedDockProps> = React.memo(
                         isActive && "ring-zinc-400 border-white -translate-y-1 rotate-0 !z-20 shadow-[0_0_15px_rgba(255,255,255,0.2)]",
                         isCompare && "ring-zinc-400 border-white -translate-y-1 rotate-0 !z-20"
                       )}
-                      aria-label={`Visualizar ou restaurar ${artwork.title}`}
+                      aria-label={artwork.title}
                     >
                       <img
                         src={artwork.thumbnailUrl}
@@ -127,9 +129,7 @@ export const RecentlyViewedDock: React.FC<RecentlyViewedDockProps> = React.memo(
                   <TooltipContent side="top" className="max-w-[220px] text-xs space-y-0.5">
                     <div className="font-semibold text-zinc-100 truncate">{artwork.title}</div>
                     <span className="block text-[10px] text-zinc-400 font-mono">
-                      {onRestoreAnchor
-                        ? "Clique para navegar até a âncora"
-                        : "Shift + Clique para comparar"}
+                      {onRestoreAnchor ? t("dock.clickToNavigate") : t("dock.shiftClickCompare")}
                     </span>
                   </TooltipContent>
                 </Tooltip>
@@ -151,7 +151,7 @@ export const RecentlyViewedDock: React.FC<RecentlyViewedDockProps> = React.memo(
                       ? "text-zinc-300 hover:text-white hover:bg-zinc-800/80 active:scale-90"
                       : "text-zinc-650 opacity-30 cursor-not-allowed"
                   )}
-                  aria-label="Avançar para próxima âncora (Alt + →)"
+                  aria-label={t("dock.shortcutAltRight")}
                 >
                   <ChevronRight className="w-4 h-4" />
                 </button>
@@ -160,12 +160,12 @@ export const RecentlyViewedDock: React.FC<RecentlyViewedDockProps> = React.memo(
                 {nextTitle ? (
                   <div className="space-y-0.5">
                     <span className="font-medium text-zinc-100 block truncate max-w-[200px]">
-                      Avançar: {nextTitle}
+                      {t("dock.forwardToNext", { title: nextTitle })}
                     </span>
-                    <span className="text-[10px] text-zinc-400 font-mono">Atalho: Alt + →</span>
+                    <span className="text-[10px] text-zinc-400 font-mono">{t("dock.shortcutAltRight")}</span>
                   </div>
                 ) : (
-                  <span className="text-zinc-400">Última âncora alcançada (Alt + →)</span>
+                  <span className="text-zinc-400">{t("dock.lastAnchor")}</span>
                 )}
               </TooltipContent>
             </Tooltip>

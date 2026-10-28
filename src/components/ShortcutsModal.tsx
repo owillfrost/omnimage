@@ -1,7 +1,8 @@
 import * as React from 'react'
-import { X, Command } from 'lucide-react'
+import { X, Command, Globe } from 'lucide-react'
 import { AsciiReveal } from './ui/AsciiReveal'
-import { SHORTCUT_GROUPS, type ShortcutContext } from '../config/shortcuts'
+import { getLocalizedShortcutGroups, type ShortcutContext } from '../config/shortcuts'
+import { useI18n } from '../i18n'
 
 export interface ShortcutsModalProps {
   isOpen: boolean
@@ -14,6 +15,7 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({
   onClose,
   activeContext = 'canvas',
 }) => {
+  const { locale, setLocale, t } = useI18n()
   const modalRef = React.useRef<HTMLDivElement | null>(null)
   const previousActiveElementRef = React.useRef<HTMLElement | null>(null)
 
@@ -72,14 +74,16 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({
           ? 'explore'
           : 'canvas'
 
-    return [...SHORTCUT_GROUPS].sort((a, b) => {
+    const localizedGroups = getLocalizedShortcutGroups(locale)
+
+    return [...localizedGroups].sort((a, b) => {
       if (a.context === 'general') return -1
       if (b.context === 'general') return 1
       if (a.context === targetContext) return -1
       if (b.context === targetContext) return 1
       return 0
     })
-  }, [activeContext])
+  }, [activeContext, locale])
 
   if (!isOpen) return null
 
@@ -93,7 +97,7 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({
         ref={modalRef}
         role="dialog"
         aria-modal="true"
-        aria-label="Atalhos de teclado e gestos"
+        aria-label={t('shortcuts.modalTitle')}
         data-shortcuts-modal="true"
         data-ascii="surface"
         tabIndex={-1}
@@ -110,18 +114,18 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({
             </span>
             <div>
               <h2 className="text-sm font-semibold text-zinc-100">
-                Atalhos de Teclado & Gestos
+                {t('shortcuts.modalTitle')}
               </h2>
               <p className="text-[11px] text-zinc-400">
-                Guia rápido de navegação interativa e controles
+                {t('shortcuts.modalSubtitle')}
               </p>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            title="Fechar (Esc ou ?)"
-            aria-label="Fechar janela de atalhos"
+            title={t('shortcuts.closeTooltip')}
+            aria-label={t('shortcuts.closeTooltip')}
             className="p-1.5 rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer"
           >
             <X className="w-4 h-4 text-white" />
@@ -144,7 +148,7 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({
                   </h3>
                   {isContextActive && (
                     <span className="text-[9px] font-medium uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                      Contexto Atual
+                      {t('shortcuts.currentContext')}
                     </span>
                   )}
                 </div>
@@ -181,8 +185,36 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({
 
         {/* Footer */}
         <div className="px-6 py-3 border-t border-zinc-800/80 bg-zinc-900/40 text-[11px] text-zinc-500 flex items-center justify-between">
-          <span>Pressione <kbd className="font-mono text-zinc-300">?</kbd> ou <kbd className="font-mono text-zinc-300">Esc</kbd> para fechar</span>
-          <span className="font-mono text-[10px] text-zinc-500">Omnimage</span>
+          <span>{locale === 'en' ? 'Press' : 'Pressione'} <kbd className="font-mono text-zinc-300">?</kbd> {locale === 'en' ? 'or' : 'ou'} <kbd className="font-mono text-zinc-300">Esc</kbd> {locale === 'en' ? 'to close' : 'para fechar'}</span>
+          <div className="flex items-center gap-2">
+            {/* Quick Language Switcher */}
+            <div className="flex items-center gap-1 bg-zinc-900 border border-zinc-800 rounded-lg p-0.5 text-[10px] font-mono">
+              <Globe className="w-3 h-3 text-zinc-500 ml-1" />
+              <button
+                type="button"
+                onClick={() => setLocale('en')}
+                className={`px-1.5 py-0.5 rounded transition-colors cursor-pointer ${
+                  locale === 'en'
+                    ? 'bg-zinc-800 text-white font-semibold'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                EN
+              </button>
+              <button
+                type="button"
+                onClick={() => setLocale('pt')}
+                className={`px-1.5 py-0.5 rounded transition-colors cursor-pointer ${
+                  locale === 'pt'
+                    ? 'bg-zinc-800 text-white font-semibold'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                PT
+              </button>
+            </div>
+            <span className="font-mono text-[10px] text-zinc-500">Omnimage</span>
+          </div>
         </div>
         </AsciiReveal>
       </div>

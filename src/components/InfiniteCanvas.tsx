@@ -42,8 +42,11 @@ import { queryVisualSearch } from "../services/visualSearchService"
 import { querySemanticSearch } from "../services/semanticSearchService"
 import { Sparkles, Loader2, AlertCircle, UploadCloud, X } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useI18n } from "../i18n"
 
 export const InfiniteCanvas: React.FC = () => {
+  const { t } = useI18n()
+
   // Active View Tab: 'canvas' (2D Infinite Spatial Grid) or 'explore' (Vertical Scroll + Fullscreen Eagle Inspector)
   const [activeTab, setActiveTab] = React.useState<ActiveTab>('canvas')
 
@@ -762,7 +765,7 @@ export const InfiniteCanvas: React.FC = () => {
         const { artwork } = await querySemanticSearch(q)
         handleApplyVisualSearchAnchor(artwork)
       } catch (err: any) {
-        setSemanticSearchError(err?.message || 'Falha ao processar busca semântica por texto.')
+        setSemanticSearchError(err?.message || t('canvas.semanticSearchError'))
         window.setTimeout(() => {
           setSemanticSearchError(null)
         }, 5000)
@@ -1052,10 +1055,8 @@ export const InfiniteCanvas: React.FC = () => {
                 style={{ left: 0, top: 0 }}
               >
                 <OmnimageLogo size={36} interactive={false} className="mb-3" />
-                <h3 className="text-sm font-semibold text-zinc-200">Carregando acervo...</h3>
-                <p className="text-xs text-zinc-400 mt-1">
-                  Lendo biblioteca {currentLibrary === 'google-flow' ? 'Prompts' : 'Design'}
-                </p>
+                <h3 className="text-sm font-semibold text-zinc-200">{t("canvas.loadingLibrary")}</h3>
+                <p className="text-xs text-zinc-400 mt-1">{t("canvas.readingLibrary", { lib: currentLibrary === "google-flow" ? "Prompts" : "Design" })}</p>
               </div>
             )}
 
@@ -1068,11 +1069,8 @@ export const InfiniteCanvas: React.FC = () => {
                 <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 mb-3">
                   <Sparkles className="w-5 h-5" />
                 </div>
-                <h3 className="text-sm font-semibold text-zinc-200">Nenhuma obra encontrada</h3>
-                <p className="text-xs text-zinc-400 mt-1">
-                  Tente ajustar os termos da busca ou limpar os filtros de paleta de cores em{" "}
-                  {currentLibrary === 'google-flow' ? 'Prompts' : 'Design'}.
-                </p>
+                <h3 className="text-sm font-semibold text-zinc-200">{t("canvas.noWorksFound")}</h3>
+                <p className="text-xs text-zinc-400 mt-1">{t("canvas.noWorksFoundDesc", { lib: currentLibrary === "google-flow" ? "Prompts" : "Design" })}</p>
                 <button
                   onClick={() => {
                     setSearchQuery("")
@@ -1080,7 +1078,7 @@ export const InfiniteCanvas: React.FC = () => {
                   }}
                   className="mt-4 px-3 py-1.5 rounded-full bg-zinc-800 text-xs text-zinc-200 hover:text-white transition-all active:scale-95 cursor-pointer"
                 >
-                  Limpar filtros
+                  {t("taxonomy.clearCurrentTab")}
                 </button>
               </div>
             )}
@@ -1149,7 +1147,7 @@ export const InfiniteCanvas: React.FC = () => {
         totalCount={filteredArtworks.length}
         gridSize={gridSize}
         onGridSizeChange={setGridSize}
-        centerLabel={activeTab === 'explore' ? 'Voltar ao Topo' : 'Recenter Grid'}
+        centerLabel={activeTab === 'explore' ? t('common.backToTop') : t('common.recenterGrid')}
       />
 
       {/* Global Keyboard Shortcuts & Gestures Modal ('?' key trigger) */}
@@ -1170,11 +1168,11 @@ export const InfiniteCanvas: React.FC = () => {
           <div className="flex flex-col items-center p-8 rounded-3xl bg-zinc-950/90 border border-zinc-800 shadow-2xl scale-105 transition-transform">
             <UploadCloud className="w-16 h-16 text-amber-400 animate-bounce mb-4" />
             <h3 className="text-xl font-semibold text-white tracking-tight">
-              Solte a imagem para buscar referências visuais
+              {t("canvas.dropzoneTitle")}
             </h3>
             <p className="text-xs text-zinc-400 font-mono mt-1.5 flex items-center gap-2">
               <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              <span>CLIP ViT-B/32 • 512 dimensões Int8 • Harmonização Radial</span>
+              <span>{t("canvas.dropzoneSubtitle")}</span>
             </p>
           </div>
         </div>

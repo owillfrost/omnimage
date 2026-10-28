@@ -3,6 +3,7 @@ import { Sparkles, Eye, Palette, Layers, Pin } from 'lucide-react'
 import type { Artwork } from '../../types/artwork'
 import type { SimilaritySortMode } from '../../services/similarityService'
 import { MotionVideoPreview } from '../MotionVideoPreview'
+import { useI18n } from "../../i18n"
 
 const PAGE_SIZE = 48
 
@@ -27,20 +28,20 @@ const MODE_OPTIONS: {
 }[] = [
   {
     id: 'hybrid',
-    label: 'Misto',
-    hint: 'Estética visual + Harmonia de paleta + Tags',
+    label: 'Hybrid',
+    hint: 'Visual aesthetics + Palette harmony + Tags',
     icon: Layers,
   },
   {
     id: 'visual',
-    label: 'Estética IA',
-    hint: 'Direção de arte, estilo & composição (CLIP)',
+    label: 'AI Aesthetics',
+    hint: 'Art direction, style & composition (CLIP)',
     icon: Eye,
   },
   {
     id: 'color',
-    label: 'Paleta',
-    hint: 'Harmonia cromática das 5 cores ponderadas',
+    label: 'Palette',
+    hint: 'Chromatic harmony of 5 weighted colors',
     icon: Palette,
   },
 ]
@@ -64,6 +65,7 @@ export const SimilarGrid = memo(
     },
     ref
   ) {
+    const { t } = useI18n()
     const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
     const sentinelRef = useRef<HTMLDivElement | null>(null)
 
@@ -101,12 +103,12 @@ export const SimilarGrid = memo(
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pb-3 border-b border-zinc-800/80">
           <div className="flex items-center gap-2.5 flex-wrap">
             <Sparkles className="w-4 h-4 text-zinc-200" />
-            <h3 className="text-sm font-semibold tracking-wider uppercase text-zinc-200">Similares</h3>
+            <h3 className="text-sm font-semibold tracking-wider uppercase text-zinc-200">{t("viewer.similar")}</h3>
             {items.length > 0 && (
-              <span className="text-xs text-zinc-500 font-mono">({items.length} referências)</span>
+              <span className="text-xs text-zinc-500 font-mono">{t("viewer.similarReferences", { count: items.length })}</span>
             )}
             <span className="hidden md:inline text-[11px] text-zinc-500 font-mono">
-              • Shift + Clique para comparar lado a lado
+              {t("viewer.shiftClickCompare")}
             </span>
           </div>
 
@@ -148,7 +150,7 @@ export const SimilarGrid = memo(
           </div>
         ) : items.length === 0 ? (
           <div className="py-16 text-center text-zinc-500 text-xs">
-            Nenhuma referência similar encontrada.
+            {t("viewer.noSimilarFound")}
           </div>
         ) : (
           <>
@@ -215,7 +217,7 @@ export const SimilarGrid = memo(
                           e.stopPropagation()
                           onCompareSelect(item)
                         }}
-                        title="Fixar para comparar lado a lado (Shift + Clique)"
+                        title={t("viewer.shiftClickCompare")}
                         className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 p-1.5 rounded-full bg-zinc-950/85 hover:bg-white text-zinc-300 hover:text-zinc-950 border border-zinc-700/80 backdrop-blur-md transition-all cursor-pointer shadow-lg hover:scale-105"
                       >
                         <Pin className="w-3.5 h-3.5" />
@@ -234,7 +236,7 @@ export const SimilarGrid = memo(
               >
                 <div className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 animate-pulse" />
-                  <span>Carregando mais similares...</span>
+                  <span>{t("viewer.loadingSimilar")}</span>
                 </div>
               </div>
             )}

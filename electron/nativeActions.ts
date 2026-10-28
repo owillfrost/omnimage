@@ -25,11 +25,11 @@ export async function showItemInFolder(filePath: string): Promise<{ ok: boolean;
 export async function showOpenDirectoryDialog(window?: BrowserWindow): Promise<string | null> {
   const result = window
     ? await dialog.showOpenDialog(window, {
-        title: 'Selecionar Pasta de Ativos Visuais',
+        title: 'Select Visual Assets Folder',
         properties: ['openDirectory', 'createDirectory'],
       })
     : await dialog.showOpenDialog({
-        title: 'Selecionar Pasta de Ativos Visuais',
+        title: 'Select Visual Assets Folder',
         properties: ['openDirectory', 'createDirectory'],
       })
 

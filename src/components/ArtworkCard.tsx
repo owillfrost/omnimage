@@ -1,9 +1,10 @@
-﻿import * as React from "react"
+import * as React from "react"
 import type { Artwork } from "../types/artwork"
 import type { SimilaritySortMode } from "../services/similarityService"
 import { MotionVideoPreview } from "./MotionVideoPreview"
 import { cn } from "@/lib/utils"
 import { Sparkles, Copy, Check, Maximize2 } from "lucide-react"
+import { useI18n } from "../i18n"
 
 interface ArtworkCardProps {
   artwork: Artwork
@@ -44,6 +45,7 @@ const ArtworkCardComponent: React.FC<ArtworkCardProps> = ({
   anchorEpoch = 0,
   isCanvasDragging = false,
 }) => {
+  const { t } = useI18n()
   const [isLoaded, setIsLoaded] = React.useState(() =>
     LOADED_IMAGE_CACHE.has(artwork.thumbnailUrl)
   )
@@ -214,12 +216,12 @@ const ArtworkCardComponent: React.FC<ArtworkCardProps> = ({
           <Sparkles className="w-3 h-3 text-amber-500 fill-amber-500" />
           <span>
             {artwork.isTextQuery
-              ? 'Busca IA • Epicentro'
+              ? t('canvas.anchorEpicenter')
               : anchorMode === 'visual'
-              ? 'Âncora • Estética IA'
+              ? t('canvas.anchorAiBadge')
               : anchorMode === 'color'
-              ? 'Âncora • Paleta'
-              : 'Âncora • Misto'}
+              ? t('canvas.anchorColorBadge')
+              : t('canvas.anchorHybridBadge')}
           </span>
         </div>
       )}
@@ -232,7 +234,7 @@ const ArtworkCardComponent: React.FC<ArtworkCardProps> = ({
             style={{ backgroundColor: artwork.dominantColor || '#ffffff' }}
           />
           <span>
-            {similarityPercent}% {anchorMode === 'color' ? 'tom' : anchorMode === 'visual' ? 'IA' : 'afinidade'}
+            {similarityPercent}% {anchorMode === 'color' ? t('canvas.affinityHue') : anchorMode === 'visual' ? t('canvas.affinityAi') : t('canvas.affinityGeneral')}
           </span>
         </div>
       )}
@@ -244,7 +246,7 @@ const ArtworkCardComponent: React.FC<ArtworkCardProps> = ({
             type="button"
             onPointerDown={(e) => e.stopPropagation()}
             onClick={handleCopyPrompt}
-            title="Copiar prompt / anotação"
+            title={t('canvas.copyPrompt')}
             className={cn(
               "flex items-center gap-1 px-2 py-1.5 rounded-full bg-black/85 hover:bg-black/95 border border-white/15 text-white text-[10px] font-medium shadow-md transition-opacity duration-150 cursor-pointer",
               isCopied
@@ -255,7 +257,7 @@ const ArtworkCardComponent: React.FC<ArtworkCardProps> = ({
             {isCopied ? (
               <>
                 <Check className="w-3 h-3 text-emerald-400 shrink-0" />
-                <span>Copiado</span>
+                <span>{t('common.copied')}</span>
               </>
             ) : (
               <Copy className="w-3 h-3 text-zinc-200 shrink-0" />
@@ -268,8 +270,8 @@ const ArtworkCardComponent: React.FC<ArtworkCardProps> = ({
             type="button"
             onPointerDown={(e) => e.stopPropagation()}
             onClick={handleOpenFullscreen}
-            title="Ver em tela cheia (Inspector Eagle)"
-            aria-label="Ver em tela cheia"
+            title={t('canvas.fullscreenInspector')}
+            aria-label={t('canvas.fullscreenAria')}
             className={cn(
               "p-1.5 rounded-full bg-black/85 hover:bg-black/95 border border-white/15 text-zinc-200 hover:text-white shadow-md transition-opacity duration-150 cursor-pointer",
               isAnchor ? "opacity-100" : "opacity-0 group-hover:opacity-100"

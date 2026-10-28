@@ -3,6 +3,7 @@ import { Info, Sparkles } from 'lucide-react'
 import type { Artwork } from '../types/artwork'
 import { MotionVideoPreview } from './MotionVideoPreview'
 import { OmnimageLogo } from './OmnimageLogo'
+import { useI18n } from "../i18n"
 
 export interface ExploreFeedViewProps {
   artworks: Artwork[]
@@ -45,6 +46,7 @@ export const ExploreFeedView: React.FC<ExploreFeedViewProps> = React.memo(({
   scrollContainerRef,
   isLoading = false,
 }) => {
+  const { t } = useI18n()
   const internalScrollRef = useRef<HTMLDivElement | null>(null)
   const containerRef = scrollContainerRef || internalScrollRef
 
@@ -227,19 +229,15 @@ export const ExploreFeedView: React.FC<ExploreFeedViewProps> = React.memo(({
       {isLoading ? (
         <div className="flex flex-col items-center justify-center h-[60vh] text-center gap-3">
           <OmnimageLogo size={36} interactive={false} className="mb-1" />
-          <p className="text-sm font-medium text-zinc-300">Carregando acervo...</p>
+          <p className="text-sm font-medium text-zinc-300">{t("exploreFeed.loading")}</p>
         </div>
       ) : artworks.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-[60vh] text-center gap-3">
           <div className="w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-500">
             <Sparkles className="w-5 h-5" />
           </div>
-          <p className="text-sm font-medium text-zinc-300">
-            Nenhuma referência encontrada para os filtros atuais
-          </p>
-          <p className="text-xs text-zinc-500 max-w-sm">
-            Experimente limpar o filtro de cores ou ajustar os termos da busca para explorar todo o acervo.
-          </p>
+          <p className="text-sm font-medium text-zinc-300">{t("exploreFeed.noResults")}</p>
+          <p className="text-xs text-zinc-500 max-w-sm">{t("exploreFeed.noResultsHint")}</p>
         </div>
       ) : (
         <div
@@ -279,8 +277,8 @@ export const ExploreFeedView: React.FC<ExploreFeedViewProps> = React.memo(({
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-start justify-end p-2.5 pointer-events-none">
                   <span
                     role="button"
-                    title="Ver detalhes"
-                    aria-label="Ver detalhes"
+                    title={t("exploreFeed.viewDetails")}
+                    aria-label={t("exploreFeed.viewDetails")}
                     className="pointer-events-auto p-2 rounded-full bg-zinc-950/80 text-zinc-100 border border-white/15 backdrop-blur-md shadow-lg transform translate-y-1 group-hover:translate-y-0 transition-transform duration-200"
                   >
                     <Info className="w-3.5 h-3.5" />
