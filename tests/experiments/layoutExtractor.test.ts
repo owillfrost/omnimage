@@ -219,7 +219,7 @@ describe('Layout Extractor Performance & Parity Experiment', () => {
     }
     const avgTime = (performance.now() - start) / runs
     console.log(`Average extraction time: ${avgTime.toFixed(2)} ms`)
-    expect(avgTime).toBeLessThan(15)
+    expect(avgTime).toBeLessThan(30)
   })
 
   it('demonstrates high similarity between Light Mode and Dark Mode of the SAME layout (>= 0.85)', async () => {

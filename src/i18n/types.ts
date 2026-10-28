@@ -90,6 +90,12 @@ export interface TranslationDictionary {
     gradeAdvancedPreviewNotice: string
     searchControlsInstant: string
     analysisControlsDatabase: string
+    searchSettingsTitle: string
+    searchSettingsNoAnchor: string
+    gradeAdvancedSection: string
+    gradeShadowThreshold: string
+    gradeHighlightThreshold: string
+    gradeResetAdvanced: string
   }
   canvas: {
     gridSmall: string

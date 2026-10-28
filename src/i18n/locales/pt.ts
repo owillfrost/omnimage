@@ -90,6 +90,12 @@ export const pt: TranslationDictionary = {
     gradeAdvancedPreviewNotice: 'Alterar parâmetros de extração é uma prévia na âncora; a consistência exige reanalisar a biblioteca.',
     searchControlsInstant: 'Controles de Busca (Instantâneos)',
     analysisControlsDatabase: 'Controles de Análise (Exige Reindexação da Biblioteca)',
+    searchSettingsTitle: 'Configurações de Busca',
+    searchSettingsNoAnchor: 'Selecione uma imagem como âncora para ajustar a busca por grade em tempo real.',
+    gradeAdvancedSection: 'Extração Avançada (Prévia)',
+    gradeShadowThreshold: 'L* Máximo de Sombras',
+    gradeHighlightThreshold: 'L* Mínimo de Altas Luzes',
+    gradeResetAdvanced: 'Restaurar padrões',
   },
   canvas: {
     gridSmall: 'Grid Pequeno (Compacto)',

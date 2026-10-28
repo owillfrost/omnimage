@@ -64,7 +64,11 @@ export class SplitToningMigrationService {
     const batchSize = options.batchSize || 200
     const configs = getLibrariesConfig()
     const config = configs.find(c => c.id === libraryId)
-    const rootPath = config?.path || ''
+    let rootPath = config?.path || ''
+    if (!rootPath) {
+      const libRow = this.db.prepare('SELECT root_path FROM libraries WHERE id = ?').get(libraryId) as { root_path: string } | undefined
+      rootPath = libRow?.root_path || ''
+    }
 
     let totalProcessed = 0
     let totalUpdated = 0

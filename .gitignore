@@ -24,6 +24,8 @@ out
 *.sqlite
 *.sqlite-shm
 *.sqlite-wal
+*.bak
+backup_db.js
 
 # Internal Migration Plans & Prototypes
 plans/

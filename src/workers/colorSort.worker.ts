@@ -221,9 +221,18 @@ self.onmessage = (event: MessageEvent<ColorSortWorkerRequest>) => {
           : [art.dominantColor || '#18181b']
 
       if (mode === 'grade') {
-        const candGrade =
-          art.splitToning ||
-          deriveFallbackSplitToningFromPalette(candColors, art.paletteWeights)
+        let candGrade = art.splitToning
+        if (!candGrade) {
+          candGrade = deriveFallbackSplitToningFromPalette(candColors, art.paletteWeights)
+        } else if (!candGrade.highlightsRaw && candColors && candColors.length > 0) {
+          // Graceful runtime fallback for legacy stored items missing highlightsRaw
+          const fallback = deriveFallbackSplitToningFromPalette(candColors, art.paletteWeights)
+          candGrade = {
+            ...candGrade,
+            highlightsRaw: fallback.highlightsRaw,
+            highlightsProtected: candGrade.highlightsProtected || candGrade.highlights,
+          }
+        }
         tempDistances[i] = calculateSplitToningDistance(anchorGrade, candGrade, targetGradeTuning)
         continue
       }
