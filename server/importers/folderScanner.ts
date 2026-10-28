@@ -9,6 +9,10 @@ import { generateVideoThumbnailAndPalette } from '../media/videoThumbnailer'
 import { clearMediaPathCache } from '../media/mediaStreamServer'
 import { extractComfyMetadataFromPngFile } from '../metadata/comfyPngParser'
 import type { CatalogFolderNode, CompactCatalogItem } from '../../src/contracts/schemas'
+import {
+  type SplitToningProfile,
+  deriveFallbackSplitToningFromPalette,
+} from '../../src/core/paletteExtractor'
 
 const IMAGE_EXTS = new Set(['jpg', 'jpeg', 'png', 'webp', 'gif', 'avif', 'svg', 'bmp'])
 const VIDEO_EXTS = new Set(['mp4', 'webm', 'mov', 'm4v'])
@@ -139,7 +143,7 @@ export class FolderScanner {
     const existingRows = this.db
       .prepare(
         `SELECT i.id, i.content_hash, i.name, i.ext, i.width, i.height, i.duration, i.btime, i.mtime,
-                i.dominant_color, i.palette_json, i.tags_json, i.folders_json, i.url, i.compact_json,
+                i.dominant_color, i.palette_json, i.split_toning_json, i.tags_json, i.folders_json, i.url, i.compact_json,
                 d.annotation
          FROM items i
          LEFT JOIN item_details d ON d.library_id = i.library_id AND d.id = i.id
@@ -268,9 +272,13 @@ export class FolderScanner {
       let dominantColor = existing?.dominant_color || '#18181b'
       let palette: string[] = ['#18181b']
       let paletteWeights: number[] = [1]
+      let splitToning: SplitToningProfile | undefined = undefined
 
       if (existing && fs.existsSync(targetThumbPath)) {
         try {
+          if (existing.split_toning_json) {
+            splitToning = JSON.parse(existing.split_toning_json)
+          }
           if (existing.palette_json) {
             const parsedPalette = JSON.parse(existing.palette_json)
             if (Array.isArray(parsedPalette) && parsedPalette.length > 0) {
@@ -284,6 +292,9 @@ export class FolderScanner {
                 paletteWeights = parsedPalette.map((p: any) => (p.ratio || 1) / 100)
               }
             }
+          }
+          if (!splitToning) {
+            splitToning = deriveFallbackSplitToningFromPalette(palette, paletteWeights)
           }
         } catch {
           // ignore
@@ -299,6 +310,7 @@ export class FolderScanner {
           dominantColor = thumbResult.dominantColor
           palette = thumbResult.palette
           paletteWeights = thumbResult.paletteWeights
+          splitToning = thumbResult.splitToning
         } catch {
           // keep defaults
         }
@@ -376,6 +388,7 @@ export class FolderScanner {
         dominantColor,
         palette,
         paletteWeights,
+        splitToning,
         tags: tags.length > 0 ? tags : undefined,
         folders: folders.length > 0 ? folders : undefined,
         url: url || undefined,
@@ -400,6 +413,7 @@ export class FolderScanner {
         url: url || undefined,
         hasAnnotation: hasAnnot ? true : undefined,
         palettes: eaglePalettes.slice(0, 4),
+        splitToning,
       }
 
       batch.push({
@@ -413,6 +427,7 @@ export class FolderScanner {
         mtime,
         dominantColor,
         paletteJson: JSON.stringify(eaglePalettes),
+        splitToningJson: splitToning ? JSON.stringify(splitToning) : null,
         tagsJson: tags.length > 0 ? JSON.stringify(tags) : null,
         foldersJson: folders.length > 0 ? JSON.stringify(folders) : null,
         url: url || null,

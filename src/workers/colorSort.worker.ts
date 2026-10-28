@@ -1,17 +1,23 @@
-﻿import {
+import {
   calculateWeightedPaletteDistance,
+  calculateSplitToningDistance,
   getCachedLab,
   getCachedHsl,
 } from '../core/colorClustering'
+import {
+  type SplitToningProfile,
+  deriveFallbackSplitToningFromPalette,
+} from '../core/paletteExtractor'
 import { computeQuantizedCosine } from '../core/vectorQuantization'
 
-export type SimilaritySortMode = 'hybrid' | 'visual' | 'color'
+export type SimilaritySortMode = 'hybrid' | 'visual' | 'color' | 'grade'
 
 export interface WorkerArtworkColorItem {
   id: string
   dominantColor: string
   palette?: string[]
   paletteWeights?: number[]
+  splitToning?: SplitToningProfile
   aspectRatio?: number
   tags?: string[]
   tokens?: string[]
@@ -37,6 +43,7 @@ export type ColorSortWorkerRequest =
       targetColor: string
       targetPalette?: string[]
       targetPaletteWeights?: number[]
+      targetSplitToning?: SplitToningProfile
       targetAspectRatio?: number
       targetTags?: string[]
       targetTokens?: string[]
@@ -147,6 +154,7 @@ self.onmessage = (event: MessageEvent<ColorSortWorkerRequest>) => {
       targetColor,
       targetPalette,
       targetPaletteWeights,
+      targetSplitToning,
       targetAspectRatio,
       targetTags,
       targetTokens,
@@ -163,6 +171,9 @@ self.onmessage = (event: MessageEvent<ColorSortWorkerRequest>) => {
       targetPalette && targetPalette.length > 0 ? targetPalette : [fallbackTarget]
     const anchorTokenSet = buildTokenSet(targetTags, targetTokens)
     const anchorAspect = targetAspectRatio || 1.0
+    const anchorGrade =
+      targetSplitToning ||
+      deriveFallbackSplitToningFromPalette(anchorColors, targetPaletteWeights)
 
     const vecs = currentEmbeddingVectors
     const dim = currentEmbeddingDim
@@ -187,6 +198,7 @@ self.onmessage = (event: MessageEvent<ColorSortWorkerRequest>) => {
       externalTargetVec !== null && externalTargetVec.length === dim
     const canUseClip =
       mode !== 'color' &&
+      mode !== 'grade' &&
       vecs !== null &&
       (hasExternalVec ||
         (anchorEmbRow !== undefined && (anchorEmbRow + 1) * dim <= vecs.length))
@@ -200,11 +212,20 @@ self.onmessage = (event: MessageEvent<ColorSortWorkerRequest>) => {
         continue
       }
 
-      // 1. Weighted Full-Palette Distance (normalized to [0..100], smaller = more similar)
       const candColors =
         art.palette && art.palette.length > 0
           ? art.palette
           : [art.dominantColor || '#18181b']
+
+      if (mode === 'grade') {
+        const candGrade =
+          art.splitToning ||
+          deriveFallbackSplitToningFromPalette(candColors, art.paletteWeights)
+        tempDistances[i] = calculateSplitToningDistance(anchorGrade, candGrade)
+        continue
+      }
+
+      // 1. Weighted Full-Palette Distance (normalized to [0..100], smaller = more similar)
       const paletteDist = calculateWeightedPaletteDistance(
         anchorColors,
         targetPaletteWeights,

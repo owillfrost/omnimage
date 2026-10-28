@@ -1,5 +1,5 @@
 import React, { forwardRef, memo, useEffect, useRef, useState } from 'react'
-import { Sparkles, Eye, Palette, Layers, Pin } from 'lucide-react'
+import { Sparkles, Eye, Palette, Layers, Pin, Sliders } from 'lucide-react'
 import type { Artwork } from '../../types/artwork'
 import type { SimilaritySortMode } from '../../services/similarityService'
 import { MotionVideoPreview } from '../MotionVideoPreview'
@@ -42,6 +42,12 @@ const MODE_OPTIONS: {
     label: 'Paleta',
     hint: 'Harmonia cromática das 5 cores ponderadas',
     icon: Palette,
+  },
+  {
+    id: 'grade',
+    label: 'Grade',
+    hint: 'Split toning: harmonia de sombras & luzes (Lab)',
+    icon: Sliders,
   },
 ]
 

@@ -1,3 +1,5 @@
+import type { SplitToningProfile } from '../core/paletteExtractor'
+
 export interface LibrarySource {
   id: string
   name: string
@@ -23,6 +25,7 @@ export interface CompactCatalogItem {
   hasAnnotation?: boolean
   annotationPreview?: string
   palettes?: Array<{ color: [number, number, number]; ratio: number }>
+  splitToning?: SplitToningProfile
 }
 
 export interface ComfyMetadata {

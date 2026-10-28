@@ -28,6 +28,11 @@ export function runMigrations(db: Database.Database): void {
   } catch {
     // Column already exists
   }
+  try {
+    db.exec(`ALTER TABLE items ADD COLUMN split_toning_json TEXT;`)
+  } catch {
+    // Column already exists
+  }
 
   // Table: items (compact metadata for grid rendering)
   db.exec(`
@@ -44,6 +49,7 @@ export function runMigrations(db: Database.Database): void {
       mtime INTEGER,
       dominant_color TEXT,
       palette_json TEXT,
+      split_toning_json TEXT,
       tags_json TEXT,
       folders_json TEXT,
       url TEXT,

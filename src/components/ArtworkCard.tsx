@@ -1,4 +1,4 @@
-﻿import * as React from "react"
+import * as React from "react"
 import type { Artwork } from "../types/artwork"
 import type { SimilaritySortMode } from "../services/similarityService"
 import { MotionVideoPreview } from "./MotionVideoPreview"
@@ -219,6 +219,8 @@ const ArtworkCardComponent: React.FC<ArtworkCardProps> = ({
               ? 'Âncora • Estética IA'
               : anchorMode === 'color'
               ? 'Âncora • Paleta'
+              : anchorMode === 'grade'
+              ? 'Âncora • Grade'
               : 'Âncora • Misto'}
           </span>
         </div>

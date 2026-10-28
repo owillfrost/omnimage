@@ -130,6 +130,7 @@ class SimilarityWorkerManager {
       dominantColor: a.dominantColor || '#18181b',
       palette: a.palette,
       paletteWeights: a.paletteWeights,
+      splitToning: a.splitToning,
       aspectRatio: a.aspectRatio,
       tags: a.tags,
       tokens: extractStyleTokens(a),
@@ -164,6 +165,7 @@ class SimilarityWorkerManager {
         targetColor: targetArtwork.dominantColor || '#ffffff',
         targetPalette: targetArtwork.palette,
         targetPaletteWeights: targetArtwork.paletteWeights,
+        targetSplitToning: targetArtwork.splitToning,
         targetAspectRatio: targetArtwork.aspectRatio,
         targetTags: targetArtwork.tags,
         targetTokens: extractStyleTokens(targetArtwork),
@@ -197,7 +199,7 @@ export async function getSimilarArtworks(
 
   similarityManager.syncItems(allArtworks)
 
-  if (mode !== 'color') {
+  if (mode !== 'color' && mode !== 'grade') {
     const libKey = targetArtwork.libraryId || (targetArtwork.id.startsWith('google-flow-')
       ? 'google-flow'
       : targetArtwork.id.startsWith('design-')

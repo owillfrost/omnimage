@@ -7,6 +7,7 @@ import type {
   CompactCatalogItem,
 } from '../contracts/schemas'
 import type { Artwork } from '../types/artwork'
+import type { SplitToningProfile } from '../core/paletteExtractor'
 import { buildArtworkColorVectors } from '../core/colorClustering'
 
 function rgbToHex(rgb?: [number, number, number]): string {
@@ -149,6 +150,7 @@ export class LocalHttpProvider implements ICatalogProvider {
         dominantColor,
         palette,
         paletteWeights,
+        splitToning: item.splitToning,
         tags: item.tags,
         folders: item.folders,
         colorVectors,
@@ -264,6 +266,7 @@ export class LocalHttpProvider implements ICatalogProvider {
     dominantColor: string
     palette: string[]
     paletteWeights: number[]
+    splitToning?: SplitToningProfile
   }> {
     const formData = new FormData()
     if (input.file) {
@@ -290,6 +293,7 @@ export class LocalHttpProvider implements ICatalogProvider {
       dominantColor: json.dominantColor || '#18181b',
       palette: json.palette || ['#18181b'],
       paletteWeights: json.paletteWeights || [1],
+      splitToning: json.splitToning,
     }
   }
 

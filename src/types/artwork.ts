@@ -1,4 +1,6 @@
-﻿export interface Artwork {
+import type { SplitToningProfile } from '../core/paletteExtractor'
+
+export interface Artwork {
   id: string
   title: string
   artist: string
@@ -15,6 +17,10 @@
    * Proportional coverage weights (normalized to sum ~1.0) for each color in `palette`.
    */
   paletteWeights?: number[]
+  /**
+   * Split-toning color grade profile (chromatic averages in Lab for shadows and highlights).
+   */
+  splitToning?: SplitToningProfile
   /**
    * Raw tags array for stylistic/semantic overlap scoring.
    */
