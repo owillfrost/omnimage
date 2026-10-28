@@ -70,6 +70,8 @@ export const pt: TranslationDictionary = {
     modeVisualHint: 'Direção de arte, estilo & composição (CLIP)',
     modeColor: 'Paleta',
     modeColorHint: 'Harmonia cromática das 5 cores ponderadas',
+    modeGrade: 'Grade',
+    modeGradeHint: 'Split toning: harmonia de sombras & luzes (Lab)',
   },
   canvas: {
     gridSmall: 'Grid Pequeno (Compacto)',
@@ -83,6 +85,7 @@ export const pt: TranslationDictionary = {
     anchorAiBadge: 'Âncora • Estética IA',
     anchorColorBadge: 'Âncora • Paleta',
     anchorHybridBadge: 'Âncora • Misto',
+    anchorGradeBadge: 'Âncora • Grade',
     affinityHue: 'tom',
     affinityAi: 'IA',
     affinityGeneral: 'afinidade',

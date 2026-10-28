@@ -1,7 +1,11 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import sharp from 'sharp'
-import { extractPaletteFromRgba, type ExtractedPalette } from '../../src/core/paletteExtractor'
+import {
+  extractPaletteFromRgba,
+  type ExtractedPalette,
+  type SplitToningProfile,
+} from '../../src/core/paletteExtractor'
 
 export interface GeneratedThumbnailResult {
   width: number
@@ -10,6 +14,7 @@ export interface GeneratedThumbnailResult {
   dominantColor: string
   palette: string[]
   paletteWeights: number[]
+  splitToning?: SplitToningProfile
   thumbPath: string
 }
 
@@ -85,6 +90,7 @@ export async function generateImageThumbnailAndPalette(
     dominantColor: paletteData.dominantColor,
     palette: paletteData.palette,
     paletteWeights: paletteData.paletteWeights,
+    splitToning: paletteData.splitToning,
     thumbPath: destWebpPath,
   }
 }

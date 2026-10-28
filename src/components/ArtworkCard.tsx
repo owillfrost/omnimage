@@ -221,6 +221,8 @@ const ArtworkCardComponent: React.FC<ArtworkCardProps> = ({
               ? t('canvas.anchorAiBadge')
               : anchorMode === 'color'
               ? t('canvas.anchorColorBadge')
+              : anchorMode === 'grade'
+              ? t('canvas.anchorGradeBadge')
               : t('canvas.anchorHybridBadge')}
           </span>
         </div>

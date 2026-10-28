@@ -70,6 +70,8 @@ export interface TranslationDictionary {
     modeVisualHint: string
     modeColor: string
     modeColorHint: string
+    modeGrade: string
+    modeGradeHint: string
   }
   canvas: {
     gridSmall: string
@@ -83,6 +85,7 @@ export interface TranslationDictionary {
     anchorAiBadge: string
     anchorColorBadge: string
     anchorHybridBadge: string
+    anchorGradeBadge: string
     affinityHue: string
     affinityAi: string
     affinityGeneral: string

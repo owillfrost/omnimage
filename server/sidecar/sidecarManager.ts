@@ -8,6 +8,7 @@ import type {
   CatalogTaxonomyResponse,
   CompactCatalogItem,
 } from '../../src/contracts/schemas'
+import type { SplitToningProfile } from '../../src/core/paletteExtractor'
 
 export interface ItemSidecarMetadata {
   id: string
@@ -21,6 +22,7 @@ export interface ItemSidecarMetadata {
   dominantColor?: string
   palette?: string[]
   paletteWeights?: number[]
+  splitToning?: SplitToningProfile
   tags?: string[]
   folders?: string[]
   url?: string
@@ -175,6 +177,7 @@ export class SidecarManager {
             folders: meta.folders && meta.folders.length > 0 ? meta.folders : undefined,
             url: meta.url && meta.url.trim().length > 0 ? meta.url : undefined,
             hasAnnotation: hasAnnot ? true : undefined,
+            splitToning: meta.splitToning,
             palettes: meta.palette
               ? meta.palette.slice(0, 4).map((hex, i) => {
                   const r = parseInt(hex.slice(1, 3), 16) || 0
@@ -199,6 +202,7 @@ export class SidecarManager {
             mtime: meta.mtime || meta.btime,
             dominantColor: meta.dominantColor || '#18181b',
             paletteJson: meta.palette ? JSON.stringify(meta.palette) : null,
+            splitToningJson: meta.splitToning ? JSON.stringify(meta.splitToning) : null,
             tagsJson: meta.tags ? JSON.stringify(meta.tags) : null,
             foldersJson: meta.folders ? JSON.stringify(meta.folders) : null,
             url: meta.url,
