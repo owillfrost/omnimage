@@ -96,6 +96,11 @@ export interface TranslationDictionary {
     gradeShadowThreshold: string
     gradeHighlightThreshold: string
     gradeResetAdvanced: string
+    modeHybridInfo: string
+    modeColorInfo: string
+    modeVisualInfo: string
+    switchToGradeMode: string
+    noAnchorActive: string
   }
   canvas: {
     gridSmall: string
