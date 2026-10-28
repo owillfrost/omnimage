@@ -47,6 +47,8 @@ export interface ToneGroupStats {
 export interface SplitToningProfile {
   shadows: ToneGroupStats
   highlights: ToneGroupStats
+  highlightsRaw?: ToneGroupStats
+  highlightsProtected?: ToneGroupStats
   totalValidPixels: number
   hasShadows: boolean
   hasHighlights: boolean
@@ -86,6 +88,12 @@ export function extractSplitToningFromRgba(
   let lightsSumA = 0
   let lightsSumB = 0
 
+  let lightsProtCount = 0
+  let lightsProtWeightSum = 0
+  let lightsProtSumL = 0
+  let lightsProtSumA = 0
+  let lightsProtSumB = 0
+
   const totalPixels = width * height
   const step = Math.max(1, Math.floor(totalPixels / 4000))
 
@@ -122,12 +130,6 @@ export function extractSplitToningFromRgba(
       : Math.min(1, Math.max(0.25, (L - 52) / 20))
     weight *= lumRamp
 
-    // Skin tone protection: if pixel falls into human skin tone cluster in highlights,
-    // attenuate its weight so portraits under neutral light don't falsely read as warm grades
-    if (isLight && isSkinToneLab(L, aLab, bLab)) {
-      weight *= SPLIT_TONING_SKIN_ATTENUATION
-    }
-
     if (isShadow) {
       shadowsCount++
       shadowsWeightSum += weight
@@ -135,11 +137,21 @@ export function extractSplitToningFromRgba(
       shadowsSumA += aLab * weight
       shadowsSumB += bLab * weight
     } else if (isLight) {
+      // 1. Raw highlight accumulation (un-attenuated)
       lightsCount++
       lightsWeightSum += weight
       lightsSumL += L * weight
       lightsSumA += aLab * weight
       lightsSumB += bLab * weight
+
+      // 2. Protected highlight accumulation (attenuating natural human skin tones)
+      const isSkin = isSkinToneLab(L, aLab, bLab)
+      const weightProt = isSkin ? weight * SPLIT_TONING_SKIN_ATTENUATION : weight
+      lightsProtCount++
+      lightsProtWeightSum += weightProt
+      lightsProtSumL += L * weightProt
+      lightsProtSumA += aLab * weightProt
+      lightsProtSumB += bLab * weightProt
     }
   }
 
@@ -151,7 +163,7 @@ export function extractSplitToningFromRgba(
     weightSum: Number(shadowsWeightSum.toFixed(2)),
   }
 
-  const highlights: ToneGroupStats = {
+  const highlightsRaw: ToneGroupStats = {
     L: lightsWeightSum > 0 ? Number((lightsSumL / lightsWeightSum).toFixed(2)) : 75,
     a: lightsWeightSum > 0 ? Number((lightsSumA / lightsWeightSum).toFixed(2)) : 0,
     b: lightsWeightSum > 0 ? Number((lightsSumB / lightsWeightSum).toFixed(2)) : 0,
@@ -159,9 +171,19 @@ export function extractSplitToningFromRgba(
     weightSum: Number(lightsWeightSum.toFixed(2)),
   }
 
+  const highlightsProtected: ToneGroupStats = {
+    L: lightsProtWeightSum > 0 ? Number((lightsProtSumL / lightsProtWeightSum).toFixed(2)) : 75,
+    a: lightsProtWeightSum > 0 ? Number((lightsProtSumA / lightsProtWeightSum).toFixed(2)) : 0,
+    b: lightsProtWeightSum > 0 ? Number((lightsProtSumB / lightsProtWeightSum).toFixed(2)) : 0,
+    validPixels: lightsProtCount,
+    weightSum: Number(lightsProtWeightSum.toFixed(2)),
+  }
+
   return {
     shadows,
-    highlights,
+    highlights: highlightsProtected, // Default highlight vector is skin-protected
+    highlightsRaw,
+    highlightsProtected,
     totalValidPixels: shadowsCount + lightsCount,
     hasShadows: shadowsCount > 5,
     hasHighlights: lightsCount > 5,
@@ -187,6 +209,12 @@ export function deriveFallbackSplitToningFromPalette(
   let lightsSumA = 0
   let lightsSumB = 0
 
+  let lightsProtCount = 0
+  let lightsProtWeightSum = 0
+  let lightsProtSumL = 0
+  let lightsProtSumA = 0
+  let lightsProtSumB = 0
+
   for (let i = 0; i < palette.length; i++) {
     const hex = palette[i]
     const pWeight = paletteWeights && paletteWeights[i] !== undefined ? paletteWeights[i] : 1 / palette.length
@@ -208,14 +236,10 @@ export function deriveFallbackSplitToningFromPalette(
       ? Math.min(1, Math.max(0.25, (48 - L) / 20))
       : Math.min(1, Math.max(0.25, (L - 52) / 20))
 
-    let weight =
+    const weight =
       (Math.pow(chromaRatio, SPLIT_TONING_CHROMA_EXPONENT) + SPLIT_TONING_CHROMA_EPSILON) *
       pWeight *
       lumRamp
-
-    if (!isShadow && isSkinToneLab(L, aLab, bLab)) {
-      weight *= SPLIT_TONING_SKIN_ATTENUATION
-    }
 
     if (isShadow) {
       shadowsCount += Math.max(1, Math.round(pWeight * 100))
@@ -224,29 +248,53 @@ export function deriveFallbackSplitToningFromPalette(
       shadowsSumA += aLab * weight
       shadowsSumB += bLab * weight
     } else {
+      // 1. Raw highlight accumulation
       lightsCount += Math.max(1, Math.round(pWeight * 100))
       lightsWeightSum += weight
       lightsSumL += L * weight
       lightsSumA += aLab * weight
       lightsSumB += bLab * weight
+
+      // 2. Protected highlight accumulation
+      const isSkin = isSkinToneLab(L, aLab, bLab)
+      const weightProt = isSkin ? weight * SPLIT_TONING_SKIN_ATTENUATION : weight
+      lightsProtCount += Math.max(1, Math.round(pWeight * 100))
+      lightsProtWeightSum += weightProt
+      lightsProtSumL += L * weightProt
+      lightsProtSumA += aLab * weightProt
+      lightsProtSumB += bLab * weightProt
     }
   }
 
+  const shadows: ToneGroupStats = {
+    L: shadowsWeightSum > 0 ? Number((shadowsSumL / shadowsWeightSum).toFixed(2)) : 25,
+    a: shadowsWeightSum > 0 ? Number((shadowsSumA / shadowsWeightSum).toFixed(2)) : 0,
+    b: shadowsWeightSum > 0 ? Number((shadowsSumB / shadowsWeightSum).toFixed(2)) : 0,
+    validPixels: shadowsCount,
+    weightSum: Number(shadowsWeightSum.toFixed(2)),
+  }
+
+  const highlightsRaw: ToneGroupStats = {
+    L: lightsWeightSum > 0 ? Number((lightsSumL / lightsWeightSum).toFixed(2)) : 75,
+    a: lightsWeightSum > 0 ? Number((lightsSumA / lightsWeightSum).toFixed(2)) : 0,
+    b: lightsWeightSum > 0 ? Number((lightsSumB / lightsWeightSum).toFixed(2)) : 0,
+    validPixels: lightsCount,
+    weightSum: Number(lightsWeightSum.toFixed(2)),
+  }
+
+  const highlightsProtected: ToneGroupStats = {
+    L: lightsProtWeightSum > 0 ? Number((lightsProtSumL / lightsProtWeightSum).toFixed(2)) : 75,
+    a: lightsProtWeightSum > 0 ? Number((lightsProtSumA / lightsProtWeightSum).toFixed(2)) : 0,
+    b: lightsProtWeightSum > 0 ? Number((lightsProtSumB / lightsProtWeightSum).toFixed(2)) : 0,
+    validPixels: lightsProtCount,
+    weightSum: Number(lightsProtWeightSum.toFixed(2)),
+  }
+
   return {
-    shadows: {
-      L: shadowsWeightSum > 0 ? Number((shadowsSumL / shadowsWeightSum).toFixed(2)) : 25,
-      a: shadowsWeightSum > 0 ? Number((shadowsSumA / shadowsWeightSum).toFixed(2)) : 0,
-      b: shadowsWeightSum > 0 ? Number((shadowsSumB / shadowsWeightSum).toFixed(2)) : 0,
-      validPixels: shadowsCount,
-      weightSum: Number(shadowsWeightSum.toFixed(2)),
-    },
-    highlights: {
-      L: lightsWeightSum > 0 ? Number((lightsSumL / lightsWeightSum).toFixed(2)) : 75,
-      a: lightsWeightSum > 0 ? Number((lightsSumA / lightsWeightSum).toFixed(2)) : 0,
-      b: lightsWeightSum > 0 ? Number((lightsSumB / lightsWeightSum).toFixed(2)) : 0,
-      validPixels: lightsCount,
-      weightSum: Number(lightsWeightSum.toFixed(2)),
-    },
+    shadows,
+    highlights: highlightsProtected,
+    highlightsRaw,
+    highlightsProtected,
     totalValidPixels: shadowsCount + lightsCount,
     hasShadows: shadowsCount > 0,
     hasHighlights: lightsCount > 0,

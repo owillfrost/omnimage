@@ -12,6 +12,7 @@ import {
 import {
   calculateSplitToningDistance,
   sortArtworksByColorProximity,
+  isAnchorNeutral,
 } from '../../src/core/colorClustering'
 import { runMigrations } from '../../server/db/migrations'
 import { CatalogRepository } from '../../server/db/catalogRepository'
@@ -390,5 +391,221 @@ describe('Split Toning Extraction & Grade Matching Parity Tests', () => {
     expect(repo.getItemsPendingSplitToning('test-lib', 10)).toHaveLength(0)
 
     db.close()
+  })
+
+  it('extracts dual highlights: raw highlights and skin-protected highlights', async () => {
+    // 60% neutral gray (#CCCCCC, L=82, a=0, b=0) + 40% skin tone (#D89B77, L=68, a=18, b=28)
+    const svgPortrait = `
+      <svg width="128" height="128" xmlns="http://www.w3.org/2000/svg">
+        <rect width="128" height="76" fill="#CCCCCC"/>
+        <rect y="76" width="128" height="52" fill="#D89B77"/>
+      </svg>
+    `
+    const portrait = await sharp(Buffer.from(svgPortrait))
+      .ensureAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true })
+    const profile = extractSplitToningFromRgba(portrait.data, portrait.info.width, portrait.info.height)
+
+    // Verify both representations are computed
+    expect(profile.highlightsProtected).toBeDefined()
+    expect(profile.highlightsRaw).toBeDefined()
+
+    // Protected highlights attenuate skin tones, keeping a* and b* close to neutral
+    expect(profile.highlightsProtected!.a).toBeLessThan(12)
+    expect(profile.highlightsProtected!.b).toBeLessThan(18)
+
+    // Raw highlights retain un-attenuated skin tones
+    expect(profile.highlightsRaw!.a).toBeGreaterThan(12)
+    expect(profile.highlightsRaw!.b).toBeGreaterThan(18)
+
+    // Default highlights points to protected highlights
+    expect(profile.highlights.a).toEqual(profile.highlightsProtected!.a)
+    expect(profile.highlights.b).toEqual(profile.highlightsProtected!.b)
+  })
+
+  it('allows 0ms skin tone protection toggle without re-analyzing library', () => {
+    // Anchor: neutral portrait with skin tones in highlights
+    const anchorNeutralPortrait = {
+      shadows: { L: 25, a: 0, b: 0, validPixels: 500, weightSum: 300 },
+      highlights: { L: 75, a: 5, b: 6, validPixels: 500, weightSum: 300 }, // protected
+      highlightsProtected: { L: 75, a: 5, b: 6, validPixels: 500, weightSum: 300 },
+      highlightsRaw: { L: 75, a: 22, b: 35, validPixels: 500, weightSum: 300 }, // raw skin
+      totalValidPixels: 1000,
+      hasShadows: true,
+      hasHighlights: true,
+    }
+
+    // Candidate: intentionally warm golden image (a=24, b=38 in highlights)
+    const candWarmImage = {
+      shadows: { L: 25, a: 0, b: 0, validPixels: 500, weightSum: 300 },
+      highlights: { L: 75, a: 24, b: 38, validPixels: 500, weightSum: 300 },
+      highlightsProtected: { L: 75, a: 24, b: 38, validPixels: 500, weightSum: 300 },
+      highlightsRaw: { L: 75, a: 24, b: 38, validPixels: 500, weightSum: 300 },
+      totalValidPixels: 1000,
+      hasShadows: true,
+      hasHighlights: true,
+    }
+
+    // 1. With skin protection ON (default):
+    // The neutral portrait highlights stay near-neutral (a=5, b=6), so distance against warm cand is large
+    const distProtected = calculateSplitToningDistance(anchorNeutralPortrait, candWarmImage, {
+      protectSkinTones: true,
+    })
+
+    // 2. With skin protection OFF:
+    // Uses raw skin highlights (a=22, b=35), which accidentally matches warm cand (a=24, b=38) closely
+    const distRaw = calculateSplitToningDistance(anchorNeutralPortrait, candWarmImage, {
+      protectSkinTones: false,
+    })
+
+    expect(distProtected).toBeGreaterThan(15)
+    expect(distRaw).toBeLessThan(4)
+    expect(distProtected).toBeGreaterThan(distRaw * 4)
+  })
+
+  it('detects neutral anchors and excludes neutral candidates when requested', () => {
+    // Neutral profile (e.g. grayscale or monochrome image)
+    const neutralGrade = {
+      shadows: { L: 25, a: 0.5, b: -0.8, validPixels: 500, weightSum: 300 },
+      highlights: { L: 75, a: 0.2, b: 0.4, validPixels: 500, weightSum: 300 },
+      totalValidPixels: 1000,
+      hasShadows: true,
+      hasHighlights: true,
+    }
+
+    // Chromatic profile (Teal & Orange)
+    const chromaticGrade = {
+      shadows: { L: 25, a: -18, b: -8, validPixels: 500, weightSum: 300 },
+      highlights: { L: 75, a: 22, b: 45, validPixels: 500, weightSum: 300 },
+      totalValidPixels: 1000,
+      hasShadows: true,
+      hasHighlights: true,
+    }
+
+    // isAnchorNeutral correctly identifies neutral vs chromatic anchors
+    expect(isAnchorNeutral(neutralGrade)).toBe(true)
+    expect(isAnchorNeutral(chromaticGrade)).toBe(false)
+
+    // With excludeNeutrals = false, neutral candidate gets normal distance
+    const distNormal = calculateSplitToningDistance(chromaticGrade, neutralGrade, {
+      excludeNeutrals: false,
+    })
+    expect(distNormal).toBeLessThan(100)
+
+    // With excludeNeutrals = true, neutral candidate gets heavy penalty (999)
+    const distExcluded = calculateSplitToningDistance(chromaticGrade, neutralGrade, {
+      excludeNeutrals: true,
+    })
+    expect(distExcluded).toBe(999)
+  })
+
+  it('stretches similarity score distribution and applies cutoff according to Grade Sensitivity', () => {
+    const baseArt = {
+      artist: '',
+      date: '',
+      medium: '',
+      source: '',
+      sourceUrl: '',
+      imageUrl: '',
+      thumbnailUrl: '',
+      palette: ['#0B4F54'],
+      worldX: 0,
+      worldY: 0,
+      width: 260,
+      height: 260,
+    }
+
+    const anchorArt: Artwork = {
+      ...baseArt,
+      id: 'anchor-art',
+      title: 'Anchor',
+      aspectRatio: 1.0,
+      dominantColor: '#0B4F54',
+      palette: ['#0B4F54', '#F59E42'],
+      splitToning: {
+        shadows: { L: 25, a: -18, b: -8, validPixels: 500, weightSum: 300 },
+        highlights: { L: 75, a: 22, b: 45, validPixels: 500, weightSum: 300 },
+        totalValidPixels: 1000,
+        hasShadows: true,
+        hasHighlights: true,
+      },
+    }
+
+    // Candidate 1: close match (distance ~4)
+    const candClose: Artwork = {
+      ...baseArt,
+      id: 'cand-close',
+      title: 'Close Match',
+      aspectRatio: 1.0,
+      dominantColor: '#0C5055',
+      splitToning: {
+        shadows: { L: 25, a: -16, b: -7, validPixels: 500, weightSum: 300 },
+        highlights: { L: 75, a: 20, b: 43, validPixels: 500, weightSum: 300 },
+        totalValidPixels: 1000,
+        hasShadows: true,
+        hasHighlights: true,
+      },
+    }
+
+    // Candidate 2: moderate match (distance ~25)
+    const candModerate: Artwork = {
+      ...baseArt,
+      id: 'cand-moderate',
+      title: 'Moderate Match',
+      aspectRatio: 1.0,
+      dominantColor: '#204040',
+      splitToning: {
+        shadows: { L: 25, a: -5, b: 5, validPixels: 500, weightSum: 300 },
+        highlights: { L: 75, a: 10, b: 25, validPixels: 500, weightSum: 300 },
+        totalValidPixels: 1000,
+        hasShadows: true,
+        hasHighlights: true,
+      },
+    }
+
+    // Candidate 3: poor match (distance ~55)
+    const candPoor: Artwork = {
+      ...baseArt,
+      id: 'cand-poor',
+      title: 'Poor Match',
+      aspectRatio: 1.0,
+      dominantColor: '#802050',
+      splitToning: {
+        shadows: { L: 25, a: 30, b: -15, validPixels: 500, weightSum: 300 },
+        highlights: { L: 75, a: -20, b: 10, validPixels: 500, weightSum: 300 },
+        totalValidPixels: 1000,
+        hasShadows: true,
+        hasHighlights: true,
+      },
+    }
+
+    // 1. Low sensitivity (0.2): generous similarity percentages, candPoor still has score
+    const scoredLow = sortArtworksByColorProximity(
+      [candClose, candModerate, candPoor],
+      anchorArt,
+      'grade',
+      { sensitivity: 0.2 }
+    )
+    const poorSimLow = scoredLow.find((s) => s.artwork.id === 'cand-poor')!.similarityPercent
+    expect(poorSimLow).toBeGreaterThan(20)
+
+    // 2. High sensitivity (1.0): scores are aggressively stretched and candPoor drops to 0% (cutoff)
+    const scoredHigh = sortArtworksByColorProximity(
+      [candClose, candModerate, candPoor],
+      anchorArt,
+      'grade',
+      { sensitivity: 1.0 }
+    )
+    const closeSimHigh = scoredHigh.find((s) => s.artwork.id === 'cand-close')!.similarityPercent
+    const modSimHigh = scoredHigh.find((s) => s.artwork.id === 'cand-moderate')!.similarityPercent
+    const poorSimHigh = scoredHigh.find((s) => s.artwork.id === 'cand-poor')!.similarityPercent
+
+    // Close match stays strong
+    expect(closeSimHigh).toBeGreaterThan(75)
+    // Moderate match falls significantly lower than at low sensitivity
+    expect(modSimHigh).toBeLessThan(50)
+    // Poor match is completely cut off to 0%
+    expect(poorSimHigh).toBe(0)
   })
 })

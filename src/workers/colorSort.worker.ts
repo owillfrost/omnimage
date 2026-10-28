@@ -343,6 +343,21 @@ self.onmessage = (event: MessageEvent<ColorSortWorkerRequest>) => {
       if (rawDist < 0) {
         sortedDistances[i] = 0
         sortedSimilarities[i] = 100
+      } else if (rawDist >= 990) {
+        sortedDistances[i] = rawDist
+        sortedSimilarities[i] = 0
+      } else if (mode === 'grade') {
+        sortedDistances[i] = rawDist
+        const sens = targetGradeTuning?.sensitivity ?? 0.75
+        // Exponent stretches similarities across the 0..100 spectrum
+        const exponent = 0.8 + sens * 2.4
+        const normalized = Math.max(0, Math.min(1, 1 - rawDist / 85))
+        const stretched = Math.pow(normalized, exponent)
+        let sim = Math.round(stretched * 100)
+        // Cutoff: at higher sensitivities, low-similarity items drop to 0%
+        const minCutoff = Math.max(0, Math.round((sens - 0.4) * 50))
+        if (sim < minCutoff) sim = 0
+        sortedSimilarities[i] = Math.max(0, Math.min(100, sim))
       } else {
         sortedDistances[i] = rawDist
         sortedSimilarities[i] = Math.max(
