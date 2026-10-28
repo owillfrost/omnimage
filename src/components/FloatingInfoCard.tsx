@@ -339,7 +339,7 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                     </div>
 
                     {/* Control 2: Balance Slider (Sombras ↔ Altas Luzes) */}
-                    <div className="space-y-1.5 p-3 rounded-2xl bg-zinc-900/40 border border-zinc-800/60">
+                    <div className="space-y-2 p-3 rounded-2xl bg-zinc-900/40 border border-zinc-800/60">
                       <div className="flex items-center justify-between text-zinc-300">
                         <span className="font-medium text-[11px]">{t("nav.gradeBalance")}</span>
                         <span className="font-mono text-[11px] text-zinc-300">
@@ -350,6 +350,20 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                             : `${balanceVal}% Sombras`}
                         </span>
                       </div>
+
+                      {/* Hardware-Accelerated Gradient Ramp Strip */}
+                      <div className="relative pt-0.5">
+                        <div
+                          className="h-2 w-full rounded-full border border-zinc-700/60 shadow-inner relative overflow-hidden"
+                          style={{
+                            background: `linear-gradient(to right, ${shadowHex}, ${highlightHex})`,
+                          }}
+                        >
+                          {/* Center 50/50 notch indicator */}
+                          <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-black/50 -translate-x-1/2" />
+                        </div>
+                      </div>
+
                       <input
                         type="range"
                         min="-100"
