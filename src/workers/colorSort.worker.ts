@@ -3,6 +3,7 @@ import {
   calculateSplitToningDistance,
   getCachedLab,
   getCachedHsl,
+  type GradeTuningOptions,
 } from '../core/colorClustering'
 import {
   type SplitToningProfile,
@@ -44,6 +45,7 @@ export type ColorSortWorkerRequest =
       targetPalette?: string[]
       targetPaletteWeights?: number[]
       targetSplitToning?: SplitToningProfile
+      targetGradeTuning?: GradeTuningOptions
       targetAspectRatio?: number
       targetTags?: string[]
       targetTokens?: string[]
@@ -155,6 +157,7 @@ self.onmessage = (event: MessageEvent<ColorSortWorkerRequest>) => {
       targetPalette,
       targetPaletteWeights,
       targetSplitToning,
+      targetGradeTuning,
       targetAspectRatio,
       targetTags,
       targetTokens,
@@ -221,7 +224,7 @@ self.onmessage = (event: MessageEvent<ColorSortWorkerRequest>) => {
         const candGrade =
           art.splitToning ||
           deriveFallbackSplitToningFromPalette(candColors, art.paletteWeights)
-        tempDistances[i] = calculateSplitToningDistance(anchorGrade, candGrade)
+        tempDistances[i] = calculateSplitToningDistance(anchorGrade, candGrade, targetGradeTuning)
         continue
       }
 

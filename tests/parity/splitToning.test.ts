@@ -285,6 +285,60 @@ describe('Split Toning Extraction & Grade Matching Parity Tests', () => {
     expect(sorted[1].distance).toBeLessThan(sorted[2].distance)
   })
 
+  it('supports real-time balance tuning between shadows and highlights', () => {
+    // Anchor: Teal shadows (a=-18, b=-8), Orange highlights (a=22, b=45)
+    const anchor = {
+      shadows: { L: 25, a: -18, b: -8, validPixels: 400, weightSum: 250 },
+      highlights: { L: 70, a: 22, b: 45, validPixels: 400, weightSum: 250 },
+      totalValidPixels: 800,
+      hasShadows: true,
+      hasHighlights: true,
+    }
+
+    // Candidate A: Matching teal shadows, but mismatched green highlights
+    const candA = {
+      shadows: { L: 25, a: -17, b: -7, validPixels: 400, weightSum: 250 }, // matches anchor shadow
+      highlights: { L: 70, a: -35, b: 35, validPixels: 400, weightSum: 250 }, // different highlight
+      totalValidPixels: 800,
+      hasShadows: true,
+      hasHighlights: true,
+    }
+
+    // Candidate B: Mismatched magenta shadows, but matching orange highlights
+    const candB = {
+      shadows: { L: 25, a: 35, b: -20, validPixels: 400, weightSum: 250 }, // different shadow
+      highlights: { L: 70, a: 21, b: 44, validPixels: 400, weightSum: 250 }, // matches anchor highlight
+      totalValidPixels: 800,
+      hasShadows: true,
+      hasHighlights: true,
+    }
+
+    // 1. Balanced (50/50, default)
+    const distBalancedA = calculateSplitToningDistance(anchor, candA)
+    const distBalancedB = calculateSplitToningDistance(anchor, candB)
+    expect(distBalancedA).toBeGreaterThan(15)
+    expect(distBalancedB).toBeGreaterThan(15)
+
+    // 2. Shadows only (balance = -100): CandA (teal shadows) must strongly win
+    const distShadowsA = calculateSplitToningDistance(anchor, candA, { balance: -100 })
+    const distShadowsB = calculateSplitToningDistance(anchor, candB, { balance: -100 })
+    expect(distShadowsA).toBeLessThan(3.0)
+    expect(distShadowsB).toBeGreaterThan(40)
+
+    // 3. Highlights only (balance = +100): CandB (orange highlights) must strongly win
+    const distHighlightsA = calculateSplitToningDistance(anchor, candA, { balance: 100 })
+    const distHighlightsB = calculateSplitToningDistance(anchor, candB, { balance: 100 })
+    expect(distHighlightsB).toBeLessThan(3.0)
+    expect(distHighlightsA).toBeGreaterThan(40)
+
+    // 4. Manual override: Overriding shadow to magenta makes CandB win in shadows
+    const distOverrideB = calculateSplitToningDistance(anchor, candB, {
+      balance: -100,
+      shadowOverride: { a: 35, b: -20 },
+    })
+    expect(distOverrideB).toBeLessThan(2.0)
+  })
+
   it('migrates existing legacy items in SQLite and populates split_toning_json and compact_json', async () => {
     const db = new Database(':memory:')
     runMigrations(db)

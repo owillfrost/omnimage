@@ -3,6 +3,7 @@ import type { Artwork } from '../types/artwork'
 import {
   sortArtworksByColorProximity,
   type ScoredArtwork,
+  type GradeTuningOptions,
 } from '../core/colorClustering'
 import type {
   ColorSortWorkerRequest,
@@ -31,14 +32,23 @@ function extractStyleTokens(artwork: Artwork): string[] {
   return Array.from(new Set(matches)).slice(0, 24)
 }
 
+function getCacheKey(targetId: string, mode: SimilaritySortMode, gradeTuning?: GradeTuningOptions): string {
+  if (mode !== 'grade' || !gradeTuning) return `${targetId}:${mode}`
+  const bal = gradeTuning.balance ?? 0
+  const s = gradeTuning.shadowOverride ? `${gradeTuning.shadowOverride.a},${gradeTuning.shadowOverride.b}` : ''
+  const h = gradeTuning.highlightOverride ? `${gradeTuning.highlightOverride.a},${gradeTuning.highlightOverride.b}` : ''
+  return `${targetId}:grade:b${bal}:s${s}:h${h}`
+}
+
 /**
  * Orchestrates off-thread CIELAB D65 + HSL + CLIP visual embedding radial sorting via Web Worker
- * with zero-copy Transferable TypedArrays and predictive pointer-down pre-sorting.
+ * with zero-copy Transferable TypedArrays, split-toning grade tuning, and predictive pointer-down pre-sorting.
  */
 export function useColorSortWorker(
   filteredArtworks: Artwork[],
   colorAnchorArtwork: Artwork | null,
-  mode: SimilaritySortMode = 'hybrid'
+  mode: SimilaritySortMode = 'hybrid',
+  gradeTuning?: GradeTuningOptions
 ) {
   const workerRef = React.useRef<Worker | null>(null)
   const requestIdRef = React.useRef(0)
@@ -46,6 +56,7 @@ export function useColorSortWorker(
   const artworksRef = React.useRef<Artwork[]>(filteredArtworks)
   const anchorRef = React.useRef<Artwork | null>(colorAnchorArtwork)
   const modeRef = React.useRef<SimilaritySortMode>(mode)
+  const gradeTuningRef = React.useRef<GradeTuningOptions | undefined>(gradeTuning)
   const pendingKeysRef = React.useRef<Set<string>>(new Set())
   const loadedEmbeddingLibsRef = React.useRef<Set<string>>(new Set())
   const loadingEmbeddingLibsRef = React.useRef<Map<string, Promise<boolean>>>(new Map())
@@ -58,9 +69,14 @@ export function useColorSortWorker(
     modeRef.current = mode
   }, [mode])
 
+  React.useEffect(() => {
+    gradeTuningRef.current = gradeTuning
+  }, [gradeTuning])
+
   const [workerResult, setWorkerResult] = React.useState<{
     targetId: string
     mode: SimilaritySortMode
+    cacheKey: string
     artworksList: Artwork[]
     scored: ScoredArtwork[]
     hasVisualEmbeddings: boolean
@@ -136,7 +152,8 @@ export function useColorSortWorker(
 
       const currentList = artworksRef.current
       const { targetId, mode: resultMode = 'hybrid', sortedIndices, distances, similarities, hasVisualEmbeddings } = msg
-      const cacheKey = `${targetId}:${resultMode}`
+      const currentTuning = gradeTuningRef.current
+      const cacheKey = getCacheKey(targetId, resultMode, currentTuning)
       pendingKeysRef.current.delete(cacheKey)
 
       if (sortedIndices.length !== currentList.length) {
@@ -178,6 +195,7 @@ export function useColorSortWorker(
       setWorkerResult({
         targetId,
         mode: resultMode,
+        cacheKey,
         artworksList: currentList,
         scored: finalScored,
         hasVisualEmbeddings,
@@ -229,12 +247,13 @@ export function useColorSortWorker(
     return () => window.clearTimeout(timer)
   }, [filteredArtworks, ensureEmbeddingsForLibrary])
 
-  // Trigger off-thread Worker sort on pointerDown (before click completes) or when mode changes
+  // Trigger off-thread Worker sort on pointerDown (before click completes) or when mode/tuning changes
   const prefetchAnchorSort = React.useCallback(
-    async (target: Artwork, explicitMode?: SimilaritySortMode) => {
+    async (target: Artwork, explicitMode?: SimilaritySortMode, explicitTuning?: GradeTuningOptions) => {
       const activeMode = explicitMode || modeRef.current
+      const activeTuning = explicitTuning !== undefined ? explicitTuning : gradeTuningRef.current
       const currentList = artworksRef.current
-      const cacheKey = `${target.id}:${activeMode}`
+      const cacheKey = getCacheKey(target.id, activeMode, activeTuning)
       const listCache = getOrCreateCacheForList(currentList)
       if (listCache.has(cacheKey) || pendingKeysRef.current.has(cacheKey)) {
         return
@@ -262,6 +281,7 @@ export function useColorSortWorker(
         targetPalette: target.palette,
         targetPaletteWeights: target.paletteWeights,
         targetSplitToning: target.splitToning,
+        targetGradeTuning: activeTuning,
         targetAspectRatio: target.aspectRatio,
         targetTags: target.tags,
         targetTokens: extractStyleTokens(target),
@@ -275,20 +295,20 @@ export function useColorSortWorker(
     [ensureEmbeddingsForLibrary]
   )
 
-  // Request worker sort if colorAnchorArtwork or mode is selected and not yet cached
+  // Request worker sort if colorAnchorArtwork, mode, or gradeTuning changes and not yet cached
   React.useEffect(() => {
     if (!colorAnchorArtwork) return
-    const cacheKey = `${colorAnchorArtwork.id}:${mode}`
+    const cacheKey = getCacheKey(colorAnchorArtwork.id, mode, gradeTuning)
     const listCache = getOrCreateCacheForList(filteredArtworks)
     if (!listCache.has(cacheKey)) {
-      void prefetchAnchorSort(colorAnchorArtwork, mode)
+      void prefetchAnchorSort(colorAnchorArtwork, mode, gradeTuning)
     }
-  }, [colorAnchorArtwork, mode, filteredArtworks, prefetchAnchorSort])
+  }, [colorAnchorArtwork, mode, gradeTuning, filteredArtworks, prefetchAnchorSort])
 
   const scoredArtworks = React.useMemo(() => {
     if (!colorAnchorArtwork) return []
 
-    const cacheKey = `${colorAnchorArtwork.id}:${mode}`
+    const cacheKey = getCacheKey(colorAnchorArtwork.id, mode, gradeTuning)
     const listCache = getOrCreateCacheForList(filteredArtworks)
     const isAnchorInList = filteredArtworks.some((a) => a.id === colorAnchorArtwork.id)
     const expectedLen = isAnchorInList ? filteredArtworks.length : filteredArtworks.length + 1
@@ -304,24 +324,25 @@ export function useColorSortWorker(
       workerResult &&
       workerResult.targetId === colorAnchorArtwork.id &&
       workerResult.mode === mode &&
+      workerResult.cacheKey === cacheKey &&
       workerResult.artworksList === filteredArtworks
     ) {
       return workerResult.scored
     }
 
     // 3. Fallback synchronous computation while Worker finishes computing
-    const syncCacheKey = `${colorAnchorArtwork.id}:${mode === 'grade' ? 'grade' : 'color'}`
-    let syncScored = listCache.get(syncCacheKey)
+    let syncScored = listCache.get(cacheKey)
     if (!syncScored || syncScored.length !== expectedLen) {
       syncScored = sortArtworksByColorProximity(
         filteredArtworks,
         colorAnchorArtwork,
-        mode === 'grade' ? 'grade' : 'color'
+        mode === 'grade' ? 'grade' : 'color',
+        gradeTuning
       )
-      listCache.set(syncCacheKey, syncScored)
+      listCache.set(cacheKey, syncScored)
     }
     return syncScored
-  }, [colorAnchorArtwork, mode, filteredArtworks, workerResult])
+  }, [colorAnchorArtwork, mode, gradeTuning, filteredArtworks, workerResult])
 
   return {
     scoredArtworks,
