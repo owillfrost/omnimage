@@ -96,6 +96,11 @@ export const en: TranslationDictionary = {
     gradeShadowThreshold: 'Shadows Upper L*',
     gradeHighlightThreshold: 'Highlights Lower L*',
     gradeResetAdvanced: 'Reset to defaults',
+    modeHybridInfo: 'Hybrid mode balances neural semantics (CLIP), color palette harmony, and prompt tags.',
+    modeColorInfo: 'Color mode matches proportional 5-color palette distribution in CIELAB space.',
+    modeVisualInfo: 'Visual mode searches by subject matter, composition, and style via CLIP neural embeddings.',
+    switchToGradeMode: 'Switch to Grade mode for split-toning adjustments',
+    noAnchorActive: 'No active anchor',
   },
   canvas: {
     gridSmall: 'Small Grid (Compact)',
