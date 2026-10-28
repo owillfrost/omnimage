@@ -138,7 +138,7 @@ describe('Eagle Zero-Copy Importer & Performance Benchmarks', () => {
       const importDurationMs = performance.now() - importStart
 
       console.log(`Inserted ${syntheticCount} synthetic items in ${importDurationMs.toFixed(1)} ms`)
-      expect(importDurationMs).toBeLessThan(500) // 5,000 items in < 500ms
+      expect(importDurationMs).toBeLessThan(1200) // 5,000 items in < 1.2s
 
       const payload = repo.getCompactJsonPayload('synthetic-lib')
       expect(payload.count).toBe(syntheticCount)

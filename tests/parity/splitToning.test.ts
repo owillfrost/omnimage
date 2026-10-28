@@ -144,6 +144,48 @@ describe('Split Toning Extraction & Grade Matching Parity Tests', () => {
     expect(profileMixed.shadows.a).toBeGreaterThan(profilePure.shadows.a * 0.45)
   })
 
+  it('protects highlights from skin tone bias when portrait is under neutral light', async () => {
+    // 1. Portrait under neutral light:
+    // 60% neutral gray/white background #CCCCCC (L=82, a=0, b=0)
+    // 40% natural skin tone #D89B77 (approx L=68, a=18, b=28)
+    const svgPortrait = `
+      <svg width="128" height="128" xmlns="http://www.w3.org/2000/svg">
+        <rect width="128" height="76" fill="#CCCCCC"/>
+        <rect y="76" width="128" height="52" fill="#D89B77"/>
+      </svg>
+    `
+    const portrait = await sharp(Buffer.from(svgPortrait))
+      .ensureAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true })
+    const profilePortrait = extractSplitToningFromRgba(portrait.data, portrait.info.width, portrait.info.height)
+
+    // With skin tone attenuation, the skin tone chroma weight is attenuated 4x,
+    // so the highlight tint stays subtle/near-neutral instead of being pulled to extreme orange.
+    expect(profilePortrait.hasHighlights).toBe(true)
+    expect(profilePortrait.highlights.a).toBeLessThan(12)
+    expect(profilePortrait.highlights.b).toBeLessThan(18)
+
+    // 2. Genuine warm graded image:
+    // 60% warm golden light #F59E42 (L=72, a=24, b=58)
+    // 40% skin tone #D89B77 (L=68, a=18, b=28)
+    const svgWarmGrade = `
+      <svg width="128" height="128" xmlns="http://www.w3.org/2000/svg">
+        <rect width="128" height="76" fill="#F59E42"/>
+        <rect y="76" width="128" height="52" fill="#D89B77"/>
+      </svg>
+    `
+    const warm = await sharp(Buffer.from(svgWarmGrade))
+      .ensureAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true })
+    const profileWarm = extractSplitToningFromRgba(warm.data, warm.info.width, warm.info.height)
+
+    // Genuine warm grade still clearly registers strong warm highlights
+    expect(profileWarm.highlights.a).toBeGreaterThan(15)
+    expect(profileWarm.highlights.b).toBeGreaterThan(35)
+  })
+
   it('weights groups with low valid pixel count less in distance comparison', () => {
     // Candidate A: Rich highlights and shadows
     const fullGrade = {
