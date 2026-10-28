@@ -4,14 +4,17 @@ import type {
   ColorSortWorkerResponse,
   SimilaritySortMode,
 } from '../workers/colorSort.worker'
+import type { GradeTuningOptions } from '../core/colorClustering'
 import { getCatalogProvider } from '../providers/providerFactory'
 
 export type { SimilaritySortMode }
+export type { GradeTuningOptions }
 
 export interface SimilarItemsOptions {
   limit?: number
   excludeSelf?: boolean
   mode?: SimilaritySortMode
+  gradeTuning?: GradeTuningOptions
 }
 
 export interface SimilarItemsResult {
@@ -29,6 +32,14 @@ function extractStyleTokens(artwork: Artwork): string[] {
   if (!matches) return []
   // Deduplicate and cap at 24 tokens per item to keep Worker memory minimal
   return Array.from(new Set(matches)).slice(0, 24)
+}
+
+function buildCacheKey(targetId: string, mode: SimilaritySortMode, gradeTuning?: GradeTuningOptions): string {
+  if (mode !== 'grade' || !gradeTuning) return `${targetId}:${mode}`
+  const bal = gradeTuning.balance ?? 0
+  const s = gradeTuning.shadowOverride ? `${gradeTuning.shadowOverride.a},${gradeTuning.shadowOverride.b}` : ''
+  const h = gradeTuning.highlightOverride ? `${gradeTuning.highlightOverride.a},${gradeTuning.highlightOverride.b}` : ''
+  return `${targetId}:grade:b${bal}:s${s}:h${h}`
 }
 
 class SimilarityWorkerManager {
@@ -146,7 +157,8 @@ class SimilarityWorkerManager {
 
   public computeSimilarity(
     targetArtwork: Artwork,
-    mode: SimilaritySortMode = 'hybrid'
+    mode: SimilaritySortMode = 'hybrid',
+    gradeTuning?: GradeTuningOptions
   ): Promise<SimilarItemsResult> {
     return new Promise((resolve) => {
       this.initWorker()
@@ -166,6 +178,7 @@ class SimilarityWorkerManager {
         targetPalette: targetArtwork.palette,
         targetPaletteWeights: targetArtwork.paletteWeights,
         targetSplitToning: targetArtwork.splitToning,
+        targetGradeTuning: gradeTuning,
         targetAspectRatio: targetArtwork.aspectRatio,
         targetTags: targetArtwork.tags,
         targetTokens: extractStyleTokens(targetArtwork),
@@ -186,8 +199,8 @@ export async function getSimilarArtworks(
   allArtworks: Artwork[],
   options: SimilarItemsOptions = {}
 ): Promise<SimilarItemsResult> {
-  const { limit = 20, mode = 'hybrid' } = options
-  const cacheKey = `${targetArtwork.id}:${mode}`
+  const { limit = 20, mode = 'hybrid', gradeTuning } = options
+  const cacheKey = buildCacheKey(targetArtwork.id, mode, gradeTuning)
 
   const cached = SIMILARITY_CACHE.get(cacheKey)
   if (cached) {
@@ -208,7 +221,7 @@ export async function getSimilarArtworks(
     await similarityManager.ensureEmbeddingsLoaded(libKey)
   }
 
-  const result = await similarityManager.computeSimilarity(targetArtwork, mode)
+  const result = await similarityManager.computeSimilarity(targetArtwork, mode, gradeTuning)
 
   if (SIMILARITY_CACHE.size >= MAX_CACHE_SIZE) {
     const firstKey = SIMILARITY_CACHE.keys().next().value

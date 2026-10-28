@@ -170,15 +170,22 @@ export function calculateWeightedPaletteDistance(
   return forwardDist * 0.5 + backwardDist * 0.3 + domDist * 0.2
 }
 
+export interface GradeTuningOptions {
+  balance?: number // -100 (100% shadows) to +100 (100% highlights), default 0
+  shadowOverride?: { a: number; b: number }
+  highlightOverride?: { a: number; b: number }
+}
+
 /**
  * Compares two images by their split-toning color grade (shadows and highlights color casts in CIELAB).
  * - Computes deltaE (Euclidean distance on a/b plane) between shadows and between highlights.
- * - Weights each group according to its valid pixel count (low pixel count groups receive lower weight).
+ * - Weights each group according to its valid pixel count and optional user balance (-100 shadows .. +100 highlights).
  * - Incorporates a gentle penalty if there is an extreme shadow/highlight balance disparity.
  */
 export function calculateSplitToningDistance(
   profileA?: SplitToningProfile,
-  profileB?: SplitToningProfile
+  profileB?: SplitToningProfile,
+  tuning?: GradeTuningOptions
 ): number {
   if (!profileA || !profileB) return 50
 
@@ -187,13 +194,18 @@ export function calculateSplitToningDistance(
   const hA = profileA.highlights
   const hB = profileB.highlights
 
+  const shadowA_a = tuning?.shadowOverride ? tuning.shadowOverride.a : sA.a
+  const shadowA_b = tuning?.shadowOverride ? tuning.shadowOverride.b : sA.b
+  const lightA_a = tuning?.highlightOverride ? tuning.highlightOverride.a : hA.a
+  const lightA_b = tuning?.highlightOverride ? tuning.highlightOverride.b : hA.b
+
   // Delta E in a/b chrominance plane
-  const deltaAs = sA.a - sB.a
-  const deltaBs = sA.b - sB.b
+  const deltaAs = shadowA_a - sB.a
+  const deltaBs = shadowA_b - sB.b
   const distShadows = Math.sqrt(deltaAs * deltaAs + deltaBs * deltaBs)
 
-  const deltaAh = hA.a - hB.a
-  const deltaBh = hA.b - hB.b
+  const deltaAh = lightA_a - hB.a
+  const deltaBh = lightA_b - hB.b
   const distHighlights = Math.sqrt(deltaAh * deltaAh + deltaBh * deltaBh)
 
   // Confidence weighting based on valid pixels:
@@ -201,11 +213,17 @@ export function calculateSplitToningDistance(
   const REF_PIXELS = 60
   const confSA = Math.min(1, sA.validPixels / REF_PIXELS)
   const confSB = Math.min(1, sB.validPixels / REF_PIXELS)
-  const weightShadows = confSA * confSB
 
   const confHA = Math.min(1, hA.validPixels / REF_PIXELS)
   const confHB = Math.min(1, hB.validPixels / REF_PIXELS)
-  const weightHighlights = confHA * confHB
+
+  // Balance between shadows and highlights (-100: shadows only, 0: 50/50, +100: highlights only)
+  const balance = tuning?.balance !== undefined ? Math.max(-100, Math.min(100, tuning.balance)) : 0
+  const factorShadows = (100 - balance) / 100
+  const factorHighlights = (100 + balance) / 100
+
+  const weightShadows = confSA * confSB * factorShadows
+  const weightHighlights = confHA * confHB * factorHighlights
 
   const totalWeight = weightShadows + weightHighlights
   if (totalWeight <= 0.001) {
@@ -221,7 +239,7 @@ export function calculateSplitToningDistance(
   const ratioSA = sA.validPixels / totalA
   const ratioSB = sB.validPixels / totalB
   const ratioDiff = Math.abs(ratioSA - ratioSB)
-  const imbalancePenalty = ratioDiff * 8
+  const imbalancePenalty = ratioDiff * 8 * Math.max(0, 1 - Math.abs(balance) / 100)
 
   return weightedDist + imbalancePenalty
 }
@@ -232,7 +250,8 @@ export function calculateSplitToningDistance(
 export function sortArtworksByColorProximity(
   artworks: Artwork[],
   targetArtwork: Artwork,
-  mode: 'color' | 'grade' = 'color'
+  mode: 'color' | 'grade' = 'color',
+  tuning?: GradeTuningOptions
 ): ScoredArtwork[] {
   const targetColor = targetArtwork.dominantColor || '#ffffff'
   const anchorColors =
@@ -260,7 +279,7 @@ export function sortArtworksByColorProximity(
       const candGrade =
         art.splitToning ||
         deriveFallbackSplitToningFromPalette(candColors, art.paletteWeights)
-      minDistance = calculateSplitToningDistance(anchorGrade, candGrade)
+      minDistance = calculateSplitToningDistance(anchorGrade, candGrade, tuning)
     } else {
       minDistance = calculateWeightedPaletteDistance(
         anchorColors,
@@ -461,5 +480,3 @@ export function matchesColorFilter(
   }
   return false
 }
-
-
