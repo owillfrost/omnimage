@@ -14,6 +14,7 @@ import {
   FolderOpen,
   Film,
   CornerDownLeft,
+  Sliders,
 } from "lucide-react"
 import { OmnimageLogo } from "./OmnimageLogo"
 import { LibraryToggleSwitch } from "./LibraryToggleSwitch"
@@ -56,6 +57,12 @@ const ANCHOR_MODE_OPTIONS: {
     label: 'Paleta',
     hint: 'Harmonia cromática das 5 cores ponderadas',
     icon: Palette,
+  },
+  {
+    id: 'grade',
+    label: 'Grade',
+    hint: 'Split toning: harmonia de sombras & luzes (Lab)',
+    icon: Sliders,
   },
 ]
 

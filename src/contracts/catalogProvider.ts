@@ -1,4 +1,5 @@
 import type { Artwork } from '../types/artwork'
+import type { SplitToningProfile } from '../core/paletteExtractor'
 import type {
   LibrarySource,
   CatalogItemDetail,
@@ -29,6 +30,7 @@ export interface ICatalogProvider {
     dominantColor: string
     palette: string[]
     paletteWeights: number[]
+    splitToning?: SplitToningProfile
   }>
   updateItemMetadata(libraryId: string, rawItemId: string, patch: ItemMetadataPatch): Promise<boolean>
   getMediaUrl(libraryId: string, rawItemId: string, type: 'thumb' | 'full'): string
