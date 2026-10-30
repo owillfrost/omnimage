@@ -144,6 +144,7 @@ export function buildInfiniteGridModel(
     const items: VirtualColumnItem[] = []
 
     for (const art of bucket) {
+      if (!art) continue
       const rawAspect = art.aspectRatio || 1.0
       const clampedAspect = Math.max(0.6, Math.min(1.8, rawAspect))
       const height = Math.round(cardWidth / clampedAspect)
@@ -338,8 +339,8 @@ export function getHarmonizedVirtualCards(
 
   const result: VisibleVirtualCard[] = []
 
-  const getCardHeight = (art: Artwork): number => {
-    const rawAspect = art.aspectRatio || 1.0
+  const getCardHeight = (art?: Artwork | null): number => {
+    const rawAspect = art?.aspectRatio || 1.0
     const clampedAspect = Math.max(0.6, Math.min(1.8, rawAspect))
     return Math.round(cardWidth / clampedAspect)
   }
@@ -368,6 +369,7 @@ export function getHarmonizedVirtualCards(
     for (let row = 0; row < MAX_STEPS; row++) {
       const rank = getRadialRank(col, row)
       const scored = scoredArtworks[rank % len]
+      if (!scored || !scored.artwork) continue
       const itemH = getCardHeight(scored.artwork)
       const worldY = currentDownY
 
@@ -401,6 +403,7 @@ export function getHarmonizedVirtualCards(
     for (let row = -1; row > -MAX_STEPS; row--) {
       const rank = getRadialRank(col, row)
       const scored = scoredArtworks[rank % len]
+      if (!scored || !scored.artwork) continue
       const itemH = getCardHeight(scored.artwork)
       const worldY = currentUpBottomY - itemH
 
