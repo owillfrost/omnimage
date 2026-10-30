@@ -37,51 +37,28 @@ function wrapText(text: string, maxCharsPerLine = 22): string[] {
 
 export function createSemanticQueryPreview(query: string): string {
   const lines = wrapText(query, 24).map(escapeXml)
+  const startY = Math.round(256 - ((lines.length - 1) * 36) / 2)
 
   const lineElements = lines
     .map(
       (line, i) =>
-        `<tspan x="256" dy="${i === 0 ? 0 : 36}" text-anchor="middle">${line}</tspan>`
+        `<tspan x="256" dy="${i === 0 ? 0 : 36}">${line}</tspan>`
     )
     .join('')
 
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <defs>
-    <radialGradient id="aura" cx="50%" cy="40%" r="65%">
-      <stop offset="0%" stop-color="#4f46e5" stop-opacity="0.45" />
-      <stop offset="50%" stop-color="#2e1065" stop-opacity="0.25" />
-      <stop offset="100%" stop-color="#09090b" stop-opacity="1" />
-    </radialGradient>
-    <linearGradient id="cardBorder" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#818cf8" stop-opacity="0.5" />
-      <stop offset="50%" stop-color="#312e81" stop-opacity="0.3" />
-      <stop offset="100%" stop-color="#18181b" stop-opacity="0.8" />
-    </linearGradient>
-    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="14" result="blur" />
-      <feComposite in="SourceGraphic" in2="blur" operator="over" />
-    </filter>
-  </defs>
-
   <rect width="512" height="512" fill="#09090b" />
-  <rect width="512" height="512" fill="url(#aura)" />
-  <rect x="16" y="16" width="480" height="480" rx="24" fill="none" stroke="url(#cardBorder)" stroke-width="2" />
+  <rect x="20" y="20" width="472" height="472" rx="20" fill="#121215" stroke="#27272a" stroke-width="1.5" />
 
-  <g transform="translate(256, 68)">
-    <rect x="-115" y="-16" width="230" height="32" rx="16" fill="#18181b" stroke="#4338ca" stroke-width="1.2" opacity="0.9" />
-    <text x="0" y="4" text-anchor="middle" fill="#a5b4fc" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="11" font-weight="600" letter-spacing="1.5">✦ BUSCA SEMÂNTICA IA</text>
-  </g>
+  <text x="256" y="74" text-anchor="middle" fill="#71717a" font-family="'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="600" letter-spacing="1.5">BUSCA TEXTUAL</text>
+  <line x1="64" y1="96" x2="448" y2="96" stroke="#222226" stroke-width="1" />
 
-  <text x="256" y="185" text-anchor="middle" fill="#6366f1" opacity="0.3" font-family="Georgia, serif" font-size="96" font-weight="bold">“</text>
-
-  <text x="256" y="245" fill="#f8fafc" font-family="'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="24" font-weight="700" letter-spacing="-0.5" filter="url(#glow)">
+  <text x="256" y="${startY}" text-anchor="middle" fill="#f4f4f6" font-family="'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="24" font-weight="600" letter-spacing="-0.3">
     ${lineElements}
   </text>
 
-  <g transform="translate(256, 440)">
-    <text x="0" y="0" text-anchor="middle" fill="#94a3b8" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="10.5" letter-spacing="1">CLIP ViT-B/32 • 512D INT8 • ZERO-SHOT</text>
-    <text x="0" y="22" text-anchor="middle" fill="#64748b" font-family="'Satoshi', -apple-system, BlinkMacSystemFont, sans-serif" font-size="10">Epicentro de similaridade radial (0, 0)</text>
-  </g>
+  <line x1="64" y1="416" x2="448" y2="416" stroke="#222226" stroke-width="1" />
+  <text x="256" y="446" text-anchor="middle" fill="#52525b" font-family="'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="500">Similaridade Semântica Neural</text>
 </svg>`
 
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`
@@ -100,12 +77,12 @@ export async function querySemanticSearch(query: string): Promise<{
   const { embedding, dim } = await provider.computeTextEmbedding(trimmed)
 
   const previewUrl = createSemanticQueryPreview(trimmed)
-  const dominant = '#6366f1'
+  const dominant = '#27272a'
 
   const ephemeralArtwork: Artwork = {
     id: `ephemeral-text-${Date.now()}`,
     title: trimmed,
-    artist: 'CLIP Natural Text Query',
+    artist: 'Busca Semântica por Texto',
     date: 'Instantâneo',
     medium: 'Vetor Zero-Shot 512D',
     source: 'Busca Semântica',
@@ -114,13 +91,13 @@ export async function querySemanticSearch(query: string): Promise<{
     thumbnailUrl: previewUrl,
     aspectRatio: 1.0,
     dominantColor: dominant,
-    palette: [dominant, '#2e1065', '#09090b', '#818cf8', '#f8fafc'],
-    paletteWeights: [0.45, 0.25, 0.15, 0.10, 0.05],
+    palette: [dominant, '#18181c', '#09090b', '#3f3f46', '#52525b'],
+    paletteWeights: [0.35, 0.25, 0.20, 0.10, 0.10],
     tags: ['clip-text-query', 'zero-shot', 'ai-search'],
     embedding,
     isEphemeral: true,
     isTextQuery: true,
-    department: 'Inteligência Artificial',
+    department: 'Busca Semântica',
     culture: `Prompt de Busca: "${trimmed}"`,
     worldX: 0,
     worldY: 0,
