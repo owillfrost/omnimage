@@ -2,109 +2,27 @@ import type { IncomingMessage, ServerResponse } from 'node:http'
 import fs from 'node:fs'
 import path from 'node:path'
 import zlib from 'node:zlib'
-import { quantizeNormalizedFloat32ToInt8 } from '../../src/core/vectorQuantization'
-import { extractPaletteFromRgba, type ExtractedPalette } from '../../src/core/paletteExtractor'
 import { findCacheFile } from '../importers/eagleLibraryImporter'
+import { getEmbeddingEngine } from './engines/engineRegistry'
+import { getEmbeddingConfig, type EmbeddingEngineType } from '../config/embeddingConfig'
+import type { TextQueryResult, VisualQueryResult } from './engines/types'
 
-// Lazy-loaded model singletons
-let clipProcessor: any = null
-let clipVisionModel: any = null
-let clipVisionLoadingPromise: Promise<{ processor: any; visionModel: any }> | null = null
-
-let clipTokenizer: any = null
-let clipTextModel: any = null
-let clipTextLoadingPromise: Promise<{ tokenizer: any; textModel: any }> | null = null
-
-export async function getClipVisionModel(): Promise<{ processor: any; visionModel: any }> {
-  if (clipProcessor && clipVisionModel) {
-    return { processor: clipProcessor, visionModel: clipVisionModel }
-  }
-  if (clipVisionLoadingPromise) return clipVisionLoadingPromise
-
-  clipVisionLoadingPromise = (async () => {
-    const { AutoProcessor, CLIPVisionModelWithProjection } = await import('@huggingface/transformers')
-    clipProcessor = await AutoProcessor.from_pretrained('Xenova/clip-vit-base-patch32')
-    clipVisionModel = await CLIPVisionModelWithProjection.from_pretrained(
-      'Xenova/clip-vit-base-patch32',
-      { dtype: 'fp32' }
-    )
-    return { processor: clipProcessor, visionModel: clipVisionModel }
-  })()
-
-  return clipVisionLoadingPromise
-}
-
-export async function getClipTextModel(): Promise<{ tokenizer: any; textModel: any }> {
-  if (clipTokenizer && clipTextModel) {
-    return { tokenizer: clipTokenizer, textModel: clipTextModel }
-  }
-  if (clipTextLoadingPromise) return clipTextLoadingPromise
-
-  clipTextLoadingPromise = (async () => {
-    const { AutoTokenizer, CLIPTextModelWithProjection } = await import('@huggingface/transformers')
-    clipTokenizer = await AutoTokenizer.from_pretrained('Xenova/clip-vit-base-patch32')
-    clipTextModel = await CLIPTextModelWithProjection.from_pretrained(
-      'Xenova/clip-vit-base-patch32',
-      { dtype: 'fp32' }
-    )
-    return { tokenizer: clipTokenizer, textModel: clipTextModel }
-  })()
-
-  return clipTextLoadingPromise
-}
+export type { TextQueryResult, VisualQueryResult }
 
 export async function computeClipTextEmbedding(
-  queryText: string
-): Promise<{ embedding: Int8Array; dim: number }> {
-  const clean = queryText.trim()
-  if (!clean) {
-    throw new Error('Query text cannot be empty')
-  }
-
-  const { tokenizer, textModel } = await getClipTextModel()
-  const inputs = await tokenizer([clean], { padding: true, truncation: true })
-  const { text_embeds } = await textModel(inputs)
-  const quantized = quantizeNormalizedFloat32ToInt8(text_embeds.data, 512)
-
-  return {
-    embedding: quantized,
-    dim: 512,
-  }
+  queryText: string,
+  engineType?: EmbeddingEngineType
+): Promise<TextQueryResult> {
+  const engine = await getEmbeddingEngine(engineType)
+  return engine.computeTextEmbedding(queryText)
 }
 
-export async function computeClipVisualQuery(imageBuffer: Buffer): Promise<{
-  embedding: Int8Array
-  width: number
-  height: number
-  aspectRatio: number
-  paletteData: ExtractedPalette
-}> {
-  if (!imageBuffer || imageBuffer.length === 0) {
-    throw new Error('Image buffer is empty')
-  }
-
-  const { RawImage } = await import('@huggingface/transformers')
-  const { processor, visionModel } = await getClipVisionModel()
-
-  const blob = new Blob([imageBuffer])
-  const rawImage = await RawImage.fromBlob(blob)
-
-  const inputs = await processor(rawImage)
-  const { image_embeds } = await visionModel(inputs)
-  const quantized = quantizeNormalizedFloat32ToInt8(image_embeds.data, 512)
-
-  const width = rawImage.width || 512
-  const height = rawImage.height || 512
-  const aspectRatio = Number((width / height).toFixed(3))
-  const paletteData = extractPaletteFromRgba(rawImage.data, width, height, 5)
-
-  return {
-    embedding: quantized,
-    width,
-    height,
-    aspectRatio,
-    paletteData,
-  }
+export async function computeClipVisualQuery(
+  imageBuffer: Buffer,
+  engineType?: EmbeddingEngineType
+): Promise<VisualQueryResult> {
+  const engine = await getEmbeddingEngine(engineType)
+  return engine.computeVisualEmbedding(imageBuffer)
 }
 
 // In-memory cache for fast binary embedding streaming
@@ -116,8 +34,14 @@ interface EmbeddingCacheEntry {
 
 const embeddingCache = new Map<string, EmbeddingCacheEntry>()
 
-export function resolveEmbeddingsFilePath(libraryId: string): string | null {
-  const fileName = `embeddings-${libraryId}.bin`
+export function resolveEmbeddingsFilePath(
+  libraryId: string,
+  engineType?: EmbeddingEngineType
+): string | null {
+  const currentEngine = engineType || getEmbeddingConfig().engine
+  const suffix = currentEngine === 'embeddinggemma-2' ? '.gemma2' : ''
+  const fileName = `embeddings-${libraryId}${suffix}.bin`
+
   // 1. Look into .omnimage/embeddings/ (or fallback .cosmos/embeddings/)
   const omnimagePath = path.resolve(process.cwd(), '.omnimage/embeddings', fileName)
   if (fs.existsSync(omnimagePath)) {
@@ -140,23 +64,27 @@ export function resolveEmbeddingsFilePath(libraryId: string): string | null {
 export async function handleEmbeddingsBinaryStream(
   req: IncomingMessage,
   res: ServerResponse,
-  libraryId: string
+  libraryId: string,
+  engineType?: EmbeddingEngineType,
+  db?: any
 ): Promise<void> {
-  const filePath = resolveEmbeddingsFilePath(libraryId)
+  const activeEngine = engineType || getEmbeddingConfig().engine
+  const filePath = resolveEmbeddingsFilePath(libraryId, activeEngine)
 
   if (!filePath || !fs.existsSync(filePath)) {
     res.statusCode = 404
     res.setHeader('Content-Type', 'application/json')
-    res.end(JSON.stringify({ status: 'not_indexed', library: libraryId }))
+    res.end(JSON.stringify({ status: 'not_indexed', library: libraryId, engine: activeEngine }))
     return
   }
 
   const stat = await fs.promises.stat(filePath)
-  const etag = `"emb-${libraryId}-${stat.size}-${stat.mtimeMs}"`
+  const etag = `"emb-${libraryId}-${activeEngine}-${stat.size}-${stat.mtimeMs}"`
 
   res.setHeader('Cache-Control', 'public, max-age=60')
   res.setHeader('ETag', etag)
   res.setHeader('X-Embedding-Dim', '512')
+  res.setHeader('X-Embedding-Engine', activeEngine)
   res.setHeader('Content-Type', 'application/octet-stream')
 
   if (req.headers['if-none-match'] === etag) {
@@ -168,12 +96,41 @@ export async function handleEmbeddingsBinaryStream(
   const acceptEncoding = String(req.headers['accept-encoding'] || '')
   const supportsGzip = acceptEncoding.includes('gzip')
 
-  let entry = embeddingCache.get(libraryId)
+  const cacheKey = `${libraryId}-${activeEngine}`
+  let entry = embeddingCache.get(cacheKey)
   if (!entry || entry.etag !== etag) {
-    const raw = await fs.promises.readFile(filePath)
+    let raw = await fs.promises.readFile(filePath)
+
+    // Check if the binary file lacks the 4-byte header length + JSON IDs prefix
+    // (i.e. was indexed as a raw contiguous Int8 buffer in batch)
+    if (raw.length >= 4) {
+      const headerLen = raw.readUInt32LE(0)
+      if (headerLen === 0 || 4 + headerLen > raw.length) {
+        // Build the standard binary packaging format on-the-fly: [Uint32LE headerLen] + [UTF-8 JSON IDs] + [vectors]
+        try {
+          const sqliteDb = db || (await import('../db/sqliteClient')).getSqliteDb()
+          const rows = sqliteDb.prepare(
+            'SELECT id FROM items WHERE library_id = ? AND is_deleted = 0 ORDER BY rowid ASC'
+          ).all(libraryId) as { id: string }[]
+
+          const numVectors = Math.floor(raw.length / 512)
+          const ids = rows.slice(0, numVectors).map(r => r.id)
+          const headerBytes = Buffer.from(JSON.stringify(ids), 'utf-8')
+
+          const packaged = Buffer.alloc(4 + headerBytes.length + raw.length)
+          packaged.writeUInt32LE(headerBytes.length, 0)
+          headerBytes.copy(packaged, 4)
+          raw.copy(packaged, 4 + headerBytes.length)
+          raw = packaged
+        } catch (packErr) {
+          console.warn('[handleEmbeddingsBinaryStream] Warning auto-packaging raw embeddings:', packErr)
+        }
+      }
+    }
+
     const gzip = zlib.gzipSync(raw, { level: zlib.constants.Z_BEST_SPEED })
     entry = { etag, raw, gzip }
-    embeddingCache.set(libraryId, entry)
+    embeddingCache.set(cacheKey, entry)
   }
 
   if (supportsGzip) {

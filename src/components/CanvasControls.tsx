@@ -1,5 +1,5 @@
 import * as React from "react"
-import { RotateCcw, Compass, Grid3x3, LayoutGrid, Maximize2, Shuffle, CircleHelp, RefreshCw } from "lucide-react"
+import { RotateCcw, Compass, Grid3x3, LayoutGrid, Maximize2, Shuffle, CircleHelp, RefreshCw, Sparkles } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip"
 import { AsciiReveal } from "./ui/AsciiReveal"
 import type { GridSizeMode } from "../core/infiniteGrid"
@@ -11,6 +11,7 @@ export interface CanvasControlsProps {
   onRefresh?: () => void
   isRefreshing?: boolean
   onOpenShortcuts?: () => void
+  onOpenModelSettings?: () => void
   visibleCount: number
   totalCount: number
   gridSize: GridSizeMode
@@ -24,6 +25,7 @@ export const CanvasControls: React.FC<CanvasControlsProps> = React.memo(({
   onRefresh,
   isRefreshing,
   onOpenShortcuts,
+  onOpenModelSettings,
   visibleCount,
   totalCount,
   gridSize,
@@ -139,6 +141,22 @@ export const CanvasControls: React.FC<CanvasControlsProps> = React.memo(({
             </TooltipTrigger>
             <TooltipContent>{effectiveCenterLabel}</TooltipContent>
           </Tooltip>
+
+          {onOpenModelSettings && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={onOpenModelSettings}
+                  className="p-2 text-zinc-400 hover:text-cyan-400 hover:bg-zinc-800 rounded-full active:scale-95 transition-all cursor-pointer"
+                  aria-label="Motor Semântico de IA"
+                >
+                  <Sparkles className="w-4 h-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Motor de IA (CLIP / Gemma 2)</TooltipContent>
+            </Tooltip>
+          )}
 
           {onOpenShortcuts && (
             <Tooltip>

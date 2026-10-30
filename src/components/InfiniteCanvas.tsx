@@ -34,11 +34,14 @@ import { ArtworkCard } from "./ArtworkCard"
 import { FloatingNav, type ActiveTab } from "./FloatingNav"
 import { MAX_FILTER_COLORS } from "../config/theme"
 import { FloatingInfoCard } from "./FloatingInfoCard"
+import { ErrorBoundary } from "./ErrorBoundary"
 import { CanvasControls } from "./CanvasControls"
 import { ExploreFeedView } from "./ExploreFeedView"
 import { ExploreFullscreenViewer } from "./ExploreFullscreenViewer"
 import { RecentlyViewedDock } from "./RecentlyViewedDock"
 import { ShortcutsModal } from "./ShortcutsModal"
+import { ModelSettingsModal } from "./ModelSettingsModal"
+import { IndexerStatusPill } from "./IndexerStatusPill"
 import { OmnimageLogo } from "./OmnimageLogo"
 import { queryVisualSearch } from "../services/visualSearchService"
 import { querySemanticSearch } from "../services/semanticSearchService"
@@ -87,6 +90,7 @@ export const InfiniteCanvas: React.FC = () => {
     sensitivity: 1.0,
   })
   const [isSearchSettingsOpen, setIsSearchSettingsOpen] = React.useState(true)
+  const [isModelSettingsOpen, setIsModelSettingsOpen] = React.useState(false)
 
   // Anchor Breadcrumb Trail (Rabbit Hole navigation)
   const {
@@ -1134,23 +1138,25 @@ export const InfiniteCanvas: React.FC = () => {
       />
 
       {/* Floating Bottom-Left Search Settings & Info Card */}
-      <FloatingInfoCard
-        isEagleConnected={isEagleConnected}
-        totalCount={allArtworks.length}
-        currentLibraryName={
-          currentLibrary === 'google-flow' ? 'Prompts' : currentLibrary === 'Comfy' ? 'Comfy' : 'Design'
-        }
-        activeTab={activeTab}
-        anchorArtwork={colorAnchorArtwork}
-        anchorMode={anchorMode}
-        onSelectAnchorMode={setAnchorMode}
-        gradeTuning={gradeTuning}
-        onGradeTuningChange={setGradeTuning}
-        layoutTuning={layoutTuning}
-        onLayoutTuningChange={setLayoutTuning}
-        isOpen={isSearchSettingsOpen}
-        onToggleOpen={() => setIsSearchSettingsOpen((prev) => !prev)}
-      />
+      <ErrorBoundary name="SearchSettings">
+        <FloatingInfoCard
+          isEagleConnected={isEagleConnected}
+          totalCount={allArtworks.length}
+          currentLibraryName={
+            currentLibrary === 'google-flow' ? 'Prompts' : currentLibrary === 'Comfy' ? 'Comfy' : 'Design'
+          }
+          activeTab={activeTab}
+          anchorArtwork={colorAnchorArtwork}
+          anchorMode={anchorMode}
+          onSelectAnchorMode={setAnchorMode}
+          gradeTuning={gradeTuning}
+          onGradeTuningChange={setGradeTuning}
+          layoutTuning={layoutTuning}
+          onLayoutTuningChange={setLayoutTuning}
+          isOpen={isSearchSettingsOpen}
+          onToggleOpen={() => setIsSearchSettingsOpen((prev) => !prev)}
+        />
+      </ErrorBoundary>
 
       {/* Floating Bottom-Center Recently Viewed Dock (Visual History Trail & Rabbit Hole Navigation) */}
       <RecentlyViewedDock
@@ -1177,12 +1183,25 @@ export const InfiniteCanvas: React.FC = () => {
         onRefresh={handleRefreshLibrary}
         isRefreshing={isLoadingLibrary}
         onOpenShortcuts={handleOpenShortcuts}
+        onOpenModelSettings={() => setIsModelSettingsOpen(true)}
         visibleCount={activeTab === 'explore' ? exploreVisibleCount : visibleCards.length}
         totalCount={filteredArtworks.length}
         gridSize={gridSize}
         onGridSizeChange={setGridSize}
         centerLabel={activeTab === 'explore' ? t('common.backToTop') : t('common.recenterGrid')}
       />
+
+      {/* AI Semantic Search Model Settings Modal */}
+      <ModelSettingsModal
+        isOpen={isModelSettingsOpen}
+        onClose={() => setIsModelSettingsOpen(false)}
+        onSaved={handleRefreshLibrary}
+      />
+
+      {/* Floating Indexer Progress Status Pill */}
+      <div className="fixed top-20 right-6 z-40 pointer-events-none">
+        <IndexerStatusPill />
+      </div>
 
       {/* Global Keyboard Shortcuts & Gestures Modal ('?' key trigger) */}
       <ShortcutsModal

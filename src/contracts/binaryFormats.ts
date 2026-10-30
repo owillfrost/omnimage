@@ -147,6 +147,7 @@ export interface LayoutBinaryHeader {
   version: number
   dim: number
   ids: string[]
+  extractorVersion?: number
 }
 
 export interface ParsedLayoutBinary {
@@ -154,25 +155,28 @@ export interface ParsedLayoutBinary {
   vectors: Uint8Array
   dim: number
   version: number
+  extractorVersion: number
 }
 
 /**
  * Serializes item layout vectors into a versioned binary package.
  * Format:
  * - Bytes [0..3]: Uint32LE indicating header size H
- * - Bytes [4..4+H]: UTF-8 JSON { version, dim, ids } (or legacy string array in v1)
+ * - Bytes [4..4+H]: UTF-8 JSON { version, dim, ids, extractorVersion } (or legacy string array in v1)
  * - Bytes [4+H..end]: Contiguous Uint8Array of dimension `dim` per item
  */
 export function serializeLayoutBinary(
   ids: string[],
   vectors: Uint8Array,
   dim = 288,
-  version = 2
+  version = 2,
+  extractorVersion = 1
 ): ArrayBuffer {
   const headerData: LayoutBinaryHeader = {
     version,
     dim,
     ids,
+    extractorVersion,
   }
   const headerJson = JSON.stringify(headerData)
   const encoder = new TextEncoder()
@@ -195,7 +199,7 @@ export function serializeLayoutBinary(
 
 /**
  * Parses a layout binary package with zero copies where possible.
- * Fully backwards-compatible with legacy unversioned v1 arrays.
+ * Fully backwards-compatible with legacy unversioned v1 arrays and unversioned extractor headers.
  */
 export function parseLayoutBinary(buffer: ArrayBuffer): ParsedLayoutBinary {
   if (buffer.byteLength < 4) {
@@ -215,17 +219,20 @@ export function parseLayoutBinary(buffer: ArrayBuffer): ParsedLayoutBinary {
 
   let ids: string[] = []
   let version = 1
+  let extractorVersion = 1
   let parsedDim: number | undefined
 
   if (Array.isArray(rawHeader)) {
     // Legacy v1 format: raw JSON array of IDs
     ids = rawHeader
     version = 1
+    extractorVersion = 1
   } else if (rawHeader && typeof rawHeader === 'object') {
-    // Versioned v2+ format: { version, dim, ids }
+    // Versioned v2+ format: { version, dim, ids, extractorVersion }
     ids = Array.isArray(rawHeader.ids) ? rawHeader.ids : []
     version = typeof rawHeader.version === 'number' ? rawHeader.version : 2
     parsedDim = typeof rawHeader.dim === 'number' ? rawHeader.dim : undefined
+    extractorVersion = typeof rawHeader.extractorVersion === 'number' ? rawHeader.extractorVersion : 1
   }
 
   const vectorOffset = 4 + headerLen
@@ -240,6 +247,7 @@ export function parseLayoutBinary(buffer: ArrayBuffer): ParsedLayoutBinary {
     vectors,
     dim,
     version,
+    extractorVersion,
   }
 }
 

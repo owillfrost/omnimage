@@ -19,6 +19,11 @@ import {
   computeClipTextEmbedding,
   computeClipVisualQuery,
 } from './clip/clipQueryService'
+import {
+  getEmbeddingConfig,
+  saveEmbeddingConfig,
+  type EmbeddingEngineType,
+} from './config/embeddingConfig'
 import type { ItemMetadataPatch } from '../src/contracts/schemas'
 
 function readRequestBody(req: IncomingMessage, maxBytes = 25 * 1024 * 1024): Promise<Buffer> {
@@ -386,7 +391,8 @@ export function createCatalogApiMiddleware() {
       // 7. GET /api/catalog/embeddings OR /api/eagle-embeddings
       if (pathname === '/api/catalog/embeddings' || pathname === '/api/eagle-embeddings') {
         const library = url.searchParams.get('library') || 'design'
-        await handleEmbeddingsBinaryStream(req, res, library)
+        const engineParam = url.searchParams.get('engine') as EmbeddingEngineType | null
+        await handleEmbeddingsBinaryStream(req, res, library, engineParam || undefined, db)
         return
       }
 
@@ -423,13 +429,15 @@ export function createCatalogApiMiddleware() {
           return
         }
 
-        const result = await computeClipTextEmbedding(queryText)
+        const queryEngine = (url.searchParams.get('engine') as EmbeddingEngineType) || undefined
+        const result = await computeClipTextEmbedding(queryText, queryEngine)
         res.setHeader('Content-Type', 'application/json; charset=utf-8')
         res.end(JSON.stringify({
           status: 'success',
           query: queryText,
           embedding: Array.from(result.embedding),
           dim: result.dim,
+          engine: queryEngine || getEmbeddingConfig().engine,
         }))
         return
       }
@@ -494,11 +502,13 @@ export function createCatalogApiMiddleware() {
           return
         }
 
-        const visualResult = await computeClipVisualQuery(imageBuffer)
+        const visualEngine = (url.searchParams.get('engine') as EmbeddingEngineType) || undefined
+        const visualResult = await computeClipVisualQuery(imageBuffer, visualEngine)
         res.setHeader('Content-Type', 'application/json; charset=utf-8')
         res.end(JSON.stringify({
           status: 'success',
           embedding: Array.from(visualResult.embedding),
+          engine: visualEngine || getEmbeddingConfig().engine,
           width: visualResult.width,
           height: visualResult.height,
           aspectRatio: visualResult.aspectRatio,
@@ -577,12 +587,36 @@ export function createCatalogApiMiddleware() {
         const bodyBuf = await readRequestBody(req, 1024 * 1024)
         const body = JSON.parse(bodyBuf.toString('utf-8'))
         const libraryId = body.library || 'design'
+        const engineParam = body.engine as EmbeddingEngineType | undefined
 
         // Run non-blocking
-        backgroundIndexer.startIndexing(libraryId, db).catch(console.error)
+        backgroundIndexer.startIndexing(libraryId, db, engineParam).catch(console.error)
 
         res.setHeader('Content-Type', 'application/json')
         res.end(JSON.stringify({ status: 'success', message: `Started indexing for ${libraryId}` }))
+        return
+      }
+
+      // 12.1 GET & POST /api/catalog/embedding-config
+      if (pathname === '/api/catalog/embedding-config') {
+        if (req.method === 'GET') {
+          res.setHeader('Content-Type', 'application/json; charset=utf-8')
+          res.end(JSON.stringify({ status: 'success', data: getEmbeddingConfig() }))
+          return
+        }
+
+        if (req.method === 'POST') {
+          const bodyBuf = await readRequestBody(req, 1024 * 1024)
+          const body = JSON.parse(bodyBuf.toString('utf-8'))
+          const updated = saveEmbeddingConfig(body)
+          res.setHeader('Content-Type', 'application/json; charset=utf-8')
+          res.end(JSON.stringify({ status: 'success', data: updated }))
+          return
+        }
+
+        res.statusCode = 405
+        res.setHeader('Content-Type', 'application/json')
+        res.end(JSON.stringify({ status: 'error', error: 'Method not allowed' }))
         return
       }
 

@@ -111,6 +111,13 @@ export interface TranslationDictionary {
     modeHybridInfo: string
     modeColorInfo: string
     modeVisualInfo: string
+    modeVisualTitle: string
+    modeVisualSubtitle: string
+    neuralEngineActive: string
+    neuralEngineClipDesc: string
+    neuralEngineGemmaDesc: string
+    neuralIndexLabel: string
+    engineSwitchError: string
     switchToGradeMode: string
     noAnchorActive: string
   }

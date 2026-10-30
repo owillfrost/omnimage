@@ -3,10 +3,12 @@ import path from 'node:path'
 import type Database from 'better-sqlite3'
 import { computeClipVisualQuery, resolveEmbeddingsFilePath } from './clipQueryService'
 import { getLibrariesConfig } from '../config/librariesConfig'
+import { getEmbeddingConfig, type EmbeddingEngineType } from '../config/embeddingConfig'
 
 export interface IndexerStatus {
   state: 'idle' | 'indexing'
   libraryId: string | null
+  engine: EmbeddingEngineType
   processed: number
   total: number
   rateImgPerSec: number
@@ -16,6 +18,7 @@ class BackgroundIndexer {
   private status: IndexerStatus = {
     state: 'idle',
     libraryId: null,
+    engine: 'clip-vit-b32',
     processed: 0,
     total: 0,
     rateImgPerSec: 0,
@@ -28,10 +31,16 @@ class BackgroundIndexer {
     return { ...this.status }
   }
 
-  async startIndexing(libraryId: string, db: Database.Database): Promise<void> {
+  async startIndexing(
+    libraryId: string,
+    db: Database.Database,
+    engineType?: EmbeddingEngineType
+  ): Promise<void> {
     if (this.isRunning) {
       return
     }
+
+    const activeEngine = engineType || getEmbeddingConfig().engine
 
     this.isRunning = true
     this.stopRequested = false
@@ -49,12 +58,15 @@ class BackgroundIndexer {
       this.status = {
         state: 'indexing',
         libraryId,
+        engine: activeEngine,
         processed: 0,
         total: rows.length,
         rateImgPerSec: 0,
       }
 
-      const embFile = resolveEmbeddingsFilePath(libraryId) || path.resolve(process.cwd(), `.omnimage/embeddings/embeddings-${libraryId}.bin`)
+      const suffix = activeEngine === 'embeddinggemma-2' ? '.gemma2' : ''
+      const defaultFileName = `embeddings-${libraryId}${suffix}.bin`
+      const embFile = resolveEmbeddingsFilePath(libraryId, activeEngine) || path.resolve(process.cwd(), `.omnimage/embeddings`, defaultFileName)
       const embDir = path.dirname(embFile)
       if (!fs.existsSync(embDir)) {
         fs.mkdirSync(embDir, { recursive: true })
@@ -79,7 +91,7 @@ class BackgroundIndexer {
         if (fs.existsSync(thumbCandidate)) {
           try {
             const buf = await fs.promises.readFile(thumbCandidate)
-            const visual = await computeClipVisualQuery(buf)
+            const visual = await computeClipVisualQuery(buf, activeEngine)
             // Append 512-byte Int8 buffer to embeddings binary file
             await fs.promises.appendFile(embFile, Buffer.from(visual.embedding.buffer))
           } catch {

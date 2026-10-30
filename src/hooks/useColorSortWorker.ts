@@ -431,26 +431,19 @@ export function useColorSortWorker(
       return workerResult.scored
     }
 
-    // 3. Fallback synchronous computation while Worker finishes computing
-    let syncScored = listCache.get(cacheKey)
-    if (!syncScored || syncScored.length !== expectedLen) {
-      if (mode === 'layout') {
-        syncScored = sortArtworksByColorProximity(
-          filteredArtworks,
-          colorAnchorArtwork,
-          'color'
-        )
-      } else {
-        syncScored = sortArtworksByColorProximity(
-          filteredArtworks,
-          colorAnchorArtwork,
-          mode === 'grade' ? 'grade' : 'color',
-          gradeTuning
-        )
-      }
-      listCache.set(cacheKey, syncScored)
+    // 3. Fallback synchronous computation while Worker finishes computing.
+    // NOTE: this placeholder is NOT written to listCache — it is a color/grade approximation, and
+    // caching it under a 'hybrid'/'visual'/'layout' key would make prefetchAnchorSort skip the
+    // Worker, freezing those modes on the color ordering.
+    if (mode === 'layout') {
+      return sortArtworksByColorProximity(filteredArtworks, colorAnchorArtwork, 'color')
     }
-    return syncScored
+    return sortArtworksByColorProximity(
+      filteredArtworks,
+      colorAnchorArtwork,
+      mode === 'grade' ? 'grade' : 'color',
+      gradeTuning
+    )
   }, [colorAnchorArtwork, mode, gradeTuning, layoutTuning, filteredArtworks, workerResult])
 
   return {

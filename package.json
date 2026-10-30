@@ -15,6 +15,10 @@
     "test:watch": "vitest",
     "migrate:grade": "vite-node scripts/migrateGrade.ts",
     "migrate:layout": "vite-node scripts/migrateLayout.ts",
+    "index:layout-v2": "vite-node scripts/indexLayoutV2.ts",
+    "index:gemma2": "vite-node scripts/indexGemma2.ts",
+    "benchmark:layout": "vite-node scripts/benchmarkLayout.ts",
+    "benchmark:blind": "vite-node scripts/runBlindBenchmark.ts",
     "preview": "vite preview"
   },
   "dependencies": {

@@ -142,11 +142,12 @@ describe('Layout Extractor & Binary Serialization Parity Tests', () => {
       rawVectors[i] = (i * 7) % 256
     }
 
-    const binaryBuffer = serializeLayoutBinary(ids, rawVectors, dim, 2)
+    const binaryBuffer = serializeLayoutBinary(ids, rawVectors, dim, 2, 2)
     expect(binaryBuffer.byteLength).toBeGreaterThan(ids.length * dim)
 
     const parsed = parseLayoutBinary(binaryBuffer)
     expect(parsed.version).toBe(2)
+    expect(parsed.extractorVersion).toBe(2)
     expect(parsed.ids).toEqual(ids)
     expect(parsed.dim).toBe(dim)
     expect(parsed.vectors.length).toBe(ids.length * dim)
@@ -162,6 +163,7 @@ describe('Layout Extractor & Binary Serialization Parity Tests', () => {
 
     const parsedLegacy = parseLayoutBinary(legacyBuf)
     expect(parsedLegacy.version).toBe(1)
+    expect(parsedLegacy.extractorVersion).toBe(1)
     expect(parsedLegacy.ids).toEqual(ids)
     expect(parsedLegacy.dim).toBe(dim)
     expect(Array.from(parsedLegacy.vectors)).toEqual(Array.from(rawVectors))

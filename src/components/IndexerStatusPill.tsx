@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils"
 
 export interface IndexerStatus {
   status: 'idle' | 'indexing' | 'completed' | 'error'
+  engine?: string
   processed: number
   total: number
   currentFileName?: string
@@ -38,6 +39,7 @@ export const IndexerStatusPill: React.FC<IndexerStatusPillProps> = ({
           if (active && json.status === 'success' && json.data) {
             setLiveStatus({
               status: json.data.state === 'indexing' ? 'indexing' : 'idle',
+              engine: json.data.engine,
               processed: json.data.processed,
               total: json.data.total,
               rateImgPerSec: json.data.rateImgPerSec,
@@ -78,7 +80,7 @@ export const IndexerStatusPill: React.FC<IndexerStatusPillProps> = ({
         <>
           <Loader2 className="w-3 h-3 animate-spin text-amber-400" />
           <span>
-            CLIP Indexer: {liveStatus.processed}/{liveStatus.total}
+            {liveStatus.engine === 'embeddinggemma-2' ? 'Gemma 2' : 'CLIP'} Indexer: {liveStatus.processed}/{liveStatus.total}
             {liveStatus.rateImgPerSec ? ` (${liveStatus.rateImgPerSec} img/s)` : ''}
           </span>
         </>

@@ -14,7 +14,11 @@ import {
   Layers,
   ArrowRight,
   LayoutGrid,
+  Zap,
+  Cpu,
+  Check,
 } from "lucide-react"
+import { cn } from "../lib/utils"
 import { useI18n } from "../i18n"
 import type { Artwork } from "../types/artwork"
 import type { GradeTuningOptions } from "../core/colorClustering"
@@ -58,6 +62,52 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
   onToggleOpen,
 }) => {
   const { t } = useI18n()
+  const [activeEngine, setActiveEngine] = React.useState<'clip-vit-b32' | 'embeddinggemma-2'>('clip-vit-b32')
+  const [isSwitchingEngine, setIsSwitchingEngine] = React.useState(false)
+  const [engineSwitchError, setEngineSwitchError] = React.useState<string | null>(null)
+
+  React.useEffect(() => {
+    fetch('/api/catalog/embedding-config')
+      .then((res) => res.json())
+      .then((res) => {
+        if (res.status === 'success' && res.data?.engine) {
+          if (res.data.engine === 'clip-vit-b32' || res.data.engine === 'embeddinggemma-2') {
+            setActiveEngine(res.data.engine)
+          }
+        }
+      })
+      .catch(() => {})
+  }, [isOpen])
+
+  const handleSelectEngineInCard = async (engine: 'clip-vit-b32' | 'embeddinggemma-2') => {
+    if (engine === activeEngine || isSwitchingEngine) return
+    setIsSwitchingEngine(true)
+    setEngineSwitchError(null)
+    try {
+      const res = await fetch('/api/catalog/embedding-config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          engine,
+          device: engine === 'embeddinggemma-2' ? 'directml' : 'auto',
+        }),
+      })
+      if (res.ok) {
+        const json = await res.json().catch(() => null)
+        if (json?.status === 'success') {
+          setActiveEngine(engine)
+          // Reload page or let parent know to re-fetch embeddings binary
+          window.location.reload()
+          return
+        }
+      }
+      setEngineSwitchError(t("nav.engineSwitchError") || 'Falha ao alternar motor neural.')
+    } catch (err) {
+      setEngineSwitchError(err instanceof Error ? err.message : 'Falha na conexão.')
+    } finally {
+      setIsSwitchingEngine(false)
+    }
+  }
   const [internalExpanded, setInternalExpanded] = React.useState(true)
   const [isAdvancedOpen, setIsAdvancedOpen] = React.useState(false)
 
@@ -727,23 +777,88 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                   </div>
                 )}
 
-                {/* --- CASE D: VISUAL MODE (CLIP Neural Embeddings) --- */}
+                {/* --- CASE D: VISUAL MODE (Neural Embeddings: CLIP or Gemma 2) --- */}
                 {anchorMode === "visual" && (
                   <div className="space-y-3 pt-1 animate-in fade-in-50 duration-200">
-                    <div className="p-3.5 rounded-2xl bg-zinc-900/50 border border-zinc-800/60 space-y-2.5">
-                      <div className="flex items-center gap-1.5 text-zinc-200 font-semibold text-[11px]">
-                        <Layers className="w-3.5 h-3.5 text-purple-400" />
-                        <span>Embeddings Visuais (CLIP)</span>
+                    <div className="p-3.5 rounded-2xl bg-zinc-900/50 border border-zinc-800/60 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5 text-zinc-200 font-semibold text-[11px]">
+                          <Layers className="w-3.5 h-3.5 text-purple-400" />
+                          <span>{t("nav.modeVisualTitle")}</span>
+                        </div>
+                        <span className="text-[10px] font-mono text-zinc-500">120 fps</span>
                       </div>
 
                       <p className="text-[11px] text-zinc-400 leading-normal">
-                        {t("nav.modeVisualInfo")}
+                        {t("nav.modeVisualSubtitle")}
                       </p>
 
-                      <div className="p-2.5 rounded-xl bg-zinc-950/60 border border-zinc-800/80 text-[10px] text-zinc-400 font-mono flex items-center justify-between">
-                        <span>Modelo Neural:</span>
-                        <span className="text-purple-300">ViT-B/32 (512-dim)</span>
+                      {engineSwitchError && (
+                        <div className="p-2 rounded-xl bg-red-950/40 border border-red-500/30 text-[10px] text-red-300 flex items-center gap-1.5 font-mono">
+                          <AlertTriangle className="w-3 h-3 text-red-400 shrink-0" />
+                          <span>{engineSwitchError}</span>
+                        </div>
+                      )}
+
+                      {/* Model Selector Pills */}
+                      <div className="space-y-1.5">
+                        <div className="text-[10px] text-zinc-400 font-medium">{t("nav.neuralEngineActive")}</div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            disabled={isSwitchingEngine}
+                            onClick={() => handleSelectEngineInCard('clip-vit-b32')}
+                            className={cn(
+                              "p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col gap-1",
+                              activeEngine === 'clip-vit-b32'
+                                ? "bg-zinc-900 border-cyan-500/60 text-white shadow-sm"
+                                : "bg-zinc-950/60 border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700"
+                            )}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-[11px] font-semibold flex items-center gap-1">
+                                <Zap className="w-3 h-3 text-amber-400" />
+                                CLIP ViT-B/32
+                              </span>
+                              {activeEngine === 'clip-vit-b32' && <Check className="w-3 h-3 text-cyan-400" />}
+                            </div>
+                            <span className="text-[9px] text-zinc-500 font-mono">{t("nav.neuralEngineClipDesc")}</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            disabled={isSwitchingEngine}
+                            onClick={() => handleSelectEngineInCard('embeddinggemma-2')}
+                            className={cn(
+                              "p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col gap-1",
+                              activeEngine === 'embeddinggemma-2'
+                                ? "bg-zinc-900 border-purple-500/60 text-white shadow-sm"
+                                : "bg-zinc-950/60 border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700"
+                            )}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-[11px] font-semibold flex items-center gap-1">
+                                <Cpu className="w-3 h-3 text-purple-400" />
+                                Gemma 2
+                              </span>
+                              {activeEngine === 'embeddinggemma-2' && <Check className="w-3 h-3 text-purple-400" />}
+                            </div>
+                            <span className="text-[9px] text-purple-300 font-mono">{t("nav.neuralEngineGemmaDesc")}</span>
+                          </button>
+                        </div>
                       </div>
+
+                      {activeEngine === 'embeddinggemma-2' ? (
+                        <div className="p-2.5 rounded-xl bg-purple-950/20 border border-purple-800/40 text-[10px] text-purple-300 flex items-center justify-between font-mono">
+                          <span>{t("nav.neuralIndexLabel")}</span>
+                          <span className="font-bold">embeddings.gemma2.bin</span>
+                        </div>
+                      ) : (
+                        <div className="p-2.5 rounded-xl bg-zinc-950/60 border border-zinc-800/80 text-[10px] text-zinc-400 flex items-center justify-between font-mono">
+                          <span>{t("nav.neuralIndexLabel")}</span>
+                          <span>embeddings.bin</span>
+                        </div>
+                      )}
 
                       {onSelectAnchorMode && (
                         <button
