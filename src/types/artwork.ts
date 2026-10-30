@@ -40,6 +40,11 @@ export interface Artwork {
    */
   embedding?: Int8Array | number[]
   /**
+   * Spatial layout vector (288 dimensions Uint8 [0..255] for 16x9 grid x 2 channels),
+   * used directly for external ephemeral anchors or layout similarity queries.
+   */
+  layoutVector?: Uint8Array | number[]
+  /**
    * Indicates whether this artwork is an external ephemeral query anchor (reverse image search or CLIP text query).
    */
   isEphemeral?: boolean

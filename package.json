@@ -14,6 +14,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "migrate:grade": "vite-node scripts/migrateGrade.ts",
+    "migrate:layout": "vite-node scripts/migrateLayout.ts",
     "preview": "vite preview"
   },
   "dependencies": {

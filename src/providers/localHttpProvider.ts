@@ -238,6 +238,22 @@ export class LocalHttpProvider implements ICatalogProvider {
     }
   }
 
+  async fetchLayoutBinary(libraryId: string): Promise<{ dim: number; buffer: ArrayBuffer } | null> {
+    try {
+      const params = new URLSearchParams({ library: libraryId })
+      const res = await fetch(`${this.baseUrl}/api/catalog/layout-vectors?${params.toString()}`)
+      if (!res.ok) return null
+
+      const dimHeader = res.headers.get('X-Layout-Dim')
+      const dim = dimHeader ? parseInt(dimHeader, 10) : 288
+      const buffer = await res.arrayBuffer()
+      return { dim, buffer }
+    } catch (err) {
+      console.error('Failed to fetch layout binary:', err)
+      return null
+    }
+  }
+
   async computeTextEmbedding(query: string): Promise<{ embedding: Int8Array; dim: number }> {
     const res = await fetch(`${this.baseUrl}/api/catalog/clip-text`, {
       method: 'POST',

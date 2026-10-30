@@ -1,5 +1,5 @@
 import React, { forwardRef, memo, useEffect, useRef, useState } from 'react'
-import { Sparkles, Eye, Palette, Layers, Pin, Sliders } from 'lucide-react'
+import { Sparkles, Eye, Palette, Layers, Pin, Sliders, LayoutGrid } from 'lucide-react'
 import type { Artwork } from '../../types/artwork'
 import type { SimilaritySortMode } from '../../services/similarityService'
 import { MotionVideoPreview } from '../MotionVideoPreview'
@@ -66,6 +66,12 @@ export const SimilarGrid = memo(
         label: t('nav.modeGrade'),
         hint: t('nav.modeGradeHint'),
         icon: Sliders,
+      },
+      {
+        id: 'layout' as SimilaritySortMode,
+        label: t('nav.modeLayout'),
+        hint: t('nav.modeLayoutHint'),
+        icon: LayoutGrid,
       },
     ], [t])
     const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)

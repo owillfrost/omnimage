@@ -223,6 +223,8 @@ const ArtworkCardComponent: React.FC<ArtworkCardProps> = ({
               ? t('canvas.anchorColorBadge')
               : anchorMode === 'grade'
               ? t('canvas.anchorGradeBadge')
+              : anchorMode === 'layout'
+              ? t('canvas.anchorLayoutBadge')
               : t('canvas.anchorHybridBadge')}
           </span>
         </div>
@@ -236,7 +238,14 @@ const ArtworkCardComponent: React.FC<ArtworkCardProps> = ({
             style={{ backgroundColor: artwork.dominantColor || '#ffffff' }}
           />
           <span>
-            {similarityPercent}% {anchorMode === 'color' ? t('canvas.affinityHue') : anchorMode === 'visual' ? t('canvas.affinityAi') : t('canvas.affinityGeneral')}
+            {similarityPercent}%{' '}
+            {anchorMode === 'color'
+              ? t('canvas.affinityHue')
+              : anchorMode === 'visual'
+              ? t('canvas.affinityAi')
+              : anchorMode === 'layout'
+              ? t('canvas.affinityLayout')
+              : t('canvas.affinityGeneral')}
           </span>
         </div>
       )}

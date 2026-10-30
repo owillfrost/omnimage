@@ -142,3 +142,104 @@ export function parseColorsBinary(buffer: ArrayBuffer): ParsedColorsBinary {
     floatsPerItem,
   }
 }
+
+export interface LayoutBinaryHeader {
+  version: number
+  dim: number
+  ids: string[]
+}
+
+export interface ParsedLayoutBinary {
+  ids: string[]
+  vectors: Uint8Array
+  dim: number
+  version: number
+}
+
+/**
+ * Serializes item layout vectors into a versioned binary package.
+ * Format:
+ * - Bytes [0..3]: Uint32LE indicating header size H
+ * - Bytes [4..4+H]: UTF-8 JSON { version, dim, ids } (or legacy string array in v1)
+ * - Bytes [4+H..end]: Contiguous Uint8Array of dimension `dim` per item
+ */
+export function serializeLayoutBinary(
+  ids: string[],
+  vectors: Uint8Array,
+  dim = 288,
+  version = 2
+): ArrayBuffer {
+  const headerData: LayoutBinaryHeader = {
+    version,
+    dim,
+    ids,
+  }
+  const headerJson = JSON.stringify(headerData)
+  const encoder = new TextEncoder()
+  const headerBytes = encoder.encode(headerJson)
+  const headerLen = headerBytes.byteLength
+
+  const totalBytes = 4 + headerLen + vectors.byteLength
+  const buffer = new ArrayBuffer(totalBytes)
+  const dataView = new DataView(buffer)
+
+  dataView.setUint32(0, headerLen, true)
+  const uint8View = new Uint8Array(buffer)
+  uint8View.set(headerBytes, 4)
+
+  const vectorTarget = new Uint8Array(buffer, 4 + headerLen, vectors.length)
+  vectorTarget.set(vectors)
+
+  return buffer
+}
+
+/**
+ * Parses a layout binary package with zero copies where possible.
+ * Fully backwards-compatible with legacy unversioned v1 arrays.
+ */
+export function parseLayoutBinary(buffer: ArrayBuffer): ParsedLayoutBinary {
+  if (buffer.byteLength < 4) {
+    throw new Error('Layout buffer is too small (under 4 bytes)')
+  }
+
+  const dataView = new DataView(buffer)
+  const headerLen = dataView.getUint32(0, true)
+
+  if (4 + headerLen > buffer.byteLength) {
+    throw new Error(`Invalid header length: ${headerLen} exceeds buffer size ${buffer.byteLength}`)
+  }
+
+  const headerBytes = new Uint8Array(buffer, 4, headerLen)
+  const decoder = new TextDecoder('utf-8')
+  const rawHeader = JSON.parse(decoder.decode(headerBytes))
+
+  let ids: string[] = []
+  let version = 1
+  let parsedDim: number | undefined
+
+  if (Array.isArray(rawHeader)) {
+    // Legacy v1 format: raw JSON array of IDs
+    ids = rawHeader
+    version = 1
+  } else if (rawHeader && typeof rawHeader === 'object') {
+    // Versioned v2+ format: { version, dim, ids }
+    ids = Array.isArray(rawHeader.ids) ? rawHeader.ids : []
+    version = typeof rawHeader.version === 'number' ? rawHeader.version : 2
+    parsedDim = typeof rawHeader.dim === 'number' ? rawHeader.dim : undefined
+  }
+
+  const vectorOffset = 4 + headerLen
+  const vectorBytes = buffer.byteLength - vectorOffset
+  const count = ids.length
+  const dim = parsedDim || (count > 0 ? Math.floor(vectorBytes / count) : 288)
+
+  const vectors = new Uint8Array(buffer, vectorOffset, count * dim)
+
+  return {
+    ids,
+    vectors,
+    dim,
+    version,
+  }
+}
+

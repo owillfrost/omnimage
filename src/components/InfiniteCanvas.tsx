@@ -15,6 +15,7 @@ const fetchCatalogTaxonomy = (lib: string, refresh = false) => getCatalogProvide
 import { parseSearchQuery, matchesTagFilters } from "../core/tagFilter"
 import type { SimilaritySortMode } from "../services/similarityService"
 import type { GradeTuningOptions } from "../core/colorClustering"
+import type { LayoutTuningOptions } from "../core/layoutExtractor"
 import {
   buildInfiniteGridModel,
   getVisibleVirtualCards,
@@ -80,6 +81,10 @@ export const InfiniteCanvas: React.FC = () => {
     sensitivity: 0.75,
     protectSkinTones: true,
     excludeNeutrals: false,
+  })
+  const [layoutTuning, setLayoutTuning] = React.useState<LayoutTuningOptions>({
+    aspectWeight: 0.15,
+    sensitivity: 1.0,
   })
   const [isSearchSettingsOpen, setIsSearchSettingsOpen] = React.useState(true)
 
@@ -396,12 +401,13 @@ export const InfiniteCanvas: React.FC = () => {
     mediaTypeFilter,
   ])
 
-  // Radial Chromatic / Aesthetic / Hybrid / Grade Sorting via parallel Web Worker (with predictive pointer-down pre-sorting)
+  // Radial Chromatic / Aesthetic / Hybrid / Grade / Layout Sorting via parallel Web Worker (with predictive pointer-down pre-sorting)
   const { scoredArtworks, prefetchAnchorSort } = useColorSortWorker(
     filteredArtworks,
     colorAnchorArtwork,
     anchorMode,
-    gradeTuning
+    gradeTuning,
+    layoutTuning
   )
 
   // Ordered artworks list for Fullscreen navigation
@@ -1140,6 +1146,8 @@ export const InfiniteCanvas: React.FC = () => {
         onSelectAnchorMode={setAnchorMode}
         gradeTuning={gradeTuning}
         onGradeTuningChange={setGradeTuning}
+        layoutTuning={layoutTuning}
+        onLayoutTuningChange={setLayoutTuning}
         isOpen={isSearchSettingsOpen}
         onToggleOpen={() => setIsSearchSettingsOpen((prev) => !prev)}
       />
