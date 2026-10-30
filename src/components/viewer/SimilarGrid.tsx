@@ -196,7 +196,8 @@ export const SimilarGrid = memo(
                         loading="lazy"
                         decoding="async"
                         draggable={false}
-                        className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-300"
+                        className="w-full h-full object-cover transition-opacity duration-200"
+                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
                       />
 
                       {/* Native Video Preview on Hover with Motion Scrubbing */}
@@ -208,12 +209,12 @@ export const SimilarGrid = memo(
 
                     {/* Active Reference Badges */}
                     {isA && (
-                      <div className="absolute top-2 left-2 z-10 px-2 py-0.5 rounded-full bg-zinc-800 text-white border border-zinc-600 text-[10px] font-mono font-medium shadow-md">
+                      <div className="absolute top-2 left-2 z-10 px-2 py-0.5 rounded-full bg-zinc-800 text-white border border-zinc-600 text-[10px] font-medium shadow-md">
                         Ref A
                       </div>
                     )}
                     {isB && (
-                      <div className="absolute top-2 left-2 z-10 px-2 py-0.5 rounded-full bg-amber-500/90 text-zinc-950 text-[10px] font-mono font-bold shadow-md">
+                      <div className="absolute top-2 left-2 z-10 px-2 py-0.5 rounded-full bg-amber-500/90 text-zinc-950 text-[10px] font-bold shadow-md">
                         Ref B
                       </div>
                     )}
@@ -226,7 +227,7 @@ export const SimilarGrid = memo(
                           onCompareSelect(item)
                         }}
                         title={t("viewer.shiftClickCompare")}
-                        className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 p-1.5 rounded-full bg-zinc-950/85 hover:bg-white text-zinc-300 hover:text-zinc-950 border border-zinc-700/80 backdrop-blur-md transition-all cursor-pointer shadow-lg hover:scale-105"
+                        className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 p-1.5 rounded-full bg-zinc-950/95 hover:bg-white text-zinc-300 hover:text-zinc-950 border border-zinc-700/80 transition-colors cursor-pointer shadow-lg"
                       >
                         <Pin className="w-3.5 h-3.5" />
                       </button>

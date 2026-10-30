@@ -191,6 +191,9 @@ const ArtworkCardComponent: React.FC<ArtworkCardProps> = ({
           LOADED_IMAGE_CACHE.add(artwork.thumbnailUrl)
           setIsLoaded(true)
         }}
+        onError={() => {
+          setIsLoaded(true)
+        }}
         className={cn(
           "w-full h-full object-cover pointer-events-none select-none",
           shouldAnimateWave

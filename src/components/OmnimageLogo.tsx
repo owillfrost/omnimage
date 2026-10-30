@@ -32,7 +32,7 @@ export const OmnimageLogo: React.FC<OmnimageLogoProps> = ({
         xmlns="http://www.w3.org/2000/svg"
         className={cn(
           "transition-transform duration-300 ease-out",
-          interactive && "group-hover:scale-110"
+          interactive && "group-hover:opacity-100"
         )}
       >
         {/* Hexagonal constellation dots */}

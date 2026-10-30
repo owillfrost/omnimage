@@ -224,7 +224,7 @@ export const ExploreFeedView: React.FC<ExploreFeedViewProps> = React.memo(({
     <div
       ref={containerRef as React.RefObject<HTMLDivElement>}
       onScroll={handleScroll}
-      className="h-screen w-screen overflow-y-auto overflow-x-hidden bg-[#09090b] pt-24 pb-28 px-6 select-none"
+      className="h-screen w-screen overflow-y-auto overflow-x-hidden bg-zinc-950 pt-24 pb-28 px-6 select-none"
     >
       {isLoading ? (
         <div className="flex flex-col items-center justify-center h-[60vh] text-center gap-3">

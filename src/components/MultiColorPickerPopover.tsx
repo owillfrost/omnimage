@@ -279,7 +279,7 @@ export const MultiColorPickerPopover: React.FC<MultiColorPickerPopoverProps> = (
       <PopoverContent
         align="end"
         sideOffset={10}
-        className="w-[310px] p-4 bg-zinc-950/95 backdrop-blur-2xl border border-zinc-800/90 rounded-2xl shadow-[0_24px_60px_rgba(0,0,0,0.85)] text-zinc-100 select-none"
+        className="w-[310px] p-4 bg-zinc-950 border border-zinc-800/90 rounded-2xl shadow-[0_24px_60px_rgba(0,0,0,0.85)] text-zinc-100 select-none"
       >
         <div className="space-y-3.5">
           {/* 1. Header: Title + Segmented Control (OR vs AND) */}
@@ -294,7 +294,7 @@ export const MultiColorPickerPopover: React.FC<MultiColorPickerPopoverProps> = (
             </div>
 
             <div
-              className="flex items-center gap-1 bg-zinc-900/90 p-1 rounded-xl border border-zinc-800/80"
+              className="flex items-center gap-1 bg-zinc-900 p-1 rounded-xl"
               role="tablist"
               aria-label={t("colorPicker.title")}
             >
@@ -338,7 +338,7 @@ export const MultiColorPickerPopover: React.FC<MultiColorPickerPopoverProps> = (
               onPointerMove={handleSvPointerMove}
               onPointerUp={handleSvPointerUp}
               onPointerCancel={handleSvPointerUp}
-              className="relative w-full h-36 rounded-xl overflow-hidden cursor-crosshair border border-white/10 shadow-inner touch-none"
+              className="relative w-full h-36 rounded-xl overflow-hidden cursor-crosshair ring-1 ring-white/10 shadow-inner touch-none"
               style={{ backgroundColor: pureHueHex }}
             >
               {/* Horizontal White-to-Transparent Saturation Gradient */}
@@ -413,7 +413,7 @@ export const MultiColorPickerPopover: React.FC<MultiColorPickerPopoverProps> = (
                         "w-5 h-5 rounded-full border transition-transform active:scale-90 cursor-pointer flex items-center justify-center",
                         isSelected
                           ? "border-white ring-2 ring-white/30 scale-110"
-                          : "border-white/20 hover:scale-105 hover:border-white/60"
+                          : "border-white/20 hover:border-white/80 hover:ring-1 hover:ring-white/40"
                       )}
                       style={{ backgroundColor: preset.hex }}
                     />
@@ -427,7 +427,7 @@ export const MultiColorPickerPopover: React.FC<MultiColorPickerPopoverProps> = (
               {/* HEX Field with Live Color Preview Swatch */}
               <div
                 className={cn(
-                  "flex items-center gap-1.5 bg-zinc-900/90 border rounded-xl px-2.5 py-1.5 flex-1 min-w-0 transition-colors",
+                  "flex items-center gap-1.5 bg-zinc-900 px-2.5 py-1.5 rounded-xl flex-1 min-w-0 transition-colors",
                   isHexValid
                     ? "border-zinc-800 focus-within:border-zinc-600"
                     : "border-red-500/70"
@@ -506,7 +506,7 @@ export const MultiColorPickerPopover: React.FC<MultiColorPickerPopoverProps> = (
             </div>
 
             {selectedColors.length === 0 ? (
-              <div className="py-2.5 px-3 rounded-xl border border-dashed border-zinc-800/80 bg-zinc-900/30 text-center">
+              <div className="py-2.5 px-3 rounded-xl bg-zinc-900/40 text-center">
                 <span className="text-[11px] text-zinc-500">
                   {t("colorPicker.dragInstruction")}
                 </span>

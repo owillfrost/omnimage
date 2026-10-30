@@ -19,7 +19,8 @@
     "index:gemma2": "vite-node scripts/indexGemma2.ts",
     "benchmark:layout": "vite-node scripts/benchmarkLayout.ts",
     "benchmark:blind": "vite-node scripts/runBlindBenchmark.ts",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint:design": "node scripts/lint-design.mjs"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.3.1",

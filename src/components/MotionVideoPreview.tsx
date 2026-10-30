@@ -226,7 +226,7 @@ export const MotionVideoPreview: React.FC<MotionVideoPreviewProps> = ({
           </div>
 
           {/* Progress Bar Track */}
-          <div className="relative w-full h-1 bg-white/20 rounded-full overflow-hidden backdrop-blur-xs">
+          <div className="relative w-full h-1 bg-white/20 rounded-full overflow-hidden">
             <div
               className="absolute left-0 top-0 bottom-0 bg-amber-400 rounded-full transition-[width] duration-75"
               style={{ width: `${Math.max(0, Math.min(100, progressRatio * 100))}%` }}

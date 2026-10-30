@@ -46,7 +46,7 @@ export const CanvasControls: React.FC<CanvasControlsProps> = React.memo(({
     <TooltipProvider>
       <div className="fixed bottom-6 right-6 z-30 flex items-center gap-2 pointer-events-none">
         {/* Count Pill */}
-        <div className="pointer-events-auto hidden sm:flex items-center gap-2 bg-zinc-950/85 backdrop-blur-xl border border-zinc-800 rounded-full px-3.5 py-1.5 text-xs text-zinc-400 shadow-xl font-mono">
+        <div className="pointer-events-auto hidden sm:flex items-center gap-2 bg-zinc-950/95 border border-zinc-800 rounded-full px-3.5 py-1.5 text-xs text-zinc-400 shadow-xl">
           <Compass className="w-3.5 h-3.5 text-zinc-300" data-ascii="skip" />
           <AsciiReveal
             key={`${totalCount}`}
@@ -64,7 +64,7 @@ export const CanvasControls: React.FC<CanvasControlsProps> = React.memo(({
 
         {/* Grid Density Selector (3 Icons) */}
         <div
-          className="pointer-events-auto bg-zinc-950/90 backdrop-blur-2xl border border-zinc-800 rounded-full p-1 shadow-2xl flex items-center gap-0.5"
+          className="pointer-events-auto bg-zinc-950/95 border border-zinc-800 rounded-full p-1 shadow-2xl flex items-center gap-0.5"
           role="group"
           aria-label={t('canvas.gridControlsAria')}
         >
@@ -76,7 +76,7 @@ export const CanvasControls: React.FC<CanvasControlsProps> = React.memo(({
                   <button
                     type="button"
                     onClick={() => onGridSizeChange(mode)}
-                    className={`p-2 rounded-full active:scale-95 transition-all cursor-pointer ${
+                    className={`p-2 rounded-full active:scale-95 transition-colors cursor-pointer ${
                       isActive
                         ? "bg-zinc-800 text-white shadow-sm"
                         : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60"

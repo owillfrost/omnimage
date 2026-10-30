@@ -99,7 +99,7 @@ artworkA,
       <div className="flex flex-col gap-2 pb-3 border-b border-zinc-800/80">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-mono font-medium bg-amber-500/15 text-zinc-200 border border-zinc-700/80">
+            <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-medium bg-amber-500/15 text-zinc-200 border border-zinc-700/80">
               <Sparkles className="w-3 h-3 text-zinc-200" />
               {t('sidebar.sideBySideCompare')}
             </span>
@@ -110,7 +110,7 @@ artworkA,
               <button
                 onClick={onSwapCompare}
                 title={t("viewer.swapAria")}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 text-xs transition-all cursor-pointer"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 text-xs transition-colors cursor-pointer"
               >
                 <ArrowLeftRight className="w-3.5 h-3.5 text-white" />
                 <span>{t("viewer.swap")}</span>
@@ -131,8 +131,8 @@ artworkA,
         {/* Side-by-Side Mini Reference Cards */}
         <div className="grid grid-cols-2 gap-2 mt-1">
           {/* Card Ref A */}
-          <div className="flex flex-col gap-1 p-2.5 rounded-xl bg-zinc-900/90 border border-zinc-700/80">
-            <div className="flex items-center justify-between text-[10px] font-mono">
+          <div className="flex flex-col gap-1 p-2.5 rounded-xl bg-zinc-900 border border-zinc-700/80">
+            <div className="flex items-center justify-between text-[10px] font-medium">
               <span className="text-zinc-200 font-semibold">REF A (BASE)</span>
               <span className="text-zinc-500">{artworkA.source}</span>
             </div>
@@ -141,6 +141,7 @@ artworkA,
                 src={artworkA.thumbnailUrl}
                 alt={artworkA.title}
                 className="w-8 h-8 rounded object-cover border border-zinc-800 shrink-0"
+                onError={(e) => { e.currentTarget.style.display = 'none'; }}
               />
               <span className="text-xs text-zinc-200 font-medium line-clamp-2 leading-snug">
                 {artworkA.title}
@@ -149,8 +150,8 @@ artworkA,
           </div>
 
           {/* Card Ref B */}
-          <div className="flex flex-col gap-1 p-2.5 rounded-xl bg-zinc-900/90 border border-zinc-700/80">
-            <div className="flex items-center justify-between text-[10px] font-mono">
+          <div className="flex flex-col gap-1 p-2.5 rounded-xl bg-zinc-900 border border-zinc-700/80">
+            <div className="flex items-center justify-between text-[10px] font-medium">
               <span className="text-zinc-200 font-semibold">{t("viewer.refBComparison").toUpperCase()}</span>
               <span className="text-zinc-500">{artworkB.source}</span>
             </div>
@@ -159,6 +160,7 @@ artworkA,
                 src={artworkB.thumbnailUrl}
                 alt={artworkB.title}
                 className="w-8 h-8 rounded object-cover border border-zinc-800 shrink-0"
+                onError={(e) => { e.currentTarget.style.display = 'none'; }}
               />
               <span className="text-xs text-zinc-200 font-medium line-clamp-2 leading-snug">
                 {artworkB.title}
@@ -175,21 +177,21 @@ artworkA,
             <Palette className="w-3.5 h-3.5 text-zinc-400" />
             <h3 className={sectionTitle}>{t('sidebar.colorHarmony')}</h3>
           </div>
-          <span className="text-[10px] font-mono text-zinc-500">CIELAB D65</span>
+          <span className="text-[10px] font-medium text-zinc-500">CIELAB D65</span>
         </div>
 
         {/* Harmony Metric Banner */}
-        <div className="flex items-center justify-between p-2.5 rounded-xl bg-zinc-900/90 border border-zinc-800">
+        <div className="flex items-center justify-between p-2.5 rounded-xl bg-zinc-900 border border-zinc-800">
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-bold text-white font-mono">
+              <span className="text-sm font-bold text-white font-medium tabular-nums">
                 {paletteDiff.harmonyScore}%
               </span>
               <span className="text-xs text-zinc-300 font-medium">
                 {paletteDiff.harmonyLabel}
               </span>
             </div>
-            <span className="text-[10px] text-zinc-500 font-mono">
+            <span className="text-[10px] text-zinc-500 font-medium">
               {t("sidebar.perceptualDistance", { dist: paletteDiff.dominantDistance })}
             </span>
           </div>
@@ -214,12 +216,12 @@ artworkA,
         <div className="flex flex-col gap-1.5 mt-1">
           {/* Strip A */}
           <div className="flex flex-col gap-0.5">
-            <span className="text-[10px] font-mono text-zinc-200">{t("sidebar.paletteRefA")}</span>
+            <span className="text-[10px] font-medium text-zinc-300">{t("sidebar.paletteRefA")}</span>
             <div className="flex h-3 w-full rounded-full overflow-hidden border border-zinc-800">
               {paletteDiff.paletteA.map(hex => (
                 <div
                   key={`palA-${hex}`}
-                  className="flex-1 h-full hover:flex-[1.5] transition-all cursor-pointer"
+                  className="flex-1 h-full hover:flex-[1.5] transition-colors cursor-pointer"
                   style={{ backgroundColor: hex }}
                   onClick={() => handleCopyText(hex, `hex-A-${hex}`)}
                   title={`${hex.toUpperCase()} (Ref A)`}
@@ -230,12 +232,12 @@ artworkA,
 
           {/* Strip B */}
           <div className="flex flex-col gap-0.5">
-            <span className="text-[10px] font-mono text-zinc-200">{t("sidebar.paletteRefB")}</span>
+            <span className="text-[10px] font-medium text-zinc-300">{t("sidebar.paletteRefB")}</span>
             <div className="flex h-3 w-full rounded-full overflow-hidden border border-zinc-800">
               {paletteDiff.paletteB.map(hex => (
                 <div
                   key={`palB-${hex}`}
-                  className="flex-1 h-full hover:flex-[1.5] transition-all cursor-pointer"
+                  className="flex-1 h-full hover:flex-[1.5] transition-colors cursor-pointer"
                   style={{ backgroundColor: hex }}
                   onClick={() => handleCopyText(hex, `hex-B-${hex}`)}
                   title={`${hex.toUpperCase()} (Ref B)`}
@@ -247,7 +249,7 @@ artworkA,
 
         {/* Closest Color Pairs List */}
         <div className="flex flex-col gap-1.5 mt-1">
-          <span className="text-[10px] text-zinc-500 font-mono uppercase">
+          <span className="text-[10px] text-zinc-500 font-medium uppercase">
             {t("sidebar.closestPairs")}
           </span>
           <div className="grid grid-cols-1 gap-1.5">
@@ -262,7 +264,7 @@ artworkA,
               return (
                 <div
                   key={`pair-${idx}`}
-                  className="flex items-center justify-between p-2 rounded-xl bg-zinc-900/60 border border-zinc-800/80 text-xs"
+                  className="flex items-center justify-between p-2 rounded-xl bg-zinc-900 border border-zinc-800/80 text-xs"
                 >
                   {/* Swatch A */}
                   <div className="flex items-center gap-2">
@@ -270,20 +272,20 @@ artworkA,
                       className="w-5 h-5 rounded-md border border-white/10 shrink-0"
                       style={{ backgroundColor: pair.colorA }}
                     />
-                    <span className="font-mono text-[11px] text-zinc-300">
+                    <span className="font-medium tabular-nums text-[11px] text-zinc-300">
                       {pair.colorA.toUpperCase()}
                     </span>
                   </div>
 
                   {/* Affinity Badge */}
-                  <div className="flex items-center gap-1 text-[10px] font-mono text-zinc-500">
+                  <div className="flex items-center gap-1 text-[10px] font-medium text-zinc-500">
                     <span>ΔE {pair.distance}</span>
                     <ArrowLeftRight className="w-2.5 h-2.5 text-zinc-500" />
                   </div>
 
                   {/* Swatch B */}
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-[11px] text-zinc-300">
+                    <span className="font-medium tabular-nums text-[11px] text-zinc-300">
                       {pair.colorB.toUpperCase()}
                     </span>
                     <span
@@ -332,7 +334,7 @@ artworkA,
             <h3 className={sectionTitle}>{t('sidebar.promptDiffTitle')}</h3>
           </div>
           {promptDiff.hasPrompts && (
-            <span className="text-[10px] font-mono text-zinc-500">
+            <span className="text-[10px] font-medium text-zinc-500">
               {Math.round(promptDiff.similarityRatio * 100)}% afinidade
             </span>
           )}
@@ -342,7 +344,7 @@ artworkA,
           <div className="flex flex-col gap-3">
             {/* Shared Terms Pills */}
             {promptDiff.sharedTerms.length > 0 && (
-              <div className="flex flex-col gap-1.5 p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25">
+              <div className="flex flex-col gap-1.5 p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-medium text-emerald-300 flex items-center gap-1">
                     <Check className="w-3 h-3 text-emerald-400" />
@@ -371,7 +373,7 @@ artworkA,
                   {promptDiff.sharedTerms.map(term => (
                     <span
                       key={`shared-${term}`}
-                      className="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-200 text-[10px] font-mono"
+                      className="px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-200 text-[10px] font-medium tabular-nums"
                     >
                       {term}
                     </span>
@@ -382,9 +384,9 @@ artworkA,
 
             {/* Prompt A with highlights */}
             {artworkA.culture && artworkA.culture !== 'Local Asset' && (
-              <div className="flex flex-col gap-1.5 p-2.5 rounded-xl bg-zinc-900/80 border border-zinc-800">
+              <div className="flex flex-col gap-1.5 p-2.5 rounded-xl bg-zinc-900 border border-zinc-800">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-mono text-zinc-200">PROMPT REF A</span>
+                  <span className="text-[10px] font-medium text-zinc-300">PROMPT REF A</span>
                   <button
                     onClick={() => handleCopyText(artworkA.culture || '', 'copy-prompt-A')}
                     className="flex items-center gap-1 text-[10px] text-zinc-400 hover:text-white cursor-pointer"
@@ -403,7 +405,7 @@ artworkA,
                       key={`spanA-${idx}`}
                       className={
                         span.type === 'shared'
-                          ? 'bg-emerald-500/25 text-emerald-200 font-medium rounded-xs px-0.5'
+                          ? 'bg-emerald-500/15 text-emerald-200 font-medium rounded-xs px-0.5'
                           : ''
                       }
                     >
@@ -416,9 +418,9 @@ artworkA,
 
             {/* Prompt B with highlights */}
             {artworkB.culture && artworkB.culture !== 'Local Asset' && (
-              <div className="flex flex-col gap-1.5 p-2.5 rounded-xl bg-zinc-900/80 border border-zinc-800">
+              <div className="flex flex-col gap-1.5 p-2.5 rounded-xl bg-zinc-900 border border-zinc-800">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-mono text-zinc-200">PROMPT REF B</span>
+                  <span className="text-[10px] font-medium text-zinc-300">PROMPT REF B</span>
                   <button
                     onClick={() => handleCopyText(artworkB.culture || '', 'copy-prompt-B')}
                     className="flex items-center gap-1 text-[10px] text-zinc-400 hover:text-white cursor-pointer"
@@ -437,7 +439,7 @@ artworkA,
                       key={`spanB-${idx}`}
                       className={
                         span.type === 'shared'
-                          ? 'bg-emerald-500/25 text-emerald-200 font-medium rounded-xs px-0.5'
+                          ? 'bg-emerald-500/15 text-emerald-200 font-medium rounded-xs px-0.5'
                           : ''
                       }
                     >
@@ -449,7 +451,7 @@ artworkA,
             )}
           </div>
         ) : (
-          <div className="p-3 rounded-xl bg-zinc-900/40 border border-zinc-800 text-[11px] text-zinc-500 italic">
+          <div className="p-3 rounded-xl bg-zinc-900/50 border border-zinc-800 text-[11px] text-zinc-500 italic">
             {t("sidebar.noPromptsRegistered")}
           </div>
         )}
@@ -462,7 +464,7 @@ artworkA,
             <Tag className="w-3.5 h-3.5 text-zinc-400" />
             <h3 className={sectionTitle}>{t("sidebar.tagDiffTitle")}</h3>
           </div>
-          <span className="text-[10px] font-mono text-zinc-500">
+          <span className="text-[10px] font-medium text-zinc-500">
             {tagDiff.overlapPercentage}% sobreposição
           </span>
         </div>
@@ -470,7 +472,7 @@ artworkA,
         {/* Shared Tags */}
         {tagDiff.sharedTags.length > 0 && (
           <div className="flex flex-col gap-1.5">
-            <span className="text-[10px] font-mono text-emerald-400 flex items-center gap-1">
+            <span className="text-[10px] font-medium text-emerald-400 flex items-center gap-1">
               <Check className="w-3 h-3" />
               {t("sidebar.sharedTags", { count: tagDiff.sharedTags.length })}
             </span>
@@ -482,7 +484,7 @@ artworkA,
                     onSearchTag(tag.startsWith('#') ? tag : `#${tag}`)
                     onClose()
                   }}
-                  className="px-2 py-0.5 rounded-full bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-200 border border-emerald-500/30 text-xs transition-all cursor-pointer"
+                  className="px-2 py-0.5 rounded-full bg-emerald-500/15 hover:bg-emerald-500/15 text-emerald-200 border border-emerald-500/30 text-xs transition-colors cursor-pointer"
                 >
                   #{tag}
                 </button>
@@ -494,7 +496,7 @@ artworkA,
         {/* Unique to A */}
         {tagDiff.onlyATags.length > 0 && (
           <div className="flex flex-col gap-1.5">
-            <span className="text-[10px] font-mono text-zinc-200">
+            <span className="text-[10px] font-medium text-zinc-300">
               {t("sidebar.uniqueToA", { count: tagDiff.onlyATags.length })}
             </span>
             <div className="flex flex-wrap gap-1.5">
@@ -505,7 +507,7 @@ artworkA,
                     onSearchTag(tag.startsWith('#') ? tag : `#${tag}`)
                     onClose()
                   }}
-                  className="px-2 py-0.5 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-700/80 text-xs transition-all cursor-pointer"
+                  className="px-2 py-0.5 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-700/80 text-xs transition-colors cursor-pointer"
                 >
                   #{tag}
                 </button>
@@ -517,7 +519,7 @@ artworkA,
         {/* Unique to B */}
         {tagDiff.onlyBTags.length > 0 && (
           <div className="flex flex-col gap-1.5">
-            <span className="text-[10px] font-mono text-zinc-200">
+            <span className="text-[10px] font-medium text-zinc-300">
               {t("sidebar.uniqueToB", { count: tagDiff.onlyBTags.length })}
             </span>
             <div className="flex flex-wrap gap-1.5">
@@ -528,7 +530,7 @@ artworkA,
                     onSearchTag(tag.startsWith('#') ? tag : `#${tag}`)
                     onClose()
                   }}
-                  className="px-2 py-0.5 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-700/80 text-xs transition-all cursor-pointer"
+                  className="px-2 py-0.5 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-700/80 text-xs transition-colors cursor-pointer"
                 >
                   #{tag}
                 </button>
@@ -540,7 +542,7 @@ artworkA,
         {tagDiff.sharedTags.length === 0 &&
           tagDiff.onlyATags.length === 0 &&
           tagDiff.onlyBTags.length === 0 && (
-            <div className="p-3 rounded-xl bg-zinc-900/40 border border-zinc-800 text-[11px] text-zinc-500 italic">
+            <div className="p-3 rounded-xl bg-zinc-900/50 border border-zinc-800 text-[11px] text-zinc-500 italic">
               {t("sidebar.noTagsRegistered")}
             </div>
           )}
@@ -553,17 +555,17 @@ artworkA,
         <div className="grid grid-cols-2 gap-2">
           {/* Ref A Actions */}
           <div className="flex flex-col gap-1.5">
-            <span className="text-[10px] font-mono text-zinc-200">Ref A</span>
+            <span className="text-[10px] font-medium text-zinc-300">Ref A</span>
             <button
               onClick={() => handleRunItemAction('reveal', artworkA, 'reveal-A')}
-              className="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 text-xs transition-all cursor-pointer"
+              className="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 text-xs transition-colors cursor-pointer"
             >
               <FolderOpen className="w-3.5 h-3.5" />
               <span>{copiedKey === 'reveal-A' ? 'Aberto!' : 'Explorer'}</span>
             </button>
             <button
               onClick={() => handleRunItemAction('info', artworkA, 'info-A')}
-              className="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 text-xs transition-all cursor-pointer"
+              className="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 text-xs transition-colors cursor-pointer"
             >
               <Copy className="w-3.5 h-3.5" />
               <span>{copiedKey === 'info-A' ? 'Copiado!' : 'Caminho'}</span>
@@ -572,17 +574,17 @@ artworkA,
 
           {/* Ref B Actions */}
           <div className="flex flex-col gap-1.5">
-            <span className="text-[10px] font-mono text-zinc-200">Ref B</span>
+            <span className="text-[10px] font-medium text-zinc-300">Ref B</span>
             <button
               onClick={() => handleRunItemAction('reveal', artworkB, 'reveal-B')}
-              className="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 text-xs transition-all cursor-pointer"
+              className="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 text-xs transition-colors cursor-pointer"
             >
               <FolderOpen className="w-3.5 h-3.5" />
               <span>{copiedKey === 'reveal-B' ? 'Aberto!' : 'Explorer'}</span>
             </button>
             <button
               onClick={() => handleRunItemAction('info', artworkB, 'info-B')}
-              className="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 text-xs transition-all cursor-pointer"
+              className="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 text-xs transition-colors cursor-pointer"
             >
               <Copy className="w-3.5 h-3.5" />
               <span>{copiedKey === 'info-B' ? 'Copiado!' : 'Caminho'}</span>
