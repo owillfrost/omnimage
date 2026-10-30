@@ -16,7 +16,7 @@ export interface ICatalogProvider {
   fetchTaxonomy(libraryId: string, refresh?: boolean): Promise<CatalogTaxonomyResponse | null>
   fetchItemDetail(libraryId: string, rawItemId: string): Promise<CatalogItemDetail | null>
   revealItemInExplorer(libraryId: string, rawItemId: string): Promise<{ ok: boolean; filePath?: string }>
-  fetchEmbeddingsBinary(libraryId: string): Promise<{ dim: number; buffer: ArrayBuffer } | null>
+  fetchEmbeddingsBinary(libraryId: string, engine?: string): Promise<{ dim: number; buffer: ArrayBuffer; engine?: string } | null>
   fetchLayoutBinary?(libraryId: string): Promise<{ dim: number; buffer: ArrayBuffer } | null>
   computeTextEmbedding(query: string): Promise<{ embedding: Int8Array; dim: number }>
   computeVisualQuery(input: {

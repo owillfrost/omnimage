@@ -4,7 +4,7 @@ import { runMigrations } from './db/migrations'
 import { createCatalogApiMiddleware } from './apiRouter'
 import { EagleLibraryImporter } from './importers/eagleLibraryImporter'
 import { getLibrariesConfig } from './config/librariesConfig'
-import { startConfiguredWatchers, stopAllLibraryWatchers, getLibraryFileWatcher } from './watcher/fileWatcher'
+import { startConfiguredWatchers } from './watcher/fileWatcher'
 
 export { getSqliteDb, closeSqliteDb } from './db/sqliteClient'
 export { CatalogRepository, invalidateCatalogCache } from './db/catalogRepository'
@@ -15,7 +15,15 @@ export {
   computeClipTextEmbedding,
   computeClipVisualQuery,
   handleEmbeddingsBinaryStream,
+  resolveEmbeddingsFilePath,
 } from './clip/clipQueryService'
+export {
+  getEmbeddingConfig,
+  saveEmbeddingConfig,
+  type EmbeddingEngineType,
+  type EmbeddingEngineConfig,
+} from './config/embeddingConfig'
+export { getEmbeddingEngine } from './clip/engines/engineRegistry'
 export { getLibraryFileWatcher, startConfiguredWatchers, stopAllLibraryWatchers } from './watcher/fileWatcher'
 
 export function initializeBackend(customDbPath?: string) {

@@ -111,6 +111,55 @@ describe('LayoutIndexer & Binary Streaming Backend Tests', () => {
     expect(parsed.ids).toEqual(['item-layout-1', 'item-layout-2'])
     expect(parsed.dim).toBe(288)
     expect(parsed.vectors.length).toBe(2 * 288)
+    expect(parsed.extractorVersion).toBe(1)
+  })
+
+  it('prevents mixing extractor versions and forces re-indexing on extractor version change', async () => {
+    // 1. Create a test thumbnail
+    const thumbPath = path.join(testDir, 'thumb_mix.webp')
+    await sharp({
+      create: {
+        width: 128,
+        height: 72,
+        channels: 4,
+        background: { r: 50, g: 100, b: 150, alpha: 1 },
+      },
+    })
+      .webp()
+      .toFile(thumbPath)
+
+    repo.insertItemsBatch('test-layout-lib', [
+      {
+        id: 'item-mix-1',
+        name: 'Item Mix 1',
+        ext: 'webp',
+        compactJson: JSON.stringify({ id: 'item-mix-1', name: 'Item Mix 1', ext: 'webp' }),
+        mediaRelPath: 'thumb_mix.webp',
+        thumbRelPath: path.relative(process.cwd(), thumbPath),
+      },
+    ])
+
+    const indexer = new LayoutIndexer()
+
+    // First pass with v1
+    const resV1 = await indexer.startIndexing('test-layout-lib', db, { extractorVersion: 1 })
+    expect(resV1.newlyIndexed).toBe(1)
+    expect(resV1.existing).toBe(0)
+
+    // Incremental pass with v1: should reuse
+    const resV1Resume = await indexer.startIndexing('test-layout-lib', db, { extractorVersion: 1 })
+    expect(resV1Resume.newlyIndexed).toBe(0)
+    expect(resV1Resume.existing).toBe(1)
+
+    // Pass with v2: MUST NOT reuse v1 vectors!
+    const resV2 = await indexer.startIndexing('test-layout-lib', db, { extractorVersion: 2 })
+    expect(resV2.newlyIndexed).toBe(1)
+    expect(resV2.existing).toBe(0)
+
+    // Check that binary header now has extractorVersion: 2
+    const raw = fs.readFileSync(testBinPath)
+    const parsed = parseLayoutBinary(raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength))
+    expect(parsed.extractorVersion).toBe(2)
   })
 
   it('streams layout binary with ETag and gzip headers', async () => {

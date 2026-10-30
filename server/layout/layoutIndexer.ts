@@ -6,6 +6,7 @@ import type Database from 'better-sqlite3'
 import {
   LAYOUT_VECTOR_DIM,
   extractLayoutFromBuffer,
+  extractLayoutV2FromBuffer,
 } from '../../src/core/layoutExtractor'
 import {
   serializeLayoutBinary,
@@ -39,8 +40,8 @@ export function invalidateLayoutCache(libraryId?: string): void {
   }
 }
 
-export function resolveLayoutFilePath(libraryId: string): string {
-  const fileName = `layout-${libraryId}.bin`
+export function resolveLayoutFilePath(libraryId: string, suffix?: string): string {
+  const fileName = suffix ? `layout-${libraryId}.${suffix}.bin` : `layout-${libraryId}.bin`
   const dir = path.resolve(process.cwd(), '.omnimage/layout')
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true })
@@ -82,6 +83,8 @@ export class LayoutIndexer {
     options: {
       onProgress?: (s: LayoutIndexerStatus) => void
       batchYield?: number
+      extractorVersion?: 1 | 2
+      targetFilePath?: string
     } = {}
   ): Promise<{ total: number; newlyIndexed: number; existing: number; elapsedSec: number }> {
     if (this.isRunning) {
@@ -92,6 +95,7 @@ export class LayoutIndexer {
     this.stopRequested = false
 
     const batchYield = options.batchYield ?? 50
+    const targetExtractorVersion = options.extractorVersion ?? 1
     const configs = getLibrariesConfig()
     const config = configs.find(c => c.id === libraryId)
     const rootPath = config?.path || ''
@@ -113,9 +117,9 @@ export class LayoutIndexer {
       }
       options.onProgress?.(this.getStatus())
 
-      const filePath = resolveLayoutFilePath(libraryId)
+      const filePath = options.targetFilePath ?? resolveLayoutFilePath(libraryId)
 
-      // 2. Load existing binary if present for incremental resume
+      // 2. Load existing binary if present for incremental resume (ONLY if extractorVersion matches)
       const existingIdMap = new Map<string, number>()
       let existingIds: string[] = []
       let existingVectors: Uint8Array = new Uint8Array(0)
@@ -125,10 +129,16 @@ export class LayoutIndexer {
           const rawBuf = fs.readFileSync(filePath)
           const ab = rawBuf.buffer.slice(rawBuf.byteOffset, rawBuf.byteOffset + rawBuf.byteLength)
           const parsed = parseLayoutBinary(ab)
-          existingIds = parsed.ids
-          existingVectors = parsed.vectors
-          for (let i = 0; i < existingIds.length; i++) {
-            existingIdMap.set(existingIds[i], i)
+          if (parsed.extractorVersion === targetExtractorVersion) {
+            existingIds = parsed.ids
+            existingVectors = parsed.vectors
+            for (let i = 0; i < existingIds.length; i++) {
+              existingIdMap.set(existingIds[i], i)
+            }
+          } else {
+            console.log(
+              `[LayoutIndexer] Extractor version mismatch in ${filePath} (found v${parsed.extractorVersion}, requested v${targetExtractorVersion}). Full re-indexing required.`
+            )
           }
         } catch {
           // If file is corrupted, re-index cleanly
@@ -154,7 +164,7 @@ export class LayoutIndexer {
 
         const existingIdx = existingIdMap.get(item.id)
         if (existingIdx !== undefined) {
-          // Fast-copy already indexed vector
+          // Fast-copy already indexed vector from identical extractor version
           const srcOffset = existingIdx * LAYOUT_VECTOR_DIM
           finalVectors.set(existingVectors.subarray(srcOffset, srcOffset + LAYOUT_VECTOR_DIM), destOffset)
           reusedCount++
@@ -176,7 +186,9 @@ export class LayoutIndexer {
           if (thumbPath && fs.existsSync(thumbPath)) {
             try {
               const fileBuf = await fs.promises.readFile(thumbPath)
-              const layoutRes = await extractLayoutFromBuffer(fileBuf)
+              const layoutRes = targetExtractorVersion === 2
+                ? await extractLayoutV2FromBuffer(fileBuf)
+                : await extractLayoutFromBuffer(fileBuf)
               finalVectors.set(layoutRes.vector, destOffset)
               newlyIndexed++
             } catch {
@@ -202,7 +214,7 @@ export class LayoutIndexer {
       }
 
       // 3. Atomically persist final binary file
-      const finalArrayBuffer = serializeLayoutBinary(finalIds, finalVectors, LAYOUT_VECTOR_DIM)
+      const finalArrayBuffer = serializeLayoutBinary(finalIds, finalVectors, LAYOUT_VECTOR_DIM, 2, targetExtractorVersion)
       const tmpPath = `${filePath}.tmp.${Date.now()}`
       fs.writeFileSync(tmpPath, Buffer.from(finalArrayBuffer))
       fs.renameSync(tmpPath, filePath)

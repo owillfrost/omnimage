@@ -222,16 +222,23 @@ export class LocalHttpProvider implements ICatalogProvider {
     return { ok: false }
   }
 
-  async fetchEmbeddingsBinary(libraryId: string): Promise<{ dim: number; buffer: ArrayBuffer } | null> {
+  async fetchEmbeddingsBinary(
+    libraryId: string,
+    engine?: string
+  ): Promise<{ dim: number; buffer: ArrayBuffer; engine?: string } | null> {
     try {
       const params = new URLSearchParams({ library: libraryId })
+      if (engine) {
+        params.set('engine', engine)
+      }
       const res = await fetch(`${this.baseUrl}/api/catalog/embeddings?${params.toString()}`)
       if (!res.ok) return null
 
       const dimHeader = res.headers.get('X-Embedding-Dim')
+      const engineHeader = res.headers.get('X-Embedding-Engine') || engine
       const dim = dimHeader ? parseInt(dimHeader, 10) : 512
       const buffer = await res.arrayBuffer()
-      return { dim, buffer }
+      return { dim, buffer, engine: engineHeader }
     } catch (err) {
       console.error('Failed to fetch embeddings binary:', err)
       return null

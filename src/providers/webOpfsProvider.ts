@@ -110,7 +110,7 @@ export class WebOpfsProvider implements ICatalogProvider {
     return { ok: false }
   }
 
-  async fetchEmbeddingsBinary(_libraryId: string): Promise<{ dim: number; buffer: ArrayBuffer } | null> {
+  async fetchEmbeddingsBinary(_libraryId: string, _engine?: string): Promise<{ dim: number; buffer: ArrayBuffer; engine?: string } | null> {
     if (this.embeddingsBuffer) {
       return { dim: 512, buffer: this.embeddingsBuffer }
     }
