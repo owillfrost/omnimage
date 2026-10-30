@@ -77,7 +77,7 @@ export const ModelSettingsModal: React.FC<ModelSettingsModalProps> = ({
       <DialogContent className="bg-zinc-950 border-zinc-800 text-zinc-100 sm:max-w-lg p-6">
         <DialogHeader>
           <DialogTitle className="text-base font-semibold flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-cyan-400" />
+            <Sparkles className="w-4 h-4 text-zinc-300" />
             <span>Motor de Busca Semântica por IA</span>
           </DialogTitle>
           <DialogDescription className="text-xs text-zinc-400 leading-relaxed">
@@ -92,16 +92,16 @@ export const ModelSettingsModal: React.FC<ModelSettingsModalProps> = ({
             className={cn(
               'p-4 rounded-2xl border transition-all cursor-pointer relative flex flex-col gap-2',
               config.engine === 'clip-vit-b32'
-                ? 'bg-zinc-900 border-cyan-500/50 shadow-lg shadow-cyan-950/30'
+                ? 'bg-zinc-900 border-zinc-500 shadow-sm'
                 : 'bg-zinc-900/40 border-zinc-800/80 hover:border-zinc-700 hover:bg-zinc-900/60'
             )}
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Zap className="w-4 h-4 text-amber-400" />
+                <Zap className="w-4 h-4 text-zinc-400" />
                 <span className="font-semibold text-xs text-zinc-200">CLIP ViT-B/32 (Padrão)</span>
               </div>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400">
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400 font-medium">
                 Padrão Leve
               </span>
             </div>
@@ -109,8 +109,8 @@ export const ModelSettingsModal: React.FC<ModelSettingsModalProps> = ({
               Ideal para qualquer PC ou CPU sem placa de vídeo. Indexação rápida e baixo consumo de RAM (~350 MB). Melhor desempenho em palavras-chave em inglês.
             </p>
             {config.engine === 'clip-vit-b32' && (
-              <div className="flex items-center gap-1.5 text-[11px] text-cyan-400 font-mono mt-1">
-                <Check className="w-3.5 h-3.5" />
+              <div className="flex items-center gap-1.5 text-[11px] text-zinc-200 mt-1">
+                <Check className="w-3.5 h-3.5 text-zinc-300" />
                 <span>Ativo</span>
               </div>
             )}
@@ -122,31 +122,31 @@ export const ModelSettingsModal: React.FC<ModelSettingsModalProps> = ({
             className={cn(
               'p-4 rounded-2xl border transition-all cursor-pointer relative flex flex-col gap-2',
               config.engine === 'embeddinggemma-2'
-                ? 'bg-zinc-900 border-purple-500/50 shadow-lg shadow-purple-950/30'
+                ? 'bg-zinc-900 border-zinc-500 shadow-sm'
                 : 'bg-zinc-900/40 border-zinc-800/80 hover:border-zinc-700 hover:bg-zinc-900/60'
             )}
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Cpu className="w-4 h-4 text-purple-400" />
+                <Cpu className="w-4 h-4 text-zinc-400" />
                 <span className="font-semibold text-xs text-zinc-200">
                   EmbeddingGemma 2 (Pro Neural 512D)
                 </span>
               </div>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 font-bold">
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300 font-medium">
                 Extra Opcional
               </span>
             </div>
             <p className="text-[11px] text-zinc-400 leading-normal">
               Modelo multimodal do Google de última geração. Compreende perfeitamente frases e descrições conceituais em <strong className="text-zinc-200">Português</strong>. Acelerado na sua GPU (DirectML / RTX 5050).
             </p>
-            <div className="flex items-center justify-between mt-1 text-[10px] text-zinc-500 font-mono">
+            <div className="flex items-center justify-between mt-1 text-[10px] text-zinc-500">
               <span>Dim: 512d (MRL)</span>
               <span>DirectML GPU Acelerado</span>
             </div>
             {config.engine === 'embeddinggemma-2' && (
-              <div className="flex items-center gap-1.5 text-[11px] text-purple-400 font-mono mt-1">
-                <Check className="w-3.5 h-3.5" />
+              <div className="flex items-center gap-1.5 text-[11px] text-zinc-200 mt-1">
+                <Check className="w-3.5 h-3.5 text-zinc-300" />
                 <span>Ativo (Índices em .gemma2.bin)</span>
               </div>
             )}
@@ -157,7 +157,7 @@ export const ModelSettingsModal: React.FC<ModelSettingsModalProps> = ({
         <div className="p-3 rounded-xl bg-zinc-900/30 border border-zinc-800/60 text-[11px] text-zinc-400 flex items-start gap-2">
           <AlertCircle className="w-3.5 h-3.5 text-zinc-500 shrink-0 mt-0.5" />
           <p className="leading-relaxed">
-            Dica: Para indexar sua biblioteca inteira com a GPU em lote usando Gemma 2, você também pode executar <code className="text-purple-300 font-mono">npm run index:gemma2</code> no terminal.
+            Dica: Para indexar sua biblioteca inteira com a GPU em lote usando Gemma 2, você também pode executar <code className="text-zinc-200 font-mono bg-zinc-800/80 px-1 py-0.5 rounded">npm run index:gemma2</code> no terminal.
           </p>
         </div>
 
