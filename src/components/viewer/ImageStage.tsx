@@ -143,7 +143,7 @@ export const ImageStage = memo(function ImageStage({
   const mediaClassSplit =
     'max-h-[72vh] max-w-[95%] rounded-lg shadow-2xl object-contain select-none pointer-events-none'
   const navBtnClass =
-    'absolute z-20 p-3 rounded-full bg-zinc-900/80 hover:bg-zinc-800/95 text-zinc-300 hover:text-white border border-zinc-800/80 backdrop-blur-md transition-all cursor-pointer shadow-xl hover:scale-105'
+    'absolute z-20 p-3 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 transition-colors cursor-pointer shadow-xl'
 
   return (
     <div
@@ -265,7 +265,7 @@ export const ImageStage = memo(function ImageStage({
                 <button
                   onClick={onSwapCompare}
                   title={t("viewer.swapAria")}
-                  className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-zinc-900/80 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 text-xs transition-all cursor-pointer"
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 text-xs transition-colors cursor-pointer"
                 >
                   <ArrowLeftRight className="w-3 h-3 text-white" />
                   <span className="hidden md:inline">{t("viewer.swap")}</span>
@@ -411,7 +411,7 @@ export const ImageStage = memo(function ImageStage({
 
       {/* Bottom Floating Control Bar */}
       <div
-        className="absolute bottom-5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 p-1.5 rounded-full bg-zinc-900/90 border border-zinc-800/80 backdrop-blur-md shadow-2xl"
+        className="absolute bottom-5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 p-1.5 rounded-full bg-zinc-900 border border-zinc-800 shadow-2xl"
         onClick={e => e.stopPropagation()}
       >
         {/* Zoom Level Selectors */}
@@ -419,7 +419,7 @@ export const ImageStage = memo(function ImageStage({
           <button
             key={level}
             onClick={() => handleZoomChange(level)}
-            className={`px-3 py-1 rounded-full text-xs font-mono font-medium transition-all cursor-pointer ${
+            className={`px-3 py-1 rounded-full text-xs font-medium tabular-nums transition-colors cursor-pointer ${
               zoom === level
                 ? 'bg-zinc-100 text-zinc-950 shadow-sm'
                 : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60'
@@ -500,7 +500,7 @@ export const ImageStage = memo(function ImageStage({
                 className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs text-zinc-400 hover:text-white hover:bg-zinc-800/60 transition-all cursor-pointer"
               >
                 <ArrowLeftRight className="w-3.5 h-3.5 text-white" />
-                <span className="hidden sm:inline">A ↔ B</span>
+                <span className="hidden sm:inline">A / B</span>
               </button>
             )}
 
@@ -523,7 +523,7 @@ export const ImageStage = memo(function ImageStage({
       <button
         onClick={onScrollToSimilar}
         title={t("viewer.similar")}
-        className="absolute bottom-5 right-6 md:right-10 z-20 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-zinc-900/85 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 border border-zinc-800/80 backdrop-blur-md text-xs font-medium transition-all cursor-pointer shadow-lg group"
+        className="absolute bottom-5 right-6 md:right-10 z-20 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 border border-zinc-800 text-xs font-medium transition-colors cursor-pointer shadow-lg group"
       >
         <span>{t("viewer.similar")}</span>
         <ChevronDown className="w-3.5 h-3.5 text-white group-hover:translate-y-0.5 transition-transform" />

@@ -188,17 +188,17 @@ artwork,
   if (!artwork) return null
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#09090b]/95 backdrop-blur-2xl flex flex-col lg:flex-row overflow-hidden animate-in fade-in duration-150">
+    <div className="fixed inset-0 z-50 bg-zinc-950/98 flex flex-col lg:flex-row overflow-hidden animate-in fade-in duration-150">
       {/* Scrollable Center Area (Hero Stage + Similares Masonry) */}
       <div
         ref={centerScrollRef}
         className="flex-1 h-full overflow-y-auto overflow-x-hidden relative select-none scroll-smooth"
       >
         {/* Sticky Top Bar Inside Viewer */}
-        <div className="sticky top-0 inset-x-0 z-30 flex items-center justify-between p-5 pointer-events-none bg-gradient-to-b from-[#09090b]/85 via-[#09090b]/40 to-transparent backdrop-blur-xs">
+        <div className="sticky top-0 inset-x-0 z-30 flex items-center justify-between p-5 pointer-events-none bg-gradient-to-b from-zinc-950/90 via-zinc-950/50 to-transparent">
           {!compareArtwork ? (
             /* Single View Header Pill */
-            <div className="pointer-events-auto flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-zinc-900/85 border border-zinc-800/80 backdrop-blur-md text-xs text-zinc-300 font-mono shadow-md">
+            <div className="pointer-events-auto flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 text-xs text-zinc-300 tabular-nums shadow-md">
               <span className="w-2 h-2 rounded-full" style={{ backgroundColor: artwork.dominantColor }} />
               <span>{currentIndex !== -1 ? `${currentIndex + 1} / ${artworks.length}` : '1 / 1'}</span>
               <span className="text-zinc-600">•</span>
@@ -206,7 +206,7 @@ artwork,
             </div>
           ) : (
             /* Split View Dual Pill */
-            <div className="pointer-events-auto flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-zinc-900/90 border border-zinc-800/90 backdrop-blur-md text-xs font-mono shadow-lg">
+            <div className="pointer-events-auto flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 text-xs tabular-nums shadow-lg">
               <Columns2 className="w-3.5 h-3.5 text-amber-400" />
               <span className="text-white font-semibold">Ref A</span>
               <span className="text-zinc-600">•</span>
@@ -225,8 +225,8 @@ artwork,
 
           <div className="flex items-center gap-2">
             {comfyMeta && (
-              <div className="pointer-events-auto flex items-center gap-1.5 px-2 py-1 rounded-full bg-zinc-900/90 border border-zinc-800 backdrop-blur-md shadow-lg">
-                <span className="hidden md:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300 text-[10px] font-mono font-semibold uppercase tracking-wide">
+              <div className="pointer-events-auto flex items-center gap-1.5 px-2 py-1 rounded-full bg-zinc-900 border border-zinc-800 shadow-lg">
+                <span className="hidden md:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300 text-[10px] font-semibold uppercase tracking-wide">
                   <Workflow className="w-3 h-3 text-amber-400" />
                   ComfyUI
                 </span>

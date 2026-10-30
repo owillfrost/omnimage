@@ -140,10 +140,10 @@ const FolderTreeItem: React.FC<FolderTreeItemProps> = ({
         <div className="flex items-center gap-1.5 shrink-0">
           <span
             className={cn(
-              "text-[10px] font-mono px-1.5 py-0.5 rounded-full transition-colors",
+              "text-[11px] text-zinc-500 tabular-nums",
               isSelected
-                ? "bg-amber-500/25 text-amber-300"
-                : "bg-zinc-900 text-zinc-500 group-hover:text-zinc-400 border border-zinc-800"
+                ? "text-amber-400 font-semibold"
+                : "text-zinc-500 group-hover:text-zinc-400"
             )}
           >
             {folder.itemCount.toLocaleString()}
@@ -658,12 +658,12 @@ folders = [],
                         <div className="flex items-center gap-1.5 shrink-0">
                           <span
                             className={cn(
-                              "text-[10px] font-mono px-1.5 py-0.5 rounded-full",
+                              "text-[11px] tabular-nums",
                               isIncluded
-                                ? "bg-emerald-500/20 text-emerald-300"
+                                ? "text-emerald-400 font-semibold"
                                 : isExcluded
-                                ? "bg-rose-500/20 text-rose-300"
-                                : "bg-zinc-900 text-zinc-500 group-hover:text-zinc-400 border border-zinc-800"
+                                ? "text-rose-400 font-semibold"
+                                : "text-zinc-500 group-hover:text-zinc-400"
                             )}
                           >
                             {tag.count.toLocaleString()}
@@ -787,7 +787,7 @@ folders = [],
 
                       <span
                         className={cn(
-                          "text-[10px] font-mono px-2 py-0.5 rounded-full shrink-0",
+                          "text-[11px] tabular-nums shrink-0 text-zinc-500",
                           opt.badgeColor
                         )}
                       >

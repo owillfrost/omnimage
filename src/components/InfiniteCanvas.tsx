@@ -962,7 +962,7 @@ export const InfiniteCanvas: React.FC = () => {
 
   return (
     <div
-      className="relative w-screen h-screen overflow-hidden bg-[#09090b] select-none"
+      className="relative w-screen h-screen overflow-hidden bg-zinc-950 select-none"
       style={{
         '--anchor-accent': calibratedAccent.accent,
         '--anchor-accent-bright': calibratedAccent.bright,
@@ -980,14 +980,7 @@ export const InfiniteCanvas: React.FC = () => {
         }}
       />
 
-      {/* Subtle starfield / grid texture in deep background */}
-      <div
-        className="absolute inset-0 pointer-events-none opacity-15"
-        style={{
-          backgroundImage: `radial-gradient(rgba(255, 255, 255, 0.12) 1px, transparent 1px)`,
-          backgroundSize: '40px 40px',
-        }}
-      />
+
 
       {/* Top Floating Navigation with Continuous Multi-Color Palette Filter, Library Switcher & Tab Switcher */}
       <FloatingNav

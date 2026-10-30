@@ -309,7 +309,7 @@ export const FloatingNav: React.FC<FloatingNavProps> = React.memo(({
     <TooltipProvider>
       <header className="fixed top-5 inset-x-0 z-40 flex items-center justify-between px-6 pointer-events-none">
         {/* Left Pill: Omnimage Identity + Connection Status Dot */}
-        <div className="pointer-events-auto flex items-center gap-3 bg-zinc-950/80 backdrop-blur-xl border border-zinc-800/80 rounded-full px-4 py-1.5 shadow-2xl transition-all hover:border-zinc-700">
+        <div className="pointer-events-auto flex items-center gap-3 bg-zinc-950 border border-zinc-800 rounded-full px-4 py-1.5 shadow-2xl transition-colors hover:border-zinc-700">
           <div className="relative flex items-center gap-2">
             <OmnimageLogo size={24} />
             <span className="text-xs font-semibold tracking-wider text-zinc-100 uppercase hidden sm:inline-block">
@@ -361,7 +361,7 @@ export const FloatingNav: React.FC<FloatingNavProps> = React.memo(({
           {/* Global Search & Smart Filter Pill */}
           <div
             className={cn(
-              "pointer-events-auto flex items-center bg-zinc-950/85 backdrop-blur-2xl border rounded-full pl-2 pr-2 py-1.5 shadow-2xl transition-all duration-300 w-full",
+              "pointer-events-auto flex items-center bg-zinc-950 border rounded-full pl-2 pr-2 py-1.5 shadow-2xl transition-colors duration-200 w-full",
               isSemanticAnchorActive
                 ? "border-amber-500/40 shadow-[0_0_25px_rgba(245,158,11,0.14)] hover:border-amber-400/60"
                 : "border-zinc-800 hover:border-zinc-700"
@@ -380,7 +380,7 @@ export const FloatingNav: React.FC<FloatingNavProps> = React.memo(({
                     "w-7 h-7 flex items-center justify-center rounded-full transition-colors duration-150 mr-2 cursor-pointer shrink-0 select-none",
                     searchMode === 'semantic'
                       ? "bg-amber-500/15 text-amber-400 border border-amber-500/35 shadow-xs hover:bg-amber-500/25 hover:border-amber-400/50"
-                      : "bg-zinc-900/60 text-zinc-400 border border-zinc-800/80 hover:text-zinc-200 hover:bg-zinc-800/70 hover:border-zinc-700/80"
+                      : "bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-zinc-200 hover:bg-zinc-800"
                   )}
                   aria-label={t("nav.searchModeToggleAria")}
                 >
@@ -470,7 +470,7 @@ export const FloatingNav: React.FC<FloatingNavProps> = React.memo(({
             {/* Active Chromatic / Image Anchor Badge (Rendered ONLY for Image anchors, avoiding text duplication) */}
             {colorAnchorArtwork && !colorAnchorArtwork.isTextQuery && (
               <div
-                className="flex items-center gap-1.5 bg-zinc-900/90 rounded-full pl-2 pr-1.5 py-0.5 text-xs text-zinc-200 mr-1.5 shrink-0 shadow-sm animate-in fade-in duration-200 transition-colors duration-300"
+                className="flex items-center gap-1.5 bg-zinc-900 rounded-full pl-2 pr-1.5 py-0.5 text-xs text-zinc-200 mr-1.5 shrink-0 shadow-sm animate-in fade-in duration-200 transition-colors duration-300"
                 style={{
                   border: '1px solid var(--anchor-accent-subtle)',
                 }}
@@ -558,7 +558,7 @@ export const FloatingNav: React.FC<FloatingNavProps> = React.memo(({
                 {visibleChips.map((hex) => (
                   <span
                     key={hex}
-                    className="inline-flex items-center gap-1 bg-zinc-900/90 border border-zinc-700/80 rounded-full pl-1.5 pr-1 py-0.5 text-[11px] font-mono text-zinc-200 shadow-sm"
+                    className="inline-flex items-center gap-1 bg-zinc-900 border border-zinc-700/80 rounded-full pl-1.5 pr-1 py-0.5 text-[11px] font-mono text-zinc-200 shadow-sm"
                   >
                     <span
                       className="w-2.5 h-2.5 rounded-full border border-white/25 shrink-0"
@@ -685,7 +685,7 @@ export const FloatingNav: React.FC<FloatingNavProps> = React.memo(({
                 <PopoverContent
                   align="end"
                   sideOffset={10}
-                  className="w-88 p-4 bg-zinc-950/95 border-zinc-800 backdrop-blur-2xl shadow-2xl rounded-2xl"
+                  className="w-88 p-4 bg-zinc-950 border-zinc-800 shadow-2xl rounded-2xl"
                 >
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
@@ -711,8 +711,8 @@ export const FloatingNav: React.FC<FloatingNavProps> = React.memo(({
                       className={cn(
                         "border-2 border-dashed rounded-xl p-5 text-center transition-all cursor-pointer select-none",
                         isDragOver
-                          ? "border-amber-400/80 bg-amber-500/10 scale-[1.01]"
-                          : "border-zinc-800 hover:border-zinc-600 bg-zinc-900/40 hover:bg-zinc-900/70",
+                          ? "border-amber-400/80 bg-amber-500/10"
+                          : "border-zinc-800 hover:border-zinc-600 bg-zinc-900 hover:bg-zinc-850",
                         isSubmitting && "opacity-60 pointer-events-none"
                       )}
                     >
@@ -819,7 +819,7 @@ export const FloatingNav: React.FC<FloatingNavProps> = React.memo(({
           {/* Mode Selector when in Color Anchor Mode */}
           {colorAnchorArtwork && activeTab === 'canvas' && (
             <div
-              className="pointer-events-auto flex items-center gap-1.5 p-1 rounded-full bg-zinc-950/90 backdrop-blur-2xl border shadow-2xl animate-in fade-in slide-in-from-top-1 duration-200 transition-colors duration-300"
+              className="pointer-events-auto flex items-center gap-1.5 p-1 rounded-full bg-zinc-950 border shadow-2xl animate-in fade-in slide-in-from-top-1 duration-200 transition-colors duration-300"
               style={{
                 borderColor: 'var(--anchor-accent-subtle)',
                 boxShadow: '0 8px 30px -8px var(--anchor-accent-subtle)',
@@ -858,7 +858,7 @@ export const FloatingNav: React.FC<FloatingNavProps> = React.memo(({
                           onAnchorModeChange?.(opt.id)
                         }
                       }}
-                      className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-zinc-100 text-zinc-950 shadow-xs transition-all cursor-pointer group"
+                      className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-zinc-100 text-zinc-950 shadow-xs transition-colors cursor-pointer group"
                       title={t("nav.searchSettingsTitle")}
                     >
                       <div className="flex items-center -space-x-1 mr-0.5">
@@ -875,7 +875,7 @@ export const FloatingNav: React.FC<FloatingNavProps> = React.memo(({
                       </div>
                       <span>{opt.label}</span>
                       {currentBalance !== 0 && (
-                        <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-zinc-900/10 text-zinc-900 font-bold">
+                        <span className="text-[10px] font-medium tabular-nums px-1.5 py-0.2 rounded-full bg-black/10 text-zinc-900 font-bold">
                           {currentBalance > 0 ? `+${currentBalance}%` : `${currentBalance}%`}
                         </span>
                       )}
@@ -891,10 +891,10 @@ export const FloatingNav: React.FC<FloatingNavProps> = React.memo(({
                     onClick={() => onAnchorModeChange?.(opt.id)}
                     title={opt.hint}
                     className={cn(
-                      "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-all cursor-pointer",
+                      "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-colors cursor-pointer",
                       isActive
                         ? "bg-zinc-100 text-zinc-950 shadow-xs font-semibold"
-                        : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60"
+                        : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900"
                     )}
                   >
                     <Icon className="w-3.5 h-3.5" />

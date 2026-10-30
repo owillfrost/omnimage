@@ -250,7 +250,7 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
   return (
     <aside className="fixed bottom-6 left-6 z-30 pointer-events-none w-88 sm:w-96 max-w-[calc(100vw-3rem)] select-none">
       <div
-        className="pointer-events-auto bg-zinc-950/95 backdrop-blur-2xl border rounded-[28px] overflow-hidden shadow-2xl transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] flex flex-col max-h-[calc(100vh-6rem)]"
+        className="pointer-events-auto bg-zinc-950/95 border rounded-2xl overflow-hidden shadow-2xl transition-colors duration-200 flex flex-col max-h-[calc(100vh-6rem)]"
         style={
           anchorArtwork
             ? {
@@ -263,7 +263,7 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
         }
       >
         {/* Card Header */}
-        <div className="p-4 flex items-center justify-between border-b border-zinc-800/60 bg-zinc-900/40 shrink-0">
+        <div className="p-4 flex items-center justify-between border-b border-zinc-800/60 bg-zinc-900/50 shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="bg-zinc-800/80 border border-zinc-700/60 rounded-full px-2.5 py-1 flex items-center gap-1.5 shadow-xs">
               <span
@@ -291,7 +291,7 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                 title="Tuning active"
               />
             )}
-            <span className="text-[10px] text-zinc-500 font-mono">Omnimage</span>
+            
           </div>
 
           <div className="flex items-center gap-1">
@@ -322,13 +322,13 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
             {/* 1. If NO anchor is selected: show clean Library Info card */}
             {!anchorArtwork ? (
               <div className="space-y-3">
-                <div className="p-3.5 rounded-2xl bg-zinc-900/60 border border-zinc-800/80 space-y-2">
+                <div className="p-3.5 rounded-xl bg-zinc-900/50 space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-zinc-200 flex items-center gap-1.5">
                       <FolderOpen className="w-3.5 h-3.5 text-blue-400" />
                       {t("infoCard.connectedTitle")}
                     </span>
-                    <span className="text-[10px] text-blue-400 font-mono">
+                    <span className="text-[11px] text-blue-400 font-medium tabular-nums">
                       {totalCount} {t("common.items").toUpperCase()}
                     </span>
                   </div>
@@ -337,7 +337,7 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                   </p>
                 </div>
 
-                <div className="p-3 rounded-2xl bg-zinc-900/40 border border-zinc-800/60 flex items-start gap-2.5 text-zinc-400">
+                <div className="p-3 rounded-xl bg-zinc-900/40 flex items-start gap-2.5 text-zinc-400">
                   <Sparkles className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
                   <p className="text-[11px] leading-relaxed">
                     {t("nav.searchSettingsNoAnchor")}
@@ -348,11 +348,12 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
               /* 2. When an Anchor IS selected: show anchor header + mode switcher */
               <>
                 {/* Anchor Summary Header */}
-                <div className="p-2.5 rounded-2xl bg-zinc-900/60 border border-zinc-800/70 flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-zinc-900/50 flex items-center gap-3">
                   <img
                     src={anchorArtwork.thumbnailUrl || anchorArtwork.imageUrl}
                     alt={anchorArtwork.title}
                     className="w-10 h-10 rounded-xl object-cover border border-zinc-700/60 shrink-0 bg-zinc-800"
+                    onError={(e) => { e.currentTarget.style.display = "none"; }}
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-1">
@@ -360,7 +361,7 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                         {anchorArtwork.title || "Anchor Reference"}
                       </span>
                       <span
-                        className="text-[9px] font-mono px-1.5 py-0.5 rounded-md uppercase font-bold transition-colors duration-300"
+                        className="text-[9px] font-medium px-1.5 py-0.5 rounded-md uppercase font-bold transition-colors duration-300"
                         style={{
                           backgroundColor: "var(--anchor-accent-subtle)",
                           color: "var(--anchor-accent-bright)",
@@ -388,7 +389,7 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                             title={`Highlights: ${highlightHex}`}
                           />
                         </div>
-                        <span className="text-[10px] text-zinc-400 font-mono truncate">
+                        <span className="text-[10px] text-zinc-400 font-medium truncate">
                           {shadowHex} / {highlightHex}
                         </span>
                       </div>
@@ -398,7 +399,7 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
 
                 {/* Mode Selector Pill Row */}
                 {onSelectAnchorMode && (
-                  <div className="flex items-center gap-1 p-1 bg-zinc-900/70 border border-zinc-800/80 rounded-xl">
+                  <div className="flex items-center gap-1 p-1 bg-zinc-900/60 rounded-xl">
                     {(["grade", "hybrid", "color", "visual", "layout"] as SimilaritySortMode[]).map((m) => {
                       const isActive = anchorMode === m
                       return (
@@ -427,15 +428,15 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                         <Sliders className="w-3.5 h-3.5 text-zinc-400" />
                         {t("nav.searchControlsInstant")}
                       </span>
-                      <span className="text-[10px] font-mono text-zinc-500">60 fps</span>
+                      
                     </div>
 
                     {/* Control 1: Grade Sensitivity Slider */}
-                    <div className="space-y-1.5 p-3 rounded-2xl bg-zinc-900/40 border border-zinc-800/60">
+                    <div className="space-y-1.5 p-3 rounded-xl bg-zinc-900/40">
                       <div className="flex items-center justify-between text-zinc-300">
                         <span className="font-medium text-[11px]">{t("nav.gradeSensitivity")}</span>
                         <span
-                          className="font-mono text-[11px] font-bold transition-colors duration-300"
+                          className="font-medium tabular-nums text-[11px] font-bold transition-colors duration-300"
                           style={{ color: "var(--anchor-accent-bright)" }}
                         >
                           {sensitivityPct}%
@@ -451,7 +452,7 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                         style={{ accentColor: "var(--anchor-accent)" }}
                         className="w-full h-1.5 bg-zinc-800 rounded-lg cursor-pointer transition-colors duration-300"
                       />
-                      <div className="flex items-center justify-between text-[10px] text-zinc-500 font-mono">
+                      <div className="flex items-center justify-between text-[10px] text-zinc-400 font-medium">
                         <span>Amplo</span>
                         <span className="text-[9px] text-zinc-400">
                           {sensitivityPct < 40
@@ -465,10 +466,10 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                     </div>
 
                     {/* Control 2: Balance Slider (Sombras ↔ Altas Luzes) */}
-                    <div className="space-y-2 p-3 rounded-2xl bg-zinc-900/40 border border-zinc-800/60">
+                    <div className="space-y-2 p-3 rounded-xl bg-zinc-900/40">
                       <div className="flex items-center justify-between text-zinc-300">
                         <span className="font-medium text-[11px]">{t("nav.gradeBalance")}</span>
-                        <span className="font-mono text-[11px] text-zinc-300">
+                        <span className="font-medium tabular-nums text-[11px] text-zinc-300">
                           {balanceVal === 0
                             ? t("nav.gradeBalanced")
                             : balanceVal > 0
@@ -504,7 +505,7 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                         <button
                           type="button"
                           onClick={() => onGradeTuningChange?.({ ...gradeTuning, balance: -100 })}
-                          className={`flex-1 py-1 rounded-md text-[9px] font-mono transition-colors cursor-pointer ${
+                          className={`flex-1 py-1 rounded-md text-[9px] font-medium transition-colors cursor-pointer ${
                             balanceVal === -100
                               ? "bg-zinc-700 text-zinc-100 font-bold"
                               : "bg-zinc-800/60 text-zinc-400 hover:text-zinc-200"
@@ -515,7 +516,7 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                         <button
                           type="button"
                           onClick={() => onGradeTuningChange?.({ ...gradeTuning, balance: 0 })}
-                          className={`flex-1 py-1 rounded-md text-[9px] font-mono transition-colors cursor-pointer ${
+                          className={`flex-1 py-1 rounded-md text-[9px] font-medium transition-colors cursor-pointer ${
                             balanceVal === 0
                               ? "bg-zinc-700 text-zinc-100 font-bold"
                               : "bg-zinc-800/60 text-zinc-400 hover:text-zinc-200"
@@ -526,7 +527,7 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                         <button
                           type="button"
                           onClick={() => onGradeTuningChange?.({ ...gradeTuning, balance: 100 })}
-                          className={`flex-1 py-1 rounded-md text-[9px] font-mono transition-colors cursor-pointer ${
+                          className={`flex-1 py-1 rounded-md text-[9px] font-medium transition-colors cursor-pointer ${
                             balanceVal === 100
                               ? "bg-zinc-700 text-zinc-100 font-bold"
                               : "bg-zinc-800/60 text-zinc-400 hover:text-zinc-200"
@@ -540,7 +541,7 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                     {/* Control 3: Protect Skin Tones Toggle */}
                     <div
                       onClick={handleToggleSkinProtection}
-                      className="p-3 rounded-2xl bg-zinc-900/40 border border-zinc-800/60 flex items-center justify-between cursor-pointer hover:border-zinc-700 transition-colors"
+                      className="p-3 rounded-xl bg-zinc-900/40 flex items-center justify-between cursor-pointer hover:border-zinc-700 transition-colors"
                     >
                       <div className="space-y-0.5 pr-2">
                         <div className="flex items-center gap-1.5 font-medium text-[11px] text-zinc-200">
@@ -573,7 +574,7 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                     <div className="space-y-1.5">
                       <div
                         onClick={handleToggleExcludeNeutrals}
-                        className="p-3 rounded-2xl bg-zinc-900/40 border border-zinc-800/60 flex items-center justify-between cursor-pointer hover:border-zinc-700 transition-colors"
+                        className="p-3 rounded-xl bg-zinc-900/40 flex items-center justify-between cursor-pointer hover:border-zinc-700 transition-colors"
                       >
                         <div className="space-y-0.5 pr-2">
                           <div className="flex items-center gap-1.5 font-medium text-[11px] text-zinc-200">
@@ -604,7 +605,7 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
 
                       {/* Neutral Anchor Advisory Banner */}
                       {isNeutralAnchor && (
-                        <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-start gap-2 text-amber-300 text-[10px] leading-snug">
+                        <div className="p-2.5 rounded-xl bg-amber-500/10 flex items-start gap-2 text-amber-300 text-[10px] leading-snug">
                           <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
                           <span>{t("nav.gradeAnchorNeutralWarning")}</span>
                         </div>
@@ -629,10 +630,10 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                         <div className="space-y-3 pt-2 pb-1 animate-in fade-in-50 duration-200">
                           {/* Notice Box: Live Preview vs Library Re-index */}
                           <div
-                            className="p-2.5 rounded-xl text-[10px] flex items-start gap-2 leading-relaxed transition-colors duration-300"
+                            className="p-2.5 rounded-lg text-[10px] flex items-start gap-2 leading-relaxed transition-colors duration-300"
                             style={{
                               backgroundColor: "var(--anchor-accent-subtle)",
-                              border: "1px solid var(--anchor-accent-subtle)",
+                              borderLeft: "2px solid var(--anchor-accent)",
                               color: "var(--anchor-accent-bright)",
                             }}
                           >
@@ -643,18 +644,18 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                             <span>{t("nav.gradeAdvancedPreviewNotice")}</span>
                           </div>
 
-                          <div className="space-y-2 p-3 rounded-2xl bg-zinc-900/40 border border-zinc-800/60 text-[10px] text-zinc-400">
+                          <div className="space-y-2 p-3 rounded-xl bg-zinc-900/40 text-[10px] text-zinc-400">
                             <div className="flex items-center justify-between">
                               <span>{t("nav.gradeShadowThreshold")}</span>
-                              <span className="font-mono text-zinc-200">L* &le; 45</span>
+                              <span className="font-medium tabular-nums text-zinc-200">L* &le; 45</span>
                             </div>
                             <div className="flex items-center justify-between">
                               <span>{t("nav.gradeHighlightThreshold")}</span>
-                              <span className="font-mono text-zinc-200">L* &ge; 55</span>
+                              <span className="font-medium tabular-nums text-zinc-200">L* &ge; 55</span>
                             </div>
                             <div className="flex items-center justify-between pt-1 border-t border-zinc-800/60">
                               <span>Banco de Dados:</span>
-                              <span className="font-mono text-emerald-400">Dual Highlights (OK)</span>
+                              <span className="font-medium text-emerald-400">Dual Highlights (OK)</span>
                             </div>
                           </div>
                         </div>
@@ -666,14 +667,14 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                 {/* --- CASE B: COLOR MODE (5-Color Palette Breakdown) --- */}
                 {anchorMode === "color" && (
                   <div className="space-y-3 pt-1 animate-in fade-in-50 duration-200">
-                    <div className="p-3.5 rounded-2xl bg-zinc-900/50 border border-zinc-800/60 space-y-2.5">
+                    <div className="p-3.5 rounded-xl bg-zinc-900/50 space-y-2.5">
                       <div className="flex items-center gap-1.5 text-zinc-200 font-semibold text-[11px]">
                         <Palette className="w-3.5 h-3.5 text-emerald-400" />
                         <span>Paleta Dominante</span>
                       </div>
 
                       {/* 5-Color Swatch Bars */}
-                      <div className="flex items-center gap-1.5 h-5 rounded-lg overflow-hidden p-0.5 bg-zinc-950/60 border border-zinc-800/80">
+                      <div className="flex items-center gap-1.5 h-5 rounded-lg overflow-hidden p-0.5 bg-zinc-900/40">
                         {anchorPalette.map((hex, i) => {
                           const w = Math.round((anchorWeights[i] || 1 / anchorPalette.length) * 100)
                           return (
@@ -691,7 +692,7 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                         {anchorPalette.map((hex, i) => {
                           const w = Math.round((anchorWeights[i] || 1 / anchorPalette.length) * 100)
                           return (
-                            <div key={i} className="flex items-center gap-1 text-[10px] font-mono text-zinc-400">
+                            <div key={i} className="flex items-center gap-1 text-[10px] text-zinc-400 font-medium tabular-nums">
                               <span className="w-2.5 h-2.5 rounded-full border border-black/30" style={{ backgroundColor: hex }} />
                               <span>{hex}</span>
                               <span className="text-[9px] text-zinc-500">({w}%)</span>
@@ -724,7 +725,7 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                 {/* --- CASE C: HYBRID MODE (Multimodal Breakdown) --- */}
                 {anchorMode === "hybrid" && (
                   <div className="space-y-3 pt-1 animate-in fade-in-50 duration-200">
-                    <div className="p-3.5 rounded-2xl bg-zinc-900/50 border border-zinc-800/60 space-y-2.5">
+                    <div className="p-3.5 rounded-xl bg-zinc-900/50 space-y-2.5">
                       <div className="flex items-center gap-1.5 text-zinc-200 font-semibold text-[11px]">
                         <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                         <span>Composição Multimodal</span>
@@ -733,7 +734,7 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                       <div className="space-y-1.5 text-[10px]">
                         <div className="flex items-center justify-between text-zinc-400">
                           <span>Semântica Neural (CLIP):</span>
-                          <span className="font-mono text-zinc-200 font-bold">68%</span>
+                          <span className="font-medium tabular-nums text-zinc-200 font-bold">68%</span>
                         </div>
                         <div className="w-full bg-zinc-800 h-1.5 rounded-full overflow-hidden">
                           <div className="bg-amber-400 h-full rounded-full" style={{ width: "68%" }} />
@@ -741,7 +742,7 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
 
                         <div className="flex items-center justify-between text-zinc-400 pt-1">
                           <span>Harmonia de Paleta:</span>
-                          <span className="font-mono text-zinc-200 font-bold">20%</span>
+                          <span className="font-medium tabular-nums text-zinc-200 font-bold">20%</span>
                         </div>
                         <div className="w-full bg-zinc-800 h-1.5 rounded-full overflow-hidden">
                           <div className="bg-emerald-400 h-full rounded-full" style={{ width: "20%" }} />
@@ -749,7 +750,7 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
 
                         <div className="flex items-center justify-between text-zinc-400 pt-1">
                           <span>Tags & Proporção:</span>
-                          <span className="font-mono text-zinc-200 font-bold">12%</span>
+                          <span className="font-medium tabular-nums text-zinc-200 font-bold">12%</span>
                         </div>
                         <div className="w-full bg-zinc-800 h-1.5 rounded-full overflow-hidden">
                           <div className="bg-blue-400 h-full rounded-full" style={{ width: "12%" }} />
@@ -780,13 +781,13 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                 {/* --- CASE D: VISUAL MODE (Neural Embeddings: CLIP or Gemma 2) --- */}
                 {anchorMode === "visual" && (
                   <div className="space-y-3 pt-1 animate-in fade-in-50 duration-200">
-                    <div className="p-3.5 rounded-2xl bg-zinc-900/50 border border-zinc-800/60 space-y-3">
+                    <div className="p-3.5 rounded-xl bg-zinc-900/50 space-y-3">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1.5 text-zinc-200 font-semibold text-[11px]">
                           <Layers className="w-3.5 h-3.5 text-purple-400" />
                           <span>{t("nav.modeVisualTitle")}</span>
                         </div>
-                        <span className="text-[10px] font-mono text-zinc-500">120 fps</span>
+                        
                       </div>
 
                       <p className="text-[11px] text-zinc-400 leading-normal">
@@ -794,8 +795,8 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                       </p>
 
                       {engineSwitchError && (
-                        <div className="p-2 rounded-xl bg-red-950/40 border border-red-500/30 text-[10px] text-red-300 flex items-center gap-1.5 font-mono">
-                          <AlertTriangle className="w-3 h-3 text-red-400 shrink-0" />
+                        <div className="p-2 rounded-lg bg-red-500/10 text-[11px] text-red-300 flex items-center gap-1.5">
+                          <AlertTriangle className="w-3.5 h-3.5 text-red-400 shrink-0" />
                           <span>{engineSwitchError}</span>
                         </div>
                       )}
@@ -822,7 +823,7 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                               </span>
                               {activeEngine === 'clip-vit-b32' && <Check className="w-3 h-3 text-cyan-400" />}
                             </div>
-                            <span className="text-[9px] text-zinc-500 font-mono">{t("nav.neuralEngineClipDesc")}</span>
+                            <span className="text-[9px] text-zinc-500">{t("nav.neuralEngineClipDesc")}</span>
                           </button>
 
                           <button
@@ -843,18 +844,18 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                               </span>
                               {activeEngine === 'embeddinggemma-2' && <Check className="w-3 h-3 text-purple-400" />}
                             </div>
-                            <span className="text-[9px] text-purple-300 font-mono">{t("nav.neuralEngineGemmaDesc")}</span>
+                            <span className="text-[9px] text-purple-300">{t("nav.neuralEngineGemmaDesc")}</span>
                           </button>
                         </div>
                       </div>
 
                       {activeEngine === 'embeddinggemma-2' ? (
-                        <div className="p-2.5 rounded-xl bg-purple-950/20 border border-purple-800/40 text-[10px] text-purple-300 flex items-center justify-between font-mono">
+                        <div className="p-2.5 rounded-xl bg-purple-950/20 text-[10px] text-purple-300 flex items-center justify-between">
                           <span>{t("nav.neuralIndexLabel")}</span>
                           <span className="font-bold">embeddings.gemma2.bin</span>
                         </div>
                       ) : (
-                        <div className="p-2.5 rounded-xl bg-zinc-950/60 border border-zinc-800/80 text-[10px] text-zinc-400 flex items-center justify-between font-mono">
+                        <div className="p-2.5 rounded-xl bg-zinc-900/40 text-[10px] text-zinc-400 flex items-center justify-between">
                           <span>{t("nav.neuralIndexLabel")}</span>
                           <span>embeddings.bin</span>
                         </div>
@@ -880,21 +881,21 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                 {/* --- CASE E: LAYOUT MODE (Spatial Wireframe & Composition) --- */}
                 {anchorMode === "layout" && (
                   <div className="space-y-3 pt-1 animate-in fade-in-50 duration-200">
-                    <div className="p-3.5 rounded-2xl bg-zinc-900/50 border border-zinc-800/60 space-y-3">
+                    <div className="p-3.5 rounded-xl bg-zinc-900/50 space-y-3">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1.5 text-zinc-200 font-semibold text-[11px]">
                           <LayoutGrid className="w-3.5 h-3.5 text-cyan-400" />
                           <span>{t("nav.layoutWireframeTitle")}</span>
                         </div>
-                        <span className="text-[10px] font-mono text-cyan-400/80">16×9 Grid</span>
+                        
                       </div>
 
                       {/* Control 1: Aspect Ratio Cohesion Slider */}
-                      <div className="space-y-1.5 p-3 rounded-2xl bg-zinc-900/40 border border-zinc-800/60">
+                      <div className="space-y-1.5 p-3 rounded-xl bg-zinc-900/40">
                         <div className="flex items-center justify-between text-zinc-300">
                           <span className="font-medium text-[11px]">{t("nav.layoutAspectWeight")}</span>
                           <span
-                            className="font-mono text-[11px] font-bold transition-colors duration-300"
+                            className="font-medium tabular-nums text-[11px] font-bold transition-colors duration-300"
                             style={{ color: "var(--anchor-accent-bright)" }}
                           >
                             {aspectWeightPct}%
@@ -910,7 +911,7 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                           style={{ accentColor: "var(--anchor-accent)" }}
                           className="w-full h-1.5 bg-zinc-800 rounded-lg cursor-pointer transition-colors duration-300"
                         />
-                        <div className="flex items-center justify-between text-[10px] text-zinc-500 font-mono">
+                        <div className="flex items-center justify-between text-[10px] text-zinc-400 font-medium">
                           <span>Livre (0%)</span>
                           <span className="text-[9px] text-zinc-400">
                             {aspectWeightPct === 0 ? "Apenas disposição espacial" : aspectWeightPct > 30 ? "Mesmo aspect ratio estrito" : "Equilibrado"}
@@ -920,11 +921,11 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                       </div>
 
                       {/* Control 2: Layout Sensitivity Slider */}
-                      <div className="space-y-1.5 p-3 rounded-2xl bg-zinc-900/40 border border-zinc-800/60">
+                      <div className="space-y-1.5 p-3 rounded-xl bg-zinc-900/40">
                         <div className="flex items-center justify-between text-zinc-300">
                           <span className="font-medium text-[11px]">{t("nav.layoutSensitivity")}</span>
                           <span
-                            className="font-mono text-[11px] font-bold transition-colors duration-300"
+                            className="font-medium tabular-nums text-[11px] font-bold transition-colors duration-300"
                             style={{ color: "var(--anchor-accent-bright)" }}
                           >
                             {layoutSensitivityPct}%
@@ -940,7 +941,7 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                           style={{ accentColor: "var(--anchor-accent)" }}
                           className="w-full h-1.5 bg-zinc-800 rounded-lg cursor-pointer transition-colors duration-300"
                         />
-                        <div className="flex items-center justify-between text-[10px] text-zinc-500 font-mono">
+                        <div className="flex items-center justify-between text-[10px] text-zinc-400 font-medium">
                           <span>Suave</span>
                           <span className="text-[9px] text-zinc-400">
                             {layoutSensitivityPct < 80 ? "Tolera variações" : layoutSensitivityPct > 150 ? "Exigente" : "Curva linear"}
@@ -953,7 +954,7 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                       <div className="space-y-1.5 text-[10px]">
                         <div className="flex items-center justify-between text-zinc-400">
                           <span>Grade Espacial 16×9 (Massa + Bordas):</span>
-                          <span className="font-mono text-zinc-200 font-bold">{100 - aspectWeightPct}%</span>
+                          <span className="font-medium tabular-nums text-zinc-200 font-bold">{100 - aspectWeightPct}%</span>
                         </div>
                         <div className="w-full bg-zinc-800 h-1.5 rounded-full overflow-hidden">
                           <div className="bg-cyan-400 h-full rounded-full transition-all" style={{ width: `${100 - aspectWeightPct}%` }} />
@@ -961,7 +962,7 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
 
                         <div className="flex items-center justify-between text-zinc-400 pt-1">
                           <span>Coesão de Proporção (Aspect):</span>
-                          <span className="font-mono text-zinc-200 font-bold">{aspectWeightPct}%</span>
+                          <span className="font-medium tabular-nums text-zinc-200 font-bold">{aspectWeightPct}%</span>
                         </div>
                         <div className="w-full bg-zinc-800 h-1.5 rounded-full overflow-hidden">
                           <div className="bg-blue-400 h-full rounded-full transition-all" style={{ width: `${aspectWeightPct}%` }} />
@@ -969,7 +970,7 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                       </div>
 
                       {/* Info note */}
-                      <div className="p-2.5 rounded-xl bg-zinc-950/60 border border-zinc-800/80 space-y-1">
+                      <div className="p-2.5 rounded-xl bg-zinc-900/40 space-y-1">
                         <div className="flex items-center gap-1.5 text-zinc-300 text-[10px] font-semibold">
                           <ShieldCheck className="w-3 h-3 text-cyan-400" />
                           <span>Invariante a Tema & Ruído</span>
@@ -999,7 +1000,7 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
             )}
 
             {/* Footer / Library Summary */}
-            <div className="pt-2 border-t border-zinc-800/60 flex items-center justify-between text-[10px] text-zinc-500 font-mono">
+            <div className="pt-2 border-t border-zinc-800/60 flex items-center justify-between text-[10px] text-zinc-400 font-medium">
               <span className="flex items-center gap-1.5">
                 <FolderOpen className="w-3 h-3 text-zinc-400" />
                 {currentLibraryName}

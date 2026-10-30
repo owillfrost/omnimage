@@ -70,7 +70,7 @@ export const IndexerStatusPill: React.FC<IndexerStatusPillProps> = ({
   return (
     <div
       className={cn(
-        "pointer-events-auto flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono backdrop-blur-xl border shadow-xl transition-all select-none",
+        "pointer-events-auto flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono bg-zinc-950 border shadow-xl transition-colors select-none",
         isRunning && "bg-amber-500/10 border-amber-500/30 text-amber-300",
         isDone && "bg-emerald-500/10 border-emerald-500/30 text-emerald-300",
         className

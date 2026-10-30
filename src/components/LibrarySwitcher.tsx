@@ -12,6 +12,7 @@ import {
   RefreshCw,
   FolderCheck,
   AlertTriangle,
+  CornerDownRight,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { getCatalogProvider } from "../providers/providerFactory"
@@ -308,7 +309,7 @@ export const LibrarySwitcher: React.FC<LibrarySwitcherProps> = ({
       <div
         role="radiogroup"
         aria-label="Library Switcher"
-        className="pointer-events-auto flex items-center bg-zinc-950/85 backdrop-blur-xl border border-zinc-800/90 rounded-full p-1 shadow-2xl relative select-none"
+        className="pointer-events-auto flex items-center bg-zinc-950/95 border border-zinc-800/90 rounded-full p-1 shadow-2xl relative select-none"
       >
         {pillSources.map(source => {
           const isActive = currentLibrary === source.id
@@ -407,7 +408,7 @@ export const LibrarySwitcher: React.FC<LibrarySwitcherProps> = ({
                     </div>
                     {source.sourceFolderPath && (
                       <span className="text-[10px] text-zinc-500 truncate font-mono">
-                        ↳ {source.sourceFolderPath}
+                        <CornerDownRight className="w-2.5 h-2.5 inline mr-1 shrink-0" />{source.sourceFolderPath}
                       </span>
                     )}
                   </div>

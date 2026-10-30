@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { AsciiSkeleton } from './AsciiSkeleton'
 import { cn } from '@/lib/utils'
 
@@ -239,6 +239,7 @@ export const AsciiImageReveal: React.FC<AsciiImageRevealProps> = ({
         draggable={false}
         onDragStart={(e) => e.preventDefault()}
         onLoad={startReveal}
+        onError={startReveal}
         className={cn(
           "w-full h-full object-cover select-none pointer-events-none transition-opacity duration-300",
           isWaveMode && "anchor-wave-image-reveal",

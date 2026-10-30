@@ -107,9 +107,9 @@ export const RecentlyViewedDock: React.FC<RecentlyViewedDockProps> = React.memo(
                       }}
                       className={cn(
                         "group relative w-11 h-11 sm:w-12 sm:h-12 rounded-[10px] overflow-hidden shrink-0 cursor-pointer select-none",
-                        "ring-[2.5px] ring-[#09090b] border border-white/20 shadow-lg",
+                        "ring-[2.5px] ring-zinc-950 border border-white/20 shadow-lg",
                         "-rotate-[4deg] transition-all duration-200 ease-out",
-                        "hover:-translate-y-1.5 hover:rotate-0 hover:scale-105 hover:!z-30 hover:border-white/60",
+                        "hover:rotate-0 hover:!z-30 hover:border-white/80 hover:shadow-xl",
                         "active:scale-95",
                         index > 0 && "-ml-2.5",
                         isActive && "ring-zinc-400 border-white -translate-y-1 rotate-0 !z-20 shadow-[0_0_15px_rgba(255,255,255,0.2)]",
@@ -123,12 +123,13 @@ export const RecentlyViewedDock: React.FC<RecentlyViewedDockProps> = React.memo(
                         decoding="async"
                         draggable={false}
                         className="w-full h-full object-cover pointer-events-none"
+                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
                       />
                     </button>
                   </TooltipTrigger>
                   <TooltipContent side="top" className="max-w-[220px] text-xs space-y-0.5">
                     <div className="font-semibold text-zinc-100 truncate">{artwork.title}</div>
-                    <span className="block text-[10px] text-zinc-400 font-mono">
+                    <span className="block text-[10px] text-zinc-400 font-medium">
                       {onRestoreAnchor ? t("dock.clickToNavigate") : t("dock.shiftClickCompare")}
                     </span>
                   </TooltipContent>

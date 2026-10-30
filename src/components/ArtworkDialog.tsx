@@ -108,7 +108,7 @@ export const ArtworkDialog: React.FC<ArtworkDialogProps> = ({
                         onSelectColor?.(color)
                         onClose()
                       }}
-                      className="group relative w-7 h-7 rounded-full border border-white/20 transition-transform hover:scale-110 active:scale-95"
+                      className="group relative w-7 h-7 rounded-full border border-white/20 transition-all hover:border-white hover:ring-2 hover:ring-white/40 active:scale-95"
                       style={{ backgroundColor: color }}
                       title={t("artworkDialog.filterByColor", { color })}
                     >
