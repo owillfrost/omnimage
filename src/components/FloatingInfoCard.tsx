@@ -727,7 +727,10 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                   <div className="space-y-3 pt-1 animate-in fade-in-50 duration-200">
                     <div className="p-3.5 rounded-xl bg-zinc-900/50 space-y-2.5">
                       <div className="flex items-center gap-1.5 text-zinc-200 font-semibold text-[11px]">
-                        <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                        <Sparkles
+                          className="w-3.5 h-3.5 transition-colors duration-300"
+                          style={{ color: "var(--anchor-accent-bright, #e4e4e7)" }}
+                        />
                         <span>Composição Multimodal</span>
                       </div>
 
@@ -737,7 +740,7 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                           <span className="font-medium tabular-nums text-zinc-200 font-bold">68%</span>
                         </div>
                         <div className="w-full bg-zinc-800 h-1.5 rounded-full overflow-hidden">
-                          <div className="bg-amber-400 h-full rounded-full" style={{ width: "68%" }} />
+                          <div className="bg-zinc-100 h-full rounded-full" style={{ width: "68%" }} />
                         </div>
 
                         <div className="flex items-center justify-between text-zinc-400 pt-1">
@@ -745,7 +748,7 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                           <span className="font-medium tabular-nums text-zinc-200 font-bold">20%</span>
                         </div>
                         <div className="w-full bg-zinc-800 h-1.5 rounded-full overflow-hidden">
-                          <div className="bg-emerald-400 h-full rounded-full" style={{ width: "20%" }} />
+                          <div className="bg-zinc-400 h-full rounded-full" style={{ width: "20%" }} />
                         </div>
 
                         <div className="flex items-center justify-between text-zinc-400 pt-1">
@@ -753,7 +756,7 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                           <span className="font-medium tabular-nums text-zinc-200 font-bold">12%</span>
                         </div>
                         <div className="w-full bg-zinc-800 h-1.5 rounded-full overflow-hidden">
-                          <div className="bg-blue-400 h-full rounded-full" style={{ width: "12%" }} />
+                          <div className="bg-zinc-600 h-full rounded-full" style={{ width: "12%" }} />
                         </div>
                       </div>
 
@@ -784,7 +787,10 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                     <div className="p-3.5 rounded-xl bg-zinc-900/50 space-y-3">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1.5 text-zinc-200 font-semibold text-[11px]">
-                          <Layers className="w-3.5 h-3.5 text-purple-400" />
+                          <Layers
+                            className="w-3.5 h-3.5 transition-colors duration-300"
+                            style={{ color: "var(--anchor-accent-bright, #e4e4e7)" }}
+                          />
                           <span>{t("nav.modeVisualTitle")}</span>
                         </div>
                         
@@ -812,16 +818,16 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                             className={cn(
                               "p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col gap-1",
                               activeEngine === 'clip-vit-b32'
-                                ? "bg-zinc-900 border-cyan-500/60 text-white shadow-sm"
+                                ? "bg-zinc-900 border-zinc-500 text-white shadow-xs"
                                 : "bg-zinc-950/60 border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700"
                             )}
                           >
                             <div className="flex items-center justify-between">
                               <span className="text-[11px] font-semibold flex items-center gap-1">
-                                <Zap className="w-3 h-3 text-amber-400" />
+                                <Zap className="w-3 h-3 text-zinc-400" />
                                 CLIP ViT-B/32
                               </span>
-                              {activeEngine === 'clip-vit-b32' && <Check className="w-3 h-3 text-cyan-400" />}
+                              {activeEngine === 'clip-vit-b32' && <Check className="w-3 h-3 text-zinc-200" />}
                             </div>
                             <span className="text-[9px] text-zinc-500">{t("nav.neuralEngineClipDesc")}</span>
                           </button>
@@ -833,33 +839,28 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                             className={cn(
                               "p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col gap-1",
                               activeEngine === 'embeddinggemma-2'
-                                ? "bg-zinc-900 border-purple-500/60 text-white shadow-sm"
+                                ? "bg-zinc-900 border-zinc-500 text-white shadow-xs"
                                 : "bg-zinc-950/60 border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700"
                             )}
                           >
                             <div className="flex items-center justify-between">
                               <span className="text-[11px] font-semibold flex items-center gap-1">
-                                <Cpu className="w-3 h-3 text-purple-400" />
+                                <Cpu className="w-3 h-3 text-zinc-400" />
                                 Gemma 2
                               </span>
-                              {activeEngine === 'embeddinggemma-2' && <Check className="w-3 h-3 text-purple-400" />}
+                              {activeEngine === 'embeddinggemma-2' && <Check className="w-3 h-3 text-zinc-200" />}
                             </div>
-                            <span className="text-[9px] text-purple-300">{t("nav.neuralEngineGemmaDesc")}</span>
+                            <span className="text-[9px] text-zinc-500">{t("nav.neuralEngineGemmaDesc")}</span>
                           </button>
                         </div>
                       </div>
 
-                      {activeEngine === 'embeddinggemma-2' ? (
-                        <div className="p-2.5 rounded-xl bg-purple-950/20 text-[10px] text-purple-300 flex items-center justify-between">
-                          <span>{t("nav.neuralIndexLabel")}</span>
-                          <span className="font-bold">embeddings.gemma2.bin</span>
-                        </div>
-                      ) : (
-                        <div className="p-2.5 rounded-xl bg-zinc-900/40 text-[10px] text-zinc-400 flex items-center justify-between">
-                          <span>{t("nav.neuralIndexLabel")}</span>
-                          <span>embeddings.bin</span>
-                        </div>
-                      )}
+                      <div className="p-2.5 rounded-xl bg-zinc-900/50 text-[10px] text-zinc-400 flex items-center justify-between">
+                        <span>{t("nav.neuralIndexLabel")}</span>
+                        <span className="text-zinc-200 font-medium">
+                          {activeEngine === 'embeddinggemma-2' ? 'embeddings.gemma2.bin' : 'embeddings.bin'}
+                        </span>
+                      </div>
 
                       {onSelectAnchorMode && (
                         <button
@@ -884,7 +885,10 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                     <div className="p-3.5 rounded-xl bg-zinc-900/50 space-y-3">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1.5 text-zinc-200 font-semibold text-[11px]">
-                          <LayoutGrid className="w-3.5 h-3.5 text-cyan-400" />
+                          <LayoutGrid
+                            className="w-3.5 h-3.5 transition-colors duration-300"
+                            style={{ color: "var(--anchor-accent-bright, #e4e4e7)" }}
+                          />
                           <span>{t("nav.layoutWireframeTitle")}</span>
                         </div>
                         
