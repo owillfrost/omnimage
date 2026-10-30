@@ -437,7 +437,13 @@ export function useColorSortWorker(
     // Worker, freezing those modes on the color ordering.
     if (colorAnchorArtwork.isTextQuery) {
       // A text query search has NO chromatic affinity: preserve existing list order until zero-shot embeddings return
-      return filteredArtworks
+      const anchorInList = filteredArtworks.some((a) => a.id === colorAnchorArtwork.id)
+      const baseList = anchorInList ? filteredArtworks : [colorAnchorArtwork, ...filteredArtworks]
+      return baseList.map((art) => ({
+        artwork: art,
+        distance: art.id === colorAnchorArtwork.id ? 0 : 50,
+        similarityPercent: art.id === colorAnchorArtwork.id ? 100 : 50,
+      }))
     }
     if (mode === 'layout') {
       return sortArtworksByColorProximity(filteredArtworks, colorAnchorArtwork, 'color')
