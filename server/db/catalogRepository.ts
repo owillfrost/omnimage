@@ -143,6 +143,27 @@ export class CatalogRepository {
     return deleted
   }
 
+  markItemDeleted(libraryId: string, id: string): boolean {
+    const deleteFts = this.db.prepare('DELETE FROM items_fts WHERE library_id = ? AND id = ?')
+    const deleteDetail = this.db.prepare('DELETE FROM item_details WHERE library_id = ? AND id = ?')
+    const updateItem = this.db.prepare('UPDATE items SET is_deleted = 1 WHERE library_id = ? AND id = ?')
+
+    const tx = this.db.transaction(() => {
+      deleteFts.run(libraryId, id)
+      deleteDetail.run(libraryId, id)
+      const info = updateItem.run(libraryId, id)
+      return info.changes > 0
+    })
+
+    const deleted = tx()
+    if (deleted) {
+      invalidateCatalogCache()
+      const total = this.countItems(libraryId)
+      this.db.prepare('UPDATE libraries SET item_count = ?, updated_at = ? WHERE id = ?').run(total, Date.now(), libraryId)
+    }
+    return deleted
+  }
+
   countItems(libraryId: string): number {
     const row = this.db.prepare(`
       SELECT COUNT(*) as count FROM items WHERE library_id = ? AND is_deleted = 0
@@ -318,10 +339,22 @@ export class CatalogRepository {
       VALUES (@library_id, @id, @annotation, NULL)
     `)
 
+    const deleteFts = this.db.prepare(`
+      DELETE FROM items_fts WHERE library_id = ? AND id = ?
+    `)
+
     const insertFts = this.db.prepare(`
       INSERT INTO items_fts (library_id, id, name, tags_text, annotation)
       VALUES (@library_id, @id, @name, @tags_text, @annotation)
     `)
+
+    // Only query and delete if the library already contains items to avoid 50,000 FTS5 table scans on initial seed
+    const hasExisting = this.countItems(libraryId) > 0
+    let existingIds: Set<string> | null = null
+    if (hasExisting) {
+      const rows = this.db.prepare('SELECT id FROM items WHERE library_id = ?').all(libraryId) as { id: string }[]
+      existingIds = new Set(rows.map(r => r.id))
+    }
 
     const tx = this.db.transaction((batch) => {
       for (const item of batch) {
@@ -359,6 +392,9 @@ export class CatalogRepository {
 
         const tagsArray: string[] = item.tagsJson ? JSON.parse(item.tagsJson) : []
         const tagsText = tagsArray.join(' ')
+        if (existingIds && existingIds.has(item.id)) {
+          deleteFts.run(libraryId, item.id)
+        }
         insertFts.run({
           library_id: libraryId,
           id: item.id,
@@ -422,8 +458,12 @@ export class CatalogRepository {
       VALUES (?, ?, ?, NULL)
     `)
 
-    const updateFts = this.db.prepare(`
-      INSERT OR REPLACE INTO items_fts (library_id, id, name, tags_text, annotation)
+    const deleteFts = this.db.prepare(`
+      DELETE FROM items_fts WHERE library_id = ? AND id = ?
+    `)
+
+    const insertFts = this.db.prepare(`
+      INSERT INTO items_fts (library_id, id, name, tags_text, annotation)
       VALUES (?, ?, ?, ?, ?)
     `)
 
@@ -445,8 +485,9 @@ export class CatalogRepository {
         this.db.prepare('DELETE FROM item_details WHERE library_id = ? AND id = ?').run(libraryId, id)
       }
 
+      deleteFts.run(libraryId, id)
       const tagsText = (newTags || []).join(' ')
-      updateFts.run(libraryId, id, newName, tagsText, newAnnotation || '')
+      insertFts.run(libraryId, id, newName, tagsText, newAnnotation || '')
     })
 
     tx()

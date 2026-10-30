@@ -229,6 +229,101 @@ describe('CatalogRepository SQLite & FTS5 Unit Tests', () => {
     // Verify FTS5 now finds 'quantum'
     const searchQuantum = repo.searchItemsFts('test-lib', 'quantum')
     expect(searchQuantum.count).toBe(1)
+
+    // Verify FTS5 no longer matches old 'original-tag'
+    const searchOld = repo.searchItemsFts('test-lib', 'original-tag')
+    expect(searchOld.count).toBe(0)
+
+    // Verify exactly 1 row exists in items_fts (no duplicates accumulated)
+    const ftsCount = (db.prepare(
+      'SELECT COUNT(*) as count FROM items_fts WHERE library_id = ? AND id = ?'
+    ).get('test-lib', 'patch-item') as any).count
+    expect(ftsCount).toBe(1)
+  })
+
+  it('deduplicates items_fts on re-importing the same items in batch', () => {
+    const compact: CompactCatalogItem = {
+      id: 'batch-dedup-item',
+      name: 'Initial Name',
+      ext: 'png',
+      tags: ['tag1'],
+      hasAnnotation: true,
+    }
+
+    // First insert
+    repo.insertItemsBatch('test-lib', [
+      {
+        id: 'batch-dedup-item',
+        name: 'Initial Name',
+        ext: 'png',
+        tagsJson: JSON.stringify(['tag1']),
+        annotation: 'Initial prompt text',
+        compactJson: JSON.stringify(compact),
+        mediaRelPath: 'images/batch-dedup-item.info/Initial Name.png',
+      },
+    ])
+
+    // Re-import with modified name & tags (simulating re-scan)
+    const updatedCompact = { ...compact, name: 'Reimported Name', tags: ['tag2'] }
+    repo.insertItemsBatch('test-lib', [
+      {
+        id: 'batch-dedup-item',
+        name: 'Reimported Name',
+        ext: 'png',
+        tagsJson: JSON.stringify(['tag2']),
+        annotation: 'Updated prompt text',
+        compactJson: JSON.stringify(updatedCompact),
+        mediaRelPath: 'images/batch-dedup-item.info/Reimported Name.png',
+      },
+    ])
+
+    // Verify exactly 1 row exists in items_fts
+    const ftsRows = db.prepare(
+      'SELECT id, name, tags_text, annotation FROM items_fts WHERE library_id = ? AND id = ?'
+    ).all('test-lib', 'batch-dedup-item') as any[]
+    expect(ftsRows).toHaveLength(1)
+    expect(ftsRows[0].name).toBe('Reimported Name')
+    expect(ftsRows[0].tags_text).toBe('tag2')
+
+    // Search matches new tag and does NOT match old tag
+    expect(repo.searchItemsFts('test-lib', 'tag2').count).toBe(1)
+    expect(repo.searchItemsFts('test-lib', 'tag1').count).toBe(0)
+  })
+
+  it('marks item as deleted and removes it from FTS5 index', () => {
+    const compact: CompactCatalogItem = {
+      id: 'del-item',
+      name: 'To Be Deleted',
+      ext: 'jpg',
+      tags: ['temporary'],
+    }
+
+    repo.insertItemsBatch('test-lib', [
+      {
+        id: 'del-item',
+        name: 'To Be Deleted',
+        ext: 'jpg',
+        tagsJson: JSON.stringify(['temporary']),
+        compactJson: JSON.stringify(compact),
+        mediaRelPath: 'images/del-item.info/To Be Deleted.jpg',
+      },
+    ])
+
+    expect(repo.countItems('test-lib')).toBe(1)
+    expect(repo.searchItemsFts('test-lib', 'temporary').count).toBe(1)
+
+    // Mark as deleted
+    const marked = repo.markItemDeleted('test-lib', 'del-item')
+    expect(marked).toBe(true)
+
+    // Count is now 0 and item is not found in FTS
+    expect(repo.countItems('test-lib')).toBe(0)
+    expect(repo.searchItemsFts('test-lib', 'temporary').count).toBe(0)
+
+    const ftsCount = (db.prepare(
+      'SELECT COUNT(*) as count FROM items_fts WHERE library_id = ? AND id = ?'
+    ).get('test-lib', 'del-item') as any).count
+    expect(ftsCount).toBe(0)
   })
 
   it('toggles library hidden status and deletes library cascade', () => {

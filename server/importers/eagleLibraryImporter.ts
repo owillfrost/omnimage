@@ -67,6 +67,7 @@ export function findCacheFile(fileName: string): string | null {
 export class EagleLibraryImporter {
   private repo: CatalogRepository
   private omnimageDir: string
+  private static activeImports = new Map<string, Promise<{ importedCount: number; fromCache: boolean; timeMs: number }>>()
 
   constructor(db: Database.Database) {
     this.repo = new CatalogRepository(db)
@@ -78,10 +79,31 @@ export class EagleLibraryImporter {
 
   /**
    * Fast Zero-Copy Import of an Eagle library into SQLite.
+   * Deduplicates concurrent in-flight imports to prevent race conditions.
    * Prioritizes pre-indexed cache files (seeds 35,000+ items in < 1 second).
    * Falls back to scanning .library directly on disk without Eagle App running.
    */
   async importLibrary(
+    libraryId: string,
+    options: {
+      libraryPath?: string
+      force?: boolean
+    } = {}
+  ): Promise<{ importedCount: number; fromCache: boolean; timeMs: number }> {
+    const inFlight = EagleLibraryImporter.activeImports.get(libraryId)
+    if (inFlight && !options.force) {
+      return inFlight
+    }
+
+    const importPromise = this.executeImport(libraryId, options).finally(() => {
+      EagleLibraryImporter.activeImports.delete(libraryId)
+    })
+
+    EagleLibraryImporter.activeImports.set(libraryId, importPromise)
+    return importPromise
+  }
+
+  private async executeImport(
     libraryId: string,
     options: {
       libraryPath?: string

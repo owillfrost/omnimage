@@ -87,4 +87,23 @@ export function runMigrations(db: Database.Database): void {
       tokenize='unicode61 remove_diacritics 2'
     );
   `)
+
+  // Self-healing migration v1: Rebuild and deduplicate items_fts from canonical items
+  const userVersion = (db.pragma('user_version', { simple: true }) as number) || 0
+  if (userVersion < 1) {
+    db.exec(`
+      DELETE FROM items_fts;
+      INSERT INTO items_fts (library_id, id, name, tags_text, annotation)
+      SELECT 
+        i.library_id,
+        i.id,
+        i.name,
+        COALESCE(REPLACE(REPLACE(REPLACE(i.tags_json, '["', ''), '"]', ''), '","', ' '), ''),
+        COALESCE(d.annotation, '')
+      FROM items i
+      LEFT JOIN item_details d ON d.library_id = i.library_id AND d.id = i.id
+      WHERE i.is_deleted = 0;
+    `)
+    db.pragma('user_version = 1')
+  }
 }
