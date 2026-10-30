@@ -29,6 +29,7 @@ export const ModelSettingsModal: React.FC<ModelSettingsModalProps> = ({
     engine: 'clip-vit-b32',
     device: 'auto',
   })
+  const [manifest, setManifest] = React.useState<Record<string, any> | null>(null)
   const [isSaving, setIsSaving] = React.useState(false)
   const [saveSuccess, setSaveSuccess] = React.useState(false)
 
@@ -41,10 +42,31 @@ export const ModelSettingsModal: React.FC<ModelSettingsModalProps> = ({
           if (res.status === 'success' && res.data) {
             setConfig(res.data)
           }
+          if (res.manifest) {
+            setManifest(res.manifest)
+          }
         })
         .catch(() => {})
     }
   }, [isOpen])
+
+  const clipTotalCount = React.useMemo(() => {
+    if (!manifest) return null
+    let total = 0
+    for (const lib of Object.values(manifest)) {
+      if (lib?.clip?.count) total += lib.clip.count
+    }
+    return total
+  }, [manifest])
+
+  const gemmaTotalCount = React.useMemo(() => {
+    if (!manifest) return null
+    let total = 0
+    for (const lib of Object.values(manifest)) {
+      if (lib?.gemma?.count) total += lib.gemma.count
+    }
+    return total
+  }, [manifest])
 
   const handleSelectEngine = async (engine: 'clip-vit-b32' | 'embeddinggemma-2') => {
     setIsSaving(true)
@@ -111,7 +133,7 @@ export const ModelSettingsModal: React.FC<ModelSettingsModalProps> = ({
             {config.engine === 'clip-vit-b32' && (
               <div className="flex items-center gap-1.5 text-[11px] text-zinc-200 mt-1">
                 <Check className="w-3.5 h-3.5 text-zinc-300" />
-                <span>Ativo</span>
+                <span>Ativo {clipTotalCount !== null && `(${clipTotalCount.toLocaleString()} itens indexados)`}</span>
               </div>
             )}
           </div>
@@ -147,7 +169,9 @@ export const ModelSettingsModal: React.FC<ModelSettingsModalProps> = ({
             {config.engine === 'embeddinggemma-2' && (
               <div className="flex items-center gap-1.5 text-[11px] text-zinc-200 mt-1">
                 <Check className="w-3.5 h-3.5 text-zinc-300" />
-                <span>Ativo (Índices em .gemma2.bin)</span>
+                <span>
+                  Ativo {gemmaTotalCount !== null && gemmaTotalCount > 0 ? `(${gemmaTotalCount.toLocaleString()} itens indexados)` : '(Fallback automático para CLIP se não indexado)'}
+                </span>
               </div>
             )}
           </div>

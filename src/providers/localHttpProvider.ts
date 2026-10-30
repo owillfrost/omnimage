@@ -225,7 +225,7 @@ export class LocalHttpProvider implements ICatalogProvider {
   async fetchEmbeddingsBinary(
     libraryId: string,
     engine?: string
-  ): Promise<{ dim: number; buffer: ArrayBuffer; engine?: string } | null> {
+  ): Promise<{ dim: number; buffer: ArrayBuffer; engine?: string; isFallback?: boolean } | null> {
     try {
       const params = new URLSearchParams({ library: libraryId })
       if (engine) {
@@ -236,9 +236,10 @@ export class LocalHttpProvider implements ICatalogProvider {
 
       const dimHeader = res.headers.get('X-Embedding-Dim')
       const engineHeader = res.headers.get('X-Embedding-Engine') || engine
+      const isFallback = res.headers.get('X-Embedding-Fallback') === 'true'
       const dim = dimHeader ? parseInt(dimHeader, 10) : 512
       const buffer = await res.arrayBuffer()
-      return { dim, buffer, engine: engineHeader }
+      return { dim, buffer, engine: engineHeader, isFallback }
     } catch (err) {
       console.error('Failed to fetch embeddings binary:', err)
       return null

@@ -9,31 +9,6 @@ import type { TextQueryResult, VisualQueryResult } from './engines/types'
 
 export type { TextQueryResult, VisualQueryResult }
 
-export async function computeClipTextEmbedding(
-  queryText: string,
-  engineType?: EmbeddingEngineType
-): Promise<TextQueryResult> {
-  const engine = await getEmbeddingEngine(engineType)
-  return engine.computeTextEmbedding(queryText)
-}
-
-export async function computeClipVisualQuery(
-  imageBuffer: Buffer,
-  engineType?: EmbeddingEngineType
-): Promise<VisualQueryResult> {
-  const engine = await getEmbeddingEngine(engineType)
-  return engine.computeVisualEmbedding(imageBuffer)
-}
-
-// In-memory cache for fast binary embedding streaming
-interface EmbeddingCacheEntry {
-  etag: string
-  raw: Buffer
-  gzip: Buffer
-}
-
-const embeddingCache = new Map<string, EmbeddingCacheEntry>()
-
 export function resolveEmbeddingsFilePath(
   libraryId: string,
   engineType?: EmbeddingEngineType
@@ -61,6 +36,69 @@ export function resolveEmbeddingsFilePath(
   return null
 }
 
+export function resolveBestEmbeddingsEngine(
+  libraryId: string,
+  preferredEngine?: EmbeddingEngineType
+): { engine: EmbeddingEngineType; filePath: string | null; isFallback: boolean } {
+  const preferred = preferredEngine || getEmbeddingConfig().engine
+  const primaryPath = resolveEmbeddingsFilePath(libraryId, preferred)
+  if (primaryPath && fs.existsSync(primaryPath)) {
+    return { engine: preferred, filePath: primaryPath, isFallback: false }
+  }
+
+  // Check fallback engine
+  const altEngine: EmbeddingEngineType =
+    preferred === 'embeddinggemma-2' ? 'clip-vit-b32' : 'embeddinggemma-2'
+  const altPath = resolveEmbeddingsFilePath(libraryId, altEngine)
+  if (altPath && fs.existsSync(altPath)) {
+    return { engine: altEngine, filePath: altPath, isFallback: true }
+  }
+
+  return { engine: preferred, filePath: null, isFallback: false }
+}
+
+export async function computeClipTextEmbedding(
+  queryText: string,
+  engineType?: EmbeddingEngineType,
+  libraryId?: string
+): Promise<TextQueryResult & { engine: EmbeddingEngineType; isFallback?: boolean }> {
+  let targetEngine = engineType || getEmbeddingConfig().engine
+  let isFallback = false
+
+  if (libraryId) {
+    const resolved = resolveBestEmbeddingsEngine(libraryId, targetEngine)
+    if (resolved.filePath) {
+      targetEngine = resolved.engine
+      isFallback = resolved.isFallback
+    }
+  }
+
+  const engine = await getEmbeddingEngine(targetEngine)
+  const result = await engine.computeTextEmbedding(queryText)
+  return {
+    ...result,
+    engine: targetEngine,
+    isFallback,
+  }
+}
+
+export async function computeClipVisualQuery(
+  imageBuffer: Buffer,
+  engineType?: EmbeddingEngineType
+): Promise<VisualQueryResult> {
+  const engine = await getEmbeddingEngine(engineType)
+  return engine.computeVisualEmbedding(imageBuffer)
+}
+
+// In-memory cache for fast binary embedding streaming
+interface EmbeddingCacheEntry {
+  etag: string
+  raw: Buffer
+  gzip: Buffer
+}
+
+const embeddingCache = new Map<string, EmbeddingCacheEntry>()
+
 export async function handleEmbeddingsBinaryStream(
   req: IncomingMessage,
   res: ServerResponse,
@@ -68,13 +106,19 @@ export async function handleEmbeddingsBinaryStream(
   engineType?: EmbeddingEngineType,
   db?: any
 ): Promise<void> {
-  const activeEngine = engineType || getEmbeddingConfig().engine
-  const filePath = resolveEmbeddingsFilePath(libraryId, activeEngine)
+  const resolved = resolveBestEmbeddingsEngine(libraryId, engineType)
+  const { engine: activeEngine, filePath, isFallback } = resolved
 
   if (!filePath || !fs.existsSync(filePath)) {
     res.statusCode = 404
     res.setHeader('Content-Type', 'application/json')
-    res.end(JSON.stringify({ status: 'not_indexed', library: libraryId, engine: activeEngine }))
+    res.end(
+      JSON.stringify({
+        status: 'not_indexed',
+        library: libraryId,
+        engine: engineType || getEmbeddingConfig().engine,
+      })
+    )
     return
   }
 
@@ -85,6 +129,9 @@ export async function handleEmbeddingsBinaryStream(
   res.setHeader('ETag', etag)
   res.setHeader('X-Embedding-Dim', '512')
   res.setHeader('X-Embedding-Engine', activeEngine)
+  if (isFallback) {
+    res.setHeader('X-Embedding-Fallback', 'true')
+  }
   res.setHeader('Content-Type', 'application/octet-stream')
 
   if (req.headers['if-none-match'] === etag) {
@@ -109,12 +156,14 @@ export async function handleEmbeddingsBinaryStream(
         // Build the standard binary packaging format on-the-fly: [Uint32LE headerLen] + [UTF-8 JSON IDs] + [vectors]
         try {
           const sqliteDb = db || (await import('../db/sqliteClient')).getSqliteDb()
-          const rows = sqliteDb.prepare(
-            'SELECT id FROM items WHERE library_id = ? AND is_deleted = 0 ORDER BY rowid ASC'
-          ).all(libraryId) as { id: string }[]
+          const rows = sqliteDb
+            .prepare(
+              'SELECT id FROM items WHERE library_id = ? AND is_deleted = 0 ORDER BY rowid ASC'
+            )
+            .all(libraryId) as { id: string }[]
 
           const numVectors = Math.floor(raw.length / 512)
-          const ids = rows.slice(0, numVectors).map(r => r.id)
+          const ids = rows.slice(0, numVectors).map((r) => r.id)
           const headerBytes = Buffer.from(JSON.stringify(ids), 'utf-8')
 
           const packaged = Buffer.alloc(4 + headerBytes.length + raw.length)

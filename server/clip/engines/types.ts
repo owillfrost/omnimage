@@ -17,7 +17,9 @@ export interface IEmbeddingEngine {
   readonly id: string
   readonly name: string
   readonly dim: number
+  readonly modality: 'multimodal' | 'text'
 
   computeTextEmbedding(queryText: string): Promise<TextQueryResult>
   computeVisualEmbedding(imageBuffer: Buffer): Promise<VisualQueryResult>
+  computeBatchTextEmbeddings?(texts: string[]): Promise<Int8Array[]>
 }

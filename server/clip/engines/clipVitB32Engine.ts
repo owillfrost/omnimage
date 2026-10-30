@@ -52,6 +52,7 @@ export class ClipVitB32Engine implements IEmbeddingEngine {
   readonly id = 'clip-vit-b32'
   readonly name = 'CLIP ViT-B/32 (Standard)'
   readonly dim = 512
+  readonly modality = 'multimodal' as const
 
   async computeTextEmbedding(queryText: string): Promise<TextQueryResult> {
     const clean = queryText.trim()
