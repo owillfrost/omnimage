@@ -1,5 +1,4 @@
 import { quantizeNormalizedFloat32ToInt8 } from '../../../src/core/vectorQuantization'
-import { extractPaletteFromRgba } from '../../../src/core/paletteExtractor'
 import type { IEmbeddingEngine, TextQueryResult, VisualQueryResult } from './types'
 
 let textPipeline: any = null
@@ -44,13 +43,30 @@ async function getTextPipeline(device: 'cpu' | 'directml' | 'cuda' | 'auto') {
   if (textPipelinePromise) return textPipelinePromise
 
   textPipelinePromise = (async () => {
-    const { pipeline } = await import('@huggingface/transformers')
-    const targetDevice = resolveDevice(device)
-    textPipeline = await pipeline('feature-extraction', GEMMA_MODEL_ID, {
-      device: targetDevice,
-      dtype: 'q4',
-    })
-    return textPipeline
+    try {
+      const { pipeline } = await import('@huggingface/transformers')
+      const targetDevice = resolveDevice(device)
+      try {
+        textPipeline = await pipeline('feature-extraction', GEMMA_MODEL_ID, {
+          device: targetDevice,
+          dtype: 'q4',
+        })
+      } catch (deviceErr) {
+        if (targetDevice !== 'cpu') {
+          console.warn('[Gemma2Engine] Hardware acceleration failed, falling back to CPU:', deviceErr)
+          textPipeline = await pipeline('feature-extraction', GEMMA_MODEL_ID, {
+            device: 'cpu',
+            dtype: 'q4',
+          })
+        } else {
+          throw deviceErr
+        }
+      }
+      return textPipeline
+    } catch (err) {
+      textPipelinePromise = null
+      throw err
+    }
   })()
 
   return textPipelinePromise
@@ -60,6 +76,7 @@ export class Gemma2Engine implements IEmbeddingEngine {
   readonly id = 'embeddinggemma-2'
   readonly name = 'EmbeddingGemma 2 (Pro Neural 512d)'
   readonly dim = 512
+  readonly modality = 'text' as const
 
   private device: 'cpu' | 'directml' | 'cuda' | 'auto'
 
@@ -79,6 +96,8 @@ export class Gemma2Engine implements IEmbeddingEngine {
     const output = await extractor(formattedQuery, {
       pooling: 'mean',
       normalize: true,
+      truncation: true,
+      max_length: 128,
     })
 
     const rawData = output.data || (output[0]?.data) || output
@@ -90,41 +109,47 @@ export class Gemma2Engine implements IEmbeddingEngine {
     }
   }
 
-  async computeVisualEmbedding(imageBuffer: Buffer): Promise<VisualQueryResult> {
-    if (!imageBuffer || imageBuffer.length === 0) {
-      throw new Error('Image buffer is empty')
-    }
-
-    const { RawImage, AutoProcessor, AutoModel } = await import('@huggingface/transformers')
-    const blob = new Blob([new Uint8Array(imageBuffer)])
-    const rawImage = await RawImage.fromBlob(blob)
-
-    const targetDevice = resolveDevice(this.device)
-    const processor = await AutoProcessor.from_pretrained(GEMMA_MODEL_ID)
-    const visionModel = await AutoModel.from_pretrained(GEMMA_MODEL_ID, {
-      device: targetDevice,
-      dtype: 'q4',
+  async computeBatchTextEmbeddings(texts: string[]): Promise<Int8Array[]> {
+    if (texts.length === 0) return []
+    const extractor = await getTextPipeline(this.device)
+    const formatted = texts.map((t) => {
+      const clean = t.trim()
+      return clean.startsWith('title:') || clean.startsWith('task:')
+        ? clean
+        : `title: none | text: ${clean || 'untitled'}`
     })
 
-    const inputs = await processor(rawImage)
-    const outputs = await visionModel(inputs)
+    const output = await extractor(formatted, {
+      pooling: 'mean',
+      normalize: true,
+      truncation: true,
+      max_length: 128,
+    })
 
-    const imageEmbeds = outputs.image_embeds || outputs.sentence_embedding || outputs.last_hidden_state
-    const rawData = imageEmbeds.data || imageEmbeds[0]?.data || imageEmbeds
-
-    const quantized512 = processMatryoshka512(rawData)
-
-    const width = rawImage.width || 512
-    const height = rawImage.height || 512
-    const aspectRatio = Number((width / height).toFixed(3))
-    const paletteData = extractPaletteFromRgba(rawImage.data, width, height, 5)
-
-    return {
-      embedding: quantized512,
-      width,
-      height,
-      aspectRatio,
-      paletteData,
+    const results: Int8Array[] = []
+    const data = output.data
+    const dims = output.dims // [batchSize, dim]
+    if (dims && dims.length === 2) {
+      const batchSize = dims[0]
+      const hiddenDim = dims[1]
+      for (let b = 0; b < batchSize; b++) {
+        const slice = data.subarray(b * hiddenDim, (b + 1) * hiddenDim)
+        results.push(processMatryoshka512(slice))
+      }
+    } else if (Array.isArray(output)) {
+      for (const item of output) {
+        results.push(processMatryoshka512(item.data))
+      }
+    } else if (data) {
+      results.push(processMatryoshka512(data))
     }
+
+    return results
+  }
+
+  async computeVisualEmbedding(_imageBuffer: Buffer): Promise<VisualQueryResult> {
+    throw new Error(
+      'Gemma2Engine is a text embedding model and does not process raw pixel images. Use ClipVitB32Engine for visual image embeddings.'
+    )
   }
 }

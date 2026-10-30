@@ -430,14 +430,16 @@ export function createCatalogApiMiddleware() {
         }
 
         const queryEngine = (url.searchParams.get('engine') as EmbeddingEngineType) || undefined
-        const result = await computeClipTextEmbedding(queryText, queryEngine)
+        const targetLib = url.searchParams.get('library') || undefined
+        const result = await computeClipTextEmbedding(queryText, queryEngine, targetLib)
         res.setHeader('Content-Type', 'application/json; charset=utf-8')
         res.end(JSON.stringify({
           status: 'success',
           query: queryText,
           embedding: Array.from(result.embedding),
           dim: result.dim,
-          engine: queryEngine || getEmbeddingConfig().engine,
+          engine: result.engine,
+          isFallback: result.isFallback || false,
         }))
         return
       }
@@ -600,8 +602,21 @@ export function createCatalogApiMiddleware() {
       // 12.1 GET & POST /api/catalog/embedding-config
       if (pathname === '/api/catalog/embedding-config') {
         if (req.method === 'GET') {
+          const manifestPath = path.resolve(process.cwd(), '.omnimage/embeddings/manifest.json')
+          let manifest = null
+          if (fs.existsSync(manifestPath)) {
+            try {
+              manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'))
+            } catch {
+              // ignore
+            }
+          }
           res.setHeader('Content-Type', 'application/json; charset=utf-8')
-          res.end(JSON.stringify({ status: 'success', data: getEmbeddingConfig() }))
+          res.end(JSON.stringify({
+            status: 'success',
+            data: getEmbeddingConfig(),
+            manifest: manifest?.libraries || null,
+          }))
           return
         }
 

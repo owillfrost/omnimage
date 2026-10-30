@@ -224,6 +224,7 @@ self.onmessage = (event: MessageEvent<ColorSortWorkerRequest>) => {
 
     const vecs = currentEmbeddingVectors
     const dim = currentEmbeddingDim
+    const isTargetText = Boolean(isTextAnchor || targetTags?.includes('clip-text-query'))
 
     let externalTargetVec: Int8Array | null = null
     let externalTargetInvNorm = 0
@@ -411,7 +412,6 @@ self.onmessage = (event: MessageEvent<ColorSortWorkerRequest>) => {
           )
         }
         let clipSim = 0
-        const isTargetText = Boolean(isTextAnchor || targetTags?.includes('clip-text-query'))
 
         if (isTargetText) {
           // Zero-shot text-to-image cosine distribution in CLIP ViT-B/32:

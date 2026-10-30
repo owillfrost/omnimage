@@ -6,8 +6,8 @@ import {
   saveEmbeddingConfig,
 } from '../../server/config/embeddingConfig'
 import { getEmbeddingEngine } from '../../server/clip/engines/engineRegistry'
-import { resolveEmbeddingsFilePath } from '../../server/clip/clipQueryService'
-import { backgroundIndexer } from '../../server/clip/backgroundIndexer'
+import { resolveEmbeddingsFilePath, resolveBestEmbeddingsEngine } from '../../server/clip/clipQueryService'
+import { backgroundIndexer, buildItemDocument } from '../../server/clip/backgroundIndexer'
 import { processMatryoshka512 } from '../../server/clip/engines/gemma2Engine'
 import { computeQuantizedCosine } from '../../src/core/vectorQuantization'
 
@@ -135,5 +135,38 @@ describe('Embedding Engine Architecture (Phase 1)', () => {
     const gemmaEngine = await getEmbeddingEngine('embeddinggemma-2')
     expect(gemmaEngine.id).toBe('embeddinggemma-2')
     expect(gemmaEngine.dim).toBe(512)
+    expect(gemmaEngine.modality).toBe('text')
+    await expect(gemmaEngine.computeVisualEmbedding(Buffer.from('fake'))).rejects.toThrow(
+      /text embedding model/
+    )
+  })
+
+  it('buildItemDocument correctly formats title, tags and prompt annotations', () => {
+    const doc = buildItemDocument({
+      name: 'Cyberpunk Cityscape',
+      tagsJson: JSON.stringify(['sci-fi', 'neon', 'night']),
+      annotation: 'photorealistic 8k render, glowing neon signs, rain on asphalt',
+    })
+    expect(doc).toContain('title: Cyberpunk Cityscape')
+    expect(doc).toContain('tags: sci-fi, neon, night')
+    expect(doc).toContain('prompt: photorealistic 8k render')
+  })
+
+  it('resolveBestEmbeddingsEngine falls back to available index when requested engine is missing', () => {
+    const testDir = path.resolve(process.cwd(), '.omnimage/embeddings')
+    if (!fs.existsSync(testDir)) fs.mkdirSync(testDir, { recursive: true })
+
+    const clipFake = path.join(testDir, 'embeddings-test-fallback-lib.bin')
+    fs.writeFileSync(clipFake, Buffer.alloc(512))
+
+    try {
+      // Requested gemma, but only clip exists -> must fallback to clip
+      const resolved = resolveBestEmbeddingsEngine('test-fallback-lib', 'embeddinggemma-2')
+      expect(resolved.engine).toBe('clip-vit-b32')
+      expect(resolved.isFallback).toBe(true)
+      expect(resolved.filePath).toBe(clipFake)
+    } finally {
+      if (fs.existsSync(clipFake)) fs.unlinkSync(clipFake)
+    }
   })
 })

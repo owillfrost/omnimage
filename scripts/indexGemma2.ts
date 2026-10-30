@@ -45,11 +45,8 @@ async function run() {
     process.exit(1)
   }
 
-  // Set configuration to embeddinggemma-2
-  saveEmbeddingConfig({
-    engine: 'embeddinggemma-2',
-    device: 'directml',
-  })
+  // Note: We deliberately do NOT call saveEmbeddingConfig here,
+  // so generating the Gemma2 index does not unexpectedly switch the active engine.
 
   for (const lib of selectedLibs) {
     console.log(`\nIndexing library: [${lib.id}] (${lib.name})`)
