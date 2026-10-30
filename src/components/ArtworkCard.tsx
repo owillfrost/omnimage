@@ -216,7 +216,7 @@ const ArtworkCardComponent: React.FC<ArtworkCardProps> = ({
       {/* Anchor Badge */}
       {isAnchor && (
         <div className="absolute top-2.5 left-2.5 z-20 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white text-black font-semibold text-[10px] tracking-wide shadow-lg pointer-events-none">
-          <Sparkles className="w-3 h-3 text-amber-500 fill-amber-500" />
+          <Sparkles className="w-3 h-3 text-zinc-950 fill-zinc-950" />
           <span>
             {artwork.isTextQuery
               ? t('canvas.anchorEpicenter')

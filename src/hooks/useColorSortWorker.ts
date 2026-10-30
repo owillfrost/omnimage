@@ -435,6 +435,10 @@ export function useColorSortWorker(
     // NOTE: this placeholder is NOT written to listCache — it is a color/grade approximation, and
     // caching it under a 'hybrid'/'visual'/'layout' key would make prefetchAnchorSort skip the
     // Worker, freezing those modes on the color ordering.
+    if (colorAnchorArtwork.isTextQuery) {
+      // A text query search has NO chromatic affinity: preserve existing list order until zero-shot embeddings return
+      return filteredArtworks
+    }
     if (mode === 'layout') {
       return sortArtworksByColorProximity(filteredArtworks, colorAnchorArtwork, 'color')
     }

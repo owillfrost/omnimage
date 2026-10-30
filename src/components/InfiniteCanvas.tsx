@@ -950,15 +950,23 @@ export const InfiniteCanvas: React.FC = () => {
   }, [activeTab, setViewport, centerView])
 
   const calibratedAccent = React.useMemo(() => {
+    if (colorAnchorArtwork?.isTextQuery) {
+      return {
+        accent: '#71717a',
+        bright: '#e4e4e7',
+        subtle: 'rgba(228, 224, 231, 0.12)',
+      }
+    }
     const rawColor =
       colorAnchorArtwork?.dominantColor ||
       colorAnchorArtwork?.palette?.[0] ||
       null
     return calibrateAnchorAccent(rawColor)
-  }, [colorAnchorArtwork?.dominantColor, colorAnchorArtwork?.palette])
+  }, [colorAnchorArtwork?.dominantColor, colorAnchorArtwork?.palette, colorAnchorArtwork?.isTextQuery])
 
   const activeAmbientColor =
-    selectedColors[selectedColors.length - 1] || (colorAnchorArtwork ? calibratedAccent.accent : null)
+    selectedColors[selectedColors.length - 1] ||
+    (colorAnchorArtwork && !colorAnchorArtwork.isTextQuery ? calibratedAccent.accent : null)
 
   return (
     <div

@@ -440,7 +440,10 @@ self.onmessage = (event: MessageEvent<ColorSortWorkerRequest>) => {
         }
       } else {
         // High-precision multi-signal fallback when CLIP embedding isn't indexed yet for this item
-        if (anchorTokenSet.size > 0) {
+        if (isTargetText) {
+          // A text query anchor has NO chromatic affinity: match strictly on prompt/style tokens
+          finalSimilarity = tokenSim * 0.85 + aspectSim * 0.15
+        } else if (anchorTokenSet.size > 0) {
           finalSimilarity = colorSim * 0.68 + tokenSim * 0.22 + aspectSim * 0.10
         } else {
           finalSimilarity = colorSim * 0.86 + aspectSim * 0.14

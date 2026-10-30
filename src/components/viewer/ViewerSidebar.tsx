@@ -53,11 +53,11 @@ function CatalogActions({ artwork }: { artwork: Artwork }) {
       <div className="flex flex-col gap-2.5">
         <div className="flex items-center justify-between">
           <h3 className={sectionTitle}>{t("sidebar.aiSemanticSearch")}</h3>
-          <span className="text-[10px] font-medium text-amber-400">CLIP ViT-B/32</span>
+          <span className="text-[10px] font-medium text-zinc-400">CLIP ViT-B/32</span>
         </div>
-        <div className="p-3 rounded-xl bg-zinc-900 border border-amber-500/25 text-xs text-zinc-300 space-y-1.5 shadow-sm">
-          <div className="flex items-center gap-1.5 text-amber-300 font-medium">
-            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+        <div className="p-3 rounded-xl bg-zinc-900 border border-zinc-800 text-xs text-zinc-300 space-y-1.5 shadow-xs">
+          <div className="flex items-center gap-1.5 text-zinc-200 font-medium">
+            <Sparkles className="w-3.5 h-3.5 text-zinc-400" />
             <span>{t("sidebar.aestheticAnchor")}</span>
           </div>
           <p className="text-[11px] text-zinc-400 leading-relaxed">
