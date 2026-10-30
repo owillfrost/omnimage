@@ -8,7 +8,7 @@ import { EagleLibraryImporter } from './importers/eagleLibraryImporter'
 import { getLibrariesConfig, saveLibrariesConfig } from './config/librariesConfig'
 import { SidecarManager } from './sidecar/sidecarManager'
 import { FolderScanner } from './importers/folderScanner'
-import { LibraryFileWatcher } from './watcher/fileWatcher'
+import { getLibraryFileWatcher } from './watcher/fileWatcher'
 import { backgroundIndexer } from './clip/backgroundIndexer'
 import { SplitToningMigrationService } from './db/splitToningMigration'
 import { handleMediaStream, clearMediaPathCache, resolveMediaFilePath } from './media/mediaStreamServer'
@@ -43,7 +43,7 @@ export function createCatalogApiMiddleware() {
   const db = getSqliteDb()
   const repo = new CatalogRepository(db)
   const importer = new EagleLibraryImporter(db)
-  const fileWatcher = new LibraryFileWatcher(db)
+  const fileWatcher = getLibraryFileWatcher(db)
   const splitToningMigrator = new SplitToningMigrationService(db)
 
   return async function catalogApiMiddleware(
@@ -201,7 +201,8 @@ export function createCatalogApiMiddleware() {
       // 2. GET /api/catalog/items OR /api/eagle-items
       if (pathname === '/api/catalog/items' || pathname === '/api/eagle-items') {
         const library = url.searchParams.get('library') || 'design'
-        const limit = parseInt(url.searchParams.get('limit') || '50000', 10)
+        const rawLimit = parseInt(url.searchParams.get('limit') || '50000', 10)
+        const limit = Number.isFinite(rawLimit) ? Math.min(Math.max(rawLimit, 1), 50000) : 50000
         const q = (url.searchParams.get('q') || '').trim()
         const refresh = url.searchParams.get('refresh') === '1' || url.searchParams.get('refresh') === 'true'
 
@@ -209,10 +210,13 @@ export function createCatalogApiMiddleware() {
           invalidateCatalogCache()
         }
 
-        // Auto-seed library if empty
-        if (repo.countItems(library) === 0) {
+        const configs = getLibrariesConfig()
+        const config = configs.find(c => c.id === library)
+
+        // Only auto-seed if library is configured and empty
+        if (repo.countItems(library) === 0 && config) {
           try {
-            await importer.importLibrary(library)
+            await importer.importLibrary(library, { libraryPath: config.path })
           } catch (err) {
             console.warn(`[Catalog] Failed auto-seed for ${library}:`, err)
           }

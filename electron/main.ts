@@ -7,6 +7,7 @@ import {
   autoSeedLibrariesIfEmpty,
   startStandaloneServer,
   closeSqliteDb,
+  stopAllLibraryWatchers,
 } from '../server/index'
 import { resolveMediaFilePath } from '../server/media/mediaStreamServer'
 import { showItemInFolder, showOpenDirectoryDialog, startFileDrag } from './nativeActions'
@@ -133,13 +134,14 @@ app.on('window-all-closed', () => {
   }
 })
 
-// Graceful shutdown: safely close SQLite and save any in-flight WAL buffers
+// Graceful shutdown: safely stop watchers and close SQLite
 app.on('before-quit', () => {
   try {
-    closeSqliteDb()
+    stopAllLibraryWatchers()
     if (serverInstance && typeof serverInstance.close === 'function') {
       serverInstance.close()
     }
+    closeSqliteDb()
   } catch {
     // ignore
   }
