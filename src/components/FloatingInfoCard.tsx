@@ -13,10 +13,12 @@ import {
   Info,
   Layers,
   ArrowRight,
+  LayoutGrid,
 } from "lucide-react"
 import { useI18n } from "../i18n"
 import type { Artwork } from "../types/artwork"
 import type { GradeTuningOptions } from "../core/colorClustering"
+import type { LayoutTuningOptions } from "../core/layoutExtractor"
 import { isAnchorNeutral } from "../core/colorClustering"
 import {
   type SplitToningProfile,
@@ -35,6 +37,8 @@ export interface FloatingInfoCardProps {
   onSelectAnchorMode?: (mode: SimilaritySortMode) => void
   gradeTuning?: GradeTuningOptions
   onGradeTuningChange?: (tuning: GradeTuningOptions) => void
+  layoutTuning?: LayoutTuningOptions
+  onLayoutTuningChange?: (tuning: LayoutTuningOptions) => void
   isOpen?: boolean
   onToggleOpen?: () => void
 }
@@ -48,6 +52,8 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
   onSelectAnchorMode,
   gradeTuning,
   onGradeTuningChange,
+  layoutTuning,
+  onLayoutTuningChange,
   isOpen,
   onToggleOpen,
 }) => {
@@ -65,12 +71,19 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
   }
 
   const isGradeMode = anchorMode === "grade"
+  const isLayoutMode = anchorMode === "layout"
 
   // Current tuning values with defaults
   const sensitivityPct = Math.round((gradeTuning?.sensitivity ?? 0.75) * 100)
   const balanceVal = gradeTuning?.balance ?? 0
   const protectSkin = gradeTuning?.protectSkinTones !== false
   const excludeNeutrals = Boolean(gradeTuning?.excludeNeutrals)
+
+  // Layout tuning values with defaults
+  const aspectWeightPct = Math.round((layoutTuning?.aspectWeight ?? 0.15) * 100)
+  const layoutSensitivity = layoutTuning?.sensitivity ?? 1.0
+  const layoutSensitivityPct = Math.round(layoutSensitivity * 100)
+  const hasLayoutOverride = Boolean(aspectWeightPct !== 15 || layoutSensitivityPct !== 100)
 
   // Derive Split Toning profile for anchor if present
   const anchorGrade: SplitToningProfile | null = React.useMemo(() => {
@@ -157,6 +170,29 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
     })
   }
 
+  const handleAspectWeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = parseInt(e.target.value, 10)
+    onLayoutTuningChange?.({
+      ...layoutTuning,
+      aspectWeight: val / 100,
+    })
+  }
+
+  const handleLayoutSensitivityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = parseInt(e.target.value, 10)
+    onLayoutTuningChange?.({
+      ...layoutTuning,
+      sensitivity: val / 100,
+    })
+  }
+
+  const handleResetLayoutTuning = () => {
+    onLayoutTuningChange?.({
+      aspectWeight: 0.15,
+      sensitivity: 1.0,
+    })
+  }
+
   // Anchor palette with weights for 'color' mode preview
   const anchorPalette = anchorArtwork?.palette || (anchorArtwork?.dominantColor ? [anchorArtwork.dominantColor] : [])
   const anchorWeights = anchorArtwork?.paletteWeights || anchorPalette.map(() => 1 / Math.max(1, anchorPalette.length))
@@ -198,7 +234,7 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                 {anchorArtwork ? t("nav.searchSettingsTitle") : isEagleConnected ? "Gallery" : t("infoCard.loadingTitle")}
               </span>
             </div>
-            {anchorArtwork && isGradeMode && hasAnyOverride && (
+            {anchorArtwork && ((isGradeMode && hasAnyOverride) || (isLayoutMode && hasLayoutOverride)) && (
               <span
                 className="w-1.5 h-1.5 rounded-full animate-pulse transition-colors duration-300"
                 style={{ backgroundColor: "var(--anchor-accent)" }}
@@ -209,12 +245,12 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
           </div>
 
           <div className="flex items-center gap-1">
-            {anchorArtwork && isGradeMode && hasAnyOverride && isExpanded && (
+            {anchorArtwork && ((isGradeMode && hasAnyOverride) || (isLayoutMode && hasLayoutOverride)) && isExpanded && (
               <button
                 type="button"
-                onClick={handleResetTuning}
+                onClick={isGradeMode ? handleResetTuning : handleResetLayoutTuning}
                 className="p-1.5 rounded-full text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors cursor-pointer"
-                title={t("nav.gradeResetTuning")}
+                title={isGradeMode ? t("nav.gradeResetTuning") : t("nav.layoutResetTuning")}
               >
                 <RotateCcw className="w-3.5 h-3.5" />
               </button>
@@ -313,7 +349,7 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                 {/* Mode Selector Pill Row */}
                 {onSelectAnchorMode && (
                   <div className="flex items-center gap-1 p-1 bg-zinc-900/70 border border-zinc-800/80 rounded-xl">
-                    {(["grade", "hybrid", "color", "visual"] as SimilaritySortMode[]).map((m) => {
+                    {(["grade", "hybrid", "color", "visual", "layout"] as SimilaritySortMode[]).map((m) => {
                       const isActive = anchorMode === m
                       return (
                         <button
@@ -707,6 +743,125 @@ export const FloatingInfoCard: React.FC<FloatingInfoCardProps> = React.memo(({
                       <div className="p-2.5 rounded-xl bg-zinc-950/60 border border-zinc-800/80 text-[10px] text-zinc-400 font-mono flex items-center justify-between">
                         <span>Modelo Neural:</span>
                         <span className="text-purple-300">ViT-B/32 (512-dim)</span>
+                      </div>
+
+                      {onSelectAnchorMode && (
+                        <button
+                          type="button"
+                          onClick={() => onSelectAnchorMode("grade")}
+                          className="w-full mt-2 py-2 px-3 rounded-xl bg-zinc-800/80 hover:bg-zinc-800 text-zinc-200 text-[11px] font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer border border-transparent hover:border-[var(--anchor-accent-subtle)]"
+                        >
+                          <span>{t("nav.switchToGradeMode")}</span>
+                          <ArrowRight
+                            className="w-3.5 h-3.5 transition-colors duration-300"
+                            style={{ color: "var(--anchor-accent-bright)" }}
+                          />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* --- CASE E: LAYOUT MODE (Spatial Wireframe & Composition) --- */}
+                {anchorMode === "layout" && (
+                  <div className="space-y-3 pt-1 animate-in fade-in-50 duration-200">
+                    <div className="p-3.5 rounded-2xl bg-zinc-900/50 border border-zinc-800/60 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5 text-zinc-200 font-semibold text-[11px]">
+                          <LayoutGrid className="w-3.5 h-3.5 text-cyan-400" />
+                          <span>{t("nav.layoutWireframeTitle")}</span>
+                        </div>
+                        <span className="text-[10px] font-mono text-cyan-400/80">16×9 Grid</span>
+                      </div>
+
+                      {/* Control 1: Aspect Ratio Cohesion Slider */}
+                      <div className="space-y-1.5 p-3 rounded-2xl bg-zinc-900/40 border border-zinc-800/60">
+                        <div className="flex items-center justify-between text-zinc-300">
+                          <span className="font-medium text-[11px]">{t("nav.layoutAspectWeight")}</span>
+                          <span
+                            className="font-mono text-[11px] font-bold transition-colors duration-300"
+                            style={{ color: "var(--anchor-accent-bright)" }}
+                          >
+                            {aspectWeightPct}%
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="50"
+                          step="1"
+                          value={aspectWeightPct}
+                          onChange={handleAspectWeightChange}
+                          style={{ accentColor: "var(--anchor-accent)" }}
+                          className="w-full h-1.5 bg-zinc-800 rounded-lg cursor-pointer transition-colors duration-300"
+                        />
+                        <div className="flex items-center justify-between text-[10px] text-zinc-500 font-mono">
+                          <span>Livre (0%)</span>
+                          <span className="text-[9px] text-zinc-400">
+                            {aspectWeightPct === 0 ? "Apenas disposição espacial" : aspectWeightPct > 30 ? "Mesmo aspect ratio estrito" : "Equilibrado"}
+                          </span>
+                          <span>Estrito (50%)</span>
+                        </div>
+                      </div>
+
+                      {/* Control 2: Layout Sensitivity Slider */}
+                      <div className="space-y-1.5 p-3 rounded-2xl bg-zinc-900/40 border border-zinc-800/60">
+                        <div className="flex items-center justify-between text-zinc-300">
+                          <span className="font-medium text-[11px]">{t("nav.layoutSensitivity")}</span>
+                          <span
+                            className="font-mono text-[11px] font-bold transition-colors duration-300"
+                            style={{ color: "var(--anchor-accent-bright)" }}
+                          >
+                            {layoutSensitivityPct}%
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min="50"
+                          max="250"
+                          step="5"
+                          value={layoutSensitivityPct}
+                          onChange={handleLayoutSensitivityChange}
+                          style={{ accentColor: "var(--anchor-accent)" }}
+                          className="w-full h-1.5 bg-zinc-800 rounded-lg cursor-pointer transition-colors duration-300"
+                        />
+                        <div className="flex items-center justify-between text-[10px] text-zinc-500 font-mono">
+                          <span>Suave</span>
+                          <span className="text-[9px] text-zinc-400">
+                            {layoutSensitivityPct < 80 ? "Tolera variações" : layoutSensitivityPct > 150 ? "Exigente" : "Curva linear"}
+                          </span>
+                          <span>Exigente</span>
+                        </div>
+                      </div>
+
+                      {/* Feature Breakdown Badges */}
+                      <div className="space-y-1.5 text-[10px]">
+                        <div className="flex items-center justify-between text-zinc-400">
+                          <span>Grade Espacial 16×9 (Massa + Bordas):</span>
+                          <span className="font-mono text-zinc-200 font-bold">{100 - aspectWeightPct}%</span>
+                        </div>
+                        <div className="w-full bg-zinc-800 h-1.5 rounded-full overflow-hidden">
+                          <div className="bg-cyan-400 h-full rounded-full transition-all" style={{ width: `${100 - aspectWeightPct}%` }} />
+                        </div>
+
+                        <div className="flex items-center justify-between text-zinc-400 pt-1">
+                          <span>Coesão de Proporção (Aspect):</span>
+                          <span className="font-mono text-zinc-200 font-bold">{aspectWeightPct}%</span>
+                        </div>
+                        <div className="w-full bg-zinc-800 h-1.5 rounded-full overflow-hidden">
+                          <div className="bg-blue-400 h-full rounded-full transition-all" style={{ width: `${aspectWeightPct}%` }} />
+                        </div>
+                      </div>
+
+                      {/* Info note */}
+                      <div className="p-2.5 rounded-xl bg-zinc-950/60 border border-zinc-800/80 space-y-1">
+                        <div className="flex items-center gap-1.5 text-zinc-300 text-[10px] font-semibold">
+                          <ShieldCheck className="w-3 h-3 text-cyan-400" />
+                          <span>Invariante a Tema & Ruído</span>
+                        </div>
+                        <p className="text-[10px] text-zinc-400 leading-normal">
+                          {t("nav.modeLayoutInfo")}
+                        </p>
                       </div>
 
                       {onSelectAnchorMode && (

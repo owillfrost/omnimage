@@ -72,6 +72,18 @@ export interface TranslationDictionary {
     modeColorHint: string
     modeGrade: string
     modeGradeHint: string
+    modeLayout: string
+    modeLayoutHint: string
+    modeLayoutInfo: string
+    layoutTunerTitle: string
+    layoutAspectWeight: string
+    layoutAspectWeightHint: string
+    layoutSensitivity: string
+    layoutSensitivityHint: string
+    layoutResetTuning: string
+    layoutGridSection: string
+    layoutWireframeTitle: string
+    switchToLayoutMode: string
     gradeTunerTitle: string
     gradeShadows: string
     gradeHighlights: string
@@ -115,8 +127,10 @@ export interface TranslationDictionary {
     anchorColorBadge: string
     anchorHybridBadge: string
     anchorGradeBadge: string
+    anchorLayoutBadge: string
     affinityHue: string
     affinityAi: string
+    affinityLayout: string
     affinityGeneral: string
     copyPrompt: string
     fullscreenInspector: string

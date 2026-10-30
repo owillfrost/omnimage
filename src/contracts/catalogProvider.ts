@@ -17,6 +17,7 @@ export interface ICatalogProvider {
   fetchItemDetail(libraryId: string, rawItemId: string): Promise<CatalogItemDetail | null>
   revealItemInExplorer(libraryId: string, rawItemId: string): Promise<{ ok: boolean; filePath?: string }>
   fetchEmbeddingsBinary(libraryId: string): Promise<{ dim: number; buffer: ArrayBuffer } | null>
+  fetchLayoutBinary?(libraryId: string): Promise<{ dim: number; buffer: ArrayBuffer } | null>
   computeTextEmbedding(query: string): Promise<{ embedding: Int8Array; dim: number }>
   computeVisualQuery(input: {
     file?: File | Blob

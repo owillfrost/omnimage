@@ -13,6 +13,7 @@ import { backgroundIndexer } from './clip/backgroundIndexer'
 import { SplitToningMigrationService } from './db/splitToningMigration'
 import { handleMediaStream, clearMediaPathCache, resolveMediaFilePath } from './media/mediaStreamServer'
 import { extractComfyMetadataFromPngFile } from './metadata/comfyPngParser'
+import { layoutIndexer, handleLayoutBinaryStream } from './layout/layoutIndexer'
 import {
   handleEmbeddingsBinaryStream,
   computeClipTextEmbedding,
@@ -385,6 +386,13 @@ export function createCatalogApiMiddleware() {
         return
       }
 
+      // 7.1 GET /api/catalog/layout-vectors OR /api/eagle-layout-vectors
+      if (pathname === '/api/catalog/layout-vectors' || pathname === '/api/eagle-layout-vectors') {
+        const library = url.searchParams.get('library') || 'design'
+        await handleLayoutBinaryStream(req, res, library)
+        return
+      }
+
       // 8. POST /api/catalog/clip-text OR /api/eagle-clip-text OR /api/eagle-text-embedding
       if (
         pathname === '/api/catalog/clip-text' ||
@@ -592,6 +600,27 @@ export function createCatalogApiMiddleware() {
 
         res.setHeader('Content-Type', 'application/json')
         res.end(JSON.stringify({ status: 'success', message: `Started split-toning migration for ${libraryId}` }))
+        return
+      }
+
+      // 12.3 GET /api/catalog/layout-indexer-status
+      if (pathname === '/api/catalog/layout-indexer-status') {
+        res.setHeader('Content-Type', 'application/json; charset=utf-8')
+        res.end(JSON.stringify({ status: 'success', data: layoutIndexer.getStatus() }))
+        return
+      }
+
+      // 12.4 POST /api/catalog/start-layout-indexing
+      if (pathname === '/api/catalog/start-layout-indexing' && req.method === 'POST') {
+        const bodyBuf = await readRequestBody(req, 1024 * 1024)
+        const body = JSON.parse(bodyBuf.toString('utf-8'))
+        const libraryId = body.library || 'design'
+
+        // Run non-blocking in background
+        layoutIndexer.startIndexing(libraryId, db).catch(console.error)
+
+        res.setHeader('Content-Type', 'application/json')
+        res.end(JSON.stringify({ status: 'success', message: `Started layout indexing for ${libraryId}` }))
         return
       }
 

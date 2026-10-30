@@ -10,8 +10,12 @@ import {
   deriveFallbackSplitToningFromPalette,
 } from '../core/paletteExtractor'
 import { computeQuantizedCosine } from '../core/vectorQuantization'
+import {
+  computeQuantizedLayoutCosine,
+  type LayoutTuningOptions,
+} from '../core/layoutExtractor'
 
-export type SimilaritySortMode = 'hybrid' | 'visual' | 'color' | 'grade'
+export type SimilaritySortMode = 'hybrid' | 'visual' | 'color' | 'grade' | 'layout'
 
 export interface WorkerArtworkColorItem {
   id: string
@@ -38,6 +42,13 @@ export type ColorSortWorkerRequest =
       vectors: Int8Array
     }
   | {
+      type: 'SET_LAYOUT_VECTORS'
+      library: string
+      dim: number
+      ids: string[]
+      vectors: Uint8Array
+    }
+  | {
       type: 'SORT_BY_ANCHOR'
       requestId: number
       targetId: string
@@ -46,12 +57,14 @@ export type ColorSortWorkerRequest =
       targetPaletteWeights?: number[]
       targetSplitToning?: SplitToningProfile
       targetGradeTuning?: GradeTuningOptions
+      targetLayoutTuning?: LayoutTuningOptions
       targetAspectRatio?: number
       targetTags?: string[]
       targetTokens?: string[]
       mode?: SimilaritySortMode
       listVersion?: number
       targetEmbedding?: Int8Array | number[]
+      targetLayoutVector?: Uint8Array | number[]
       isTextAnchor?: boolean
     }
 
@@ -64,6 +77,7 @@ export interface ColorSortWorkerResponse {
   distances: Float32Array
   similarities: Uint8Array
   hasVisualEmbeddings: boolean
+  hasLayoutVectors?: boolean
   listVersion?: number
 }
 
@@ -75,6 +89,12 @@ const embeddingIndexById = new Map<string, number>()
 let currentEmbeddingVectors: Int8Array | null = null
 let currentEmbeddingDim = 512
 let currentInvNorms: Float32Array | null = null
+
+// Map from full artwork id -> row index in currentLayoutVectors
+const layoutIndexById = new Map<string, number>()
+let currentLayoutVectors: Uint8Array | null = null
+let currentLayoutDim = 288
+let currentLayoutInvNorms: Float32Array | null = null
 let currentListVersion = 0
 
 const STOP_WORDS = new Set([
@@ -127,6 +147,29 @@ self.onmessage = (event: MessageEvent<ColorSortWorkerRequest>) => {
     return
   }
 
+  if (msg.type === 'SET_LAYOUT_VECTORS') {
+    const { library, dim, ids, vectors } = msg
+    currentLayoutDim = dim || 288
+    currentLayoutVectors = vectors
+    currentLayoutInvNorms = new Float32Array(ids.length)
+    for (let i = 0; i < ids.length; i++) {
+      const offset = i * currentLayoutDim
+      let norm = 0
+      for (let d = 0; d < currentLayoutDim; d++) {
+        const v = vectors[offset + d]
+        norm += v * v
+      }
+      currentLayoutInvNorms[i] = norm > 0 ? 1 / Math.sqrt(norm) : 0
+    }
+    for (let i = 0; i < ids.length; i++) {
+      const rawId = ids[i]
+      const fullId = rawId.startsWith(`${library}-`) ? rawId : `${library}-${rawId}`
+      layoutIndexById.set(fullId, i)
+      layoutIndexById.set(rawId, i)
+    }
+    return
+  }
+
   if (msg.type === 'SET_ITEMS') {
     currentListVersion = msg.listVersion ?? 0
     currentItems = msg.items
@@ -158,6 +201,7 @@ self.onmessage = (event: MessageEvent<ColorSortWorkerRequest>) => {
       targetPaletteWeights,
       targetSplitToning,
       targetGradeTuning,
+      targetLayoutTuning,
       targetAspectRatio,
       targetTags,
       targetTokens,
@@ -202,9 +246,37 @@ self.onmessage = (event: MessageEvent<ColorSortWorkerRequest>) => {
     const canUseClip =
       mode !== 'color' &&
       mode !== 'grade' &&
+      mode !== 'layout' &&
       vecs !== null &&
       (hasExternalVec ||
         (anchorEmbRow !== undefined && (anchorEmbRow + 1) * dim <= vecs.length))
+
+    const layoutVecs = currentLayoutVectors
+    const layoutDim = currentLayoutDim
+
+    let externalTargetLayoutVec: Uint8Array | null = null
+    let externalTargetLayoutInvNorm = 0
+    if (msg.targetLayoutVector) {
+      externalTargetLayoutVec =
+        msg.targetLayoutVector instanceof Uint8Array
+          ? msg.targetLayoutVector
+          : new Uint8Array(msg.targetLayoutVector)
+      let norm = 0
+      for (let d = 0; d < layoutDim; d++) {
+        const v = externalTargetLayoutVec[d]
+        norm += v * v
+      }
+      externalTargetLayoutInvNorm = norm > 0 ? 1 / Math.sqrt(norm) : 0
+    }
+
+    const anchorLayoutRow = layoutIndexById.get(targetId)
+    const hasExternalLayoutVec =
+      externalTargetLayoutVec !== null && externalTargetLayoutVec.length === layoutDim
+    const canUseLayout =
+      mode === 'layout' &&
+      layoutVecs !== null &&
+      (hasExternalLayoutVec ||
+        (anchorLayoutRow !== undefined && (anchorLayoutRow + 1) * layoutDim <= layoutVecs.length))
 
     for (let i = 0; i < len; i++) {
       indices[i] = i
@@ -273,6 +345,45 @@ self.onmessage = (event: MessageEvent<ColorSortWorkerRequest>) => {
       const candAspect = art.aspectRatio || 1.0
       const aspectDiff = Math.abs(Math.log(anchorAspect / candAspect))
       const aspectSim = Math.max(0, 1 - aspectDiff * 1.1)
+
+      if (mode === 'layout') {
+        let finalSim = 0
+        const candLayoutRow = canUseLayout ? layoutIndexById.get(art.id) : undefined
+
+        if (canUseLayout && candLayoutRow !== undefined && layoutVecs) {
+          let rawCos = 0
+          if (hasExternalLayoutVec && externalTargetLayoutVec !== null) {
+            const offsetCand = candLayoutRow * layoutDim
+            let dot = 0
+            for (let d = 0; d < layoutDim; d++) {
+              dot += externalTargetLayoutVec[d] * layoutVecs[offsetCand + d]
+            }
+            rawCos =
+              dot *
+              externalTargetLayoutInvNorm *
+              (currentLayoutInvNorms ? currentLayoutInvNorms[candLayoutRow] ?? 0 : 0)
+          } else if (anchorLayoutRow !== undefined) {
+            rawCos = computeQuantizedLayoutCosine(
+              layoutVecs,
+              layoutDim,
+              anchorLayoutRow,
+              candLayoutRow,
+              currentLayoutInvNorms
+            )
+          }
+
+          // Stretch layout cosine: below 0.35 = minimal match, 0.95+ = identical layout
+          const layoutSim = Math.max(0, Math.min(1, (rawCos - 0.35) / 0.60))
+          const aspectWeight = targetLayoutTuning?.aspectWeight ?? 0.15
+          finalSim = layoutSim * (1 - aspectWeight) + aspectSim * aspectWeight
+        } else {
+          // Fallback when layout vector isn't indexed yet for candidate
+          finalSim = aspectSim * 0.70 + colorSim * 0.30
+        }
+
+        tempDistances[i] = (1 - finalSim) * 85
+        continue
+      }
 
       // 4. Visual Embedding (CLIP / SigLIP) Cosine Similarity [0..1]
       let finalSimilarity = 0
@@ -367,6 +478,17 @@ self.onmessage = (event: MessageEvent<ColorSortWorkerRequest>) => {
         const minCutoff = Math.max(0, Math.round((sens - 0.4) * 50))
         if (sim < minCutoff) sim = 0
         sortedSimilarities[i] = Math.max(0, Math.min(100, sim))
+      } else if (mode === 'layout') {
+        sortedDistances[i] = rawDist
+        const sens = targetLayoutTuning?.sensitivity ?? 1.0
+        const baseSim = Math.max(0, Math.min(1, 1 - rawDist / 85))
+        if (sens !== 1.0) {
+          const exponent = 0.5 + sens * 0.9
+          const stretched = Math.pow(baseSim, exponent)
+          sortedSimilarities[i] = Math.max(0, Math.min(100, Math.round(stretched * 100)))
+        } else {
+          sortedSimilarities[i] = Math.max(0, Math.min(100, Math.round(baseSim * 100)))
+        }
       } else {
         sortedDistances[i] = rawDist
         sortedSimilarities[i] = Math.max(
@@ -385,6 +507,7 @@ self.onmessage = (event: MessageEvent<ColorSortWorkerRequest>) => {
       distances: sortedDistances,
       similarities: sortedSimilarities,
       hasVisualEmbeddings: canUseClip,
+      hasLayoutVectors: canUseLayout,
       listVersion: msg.listVersion ?? currentListVersion,
     }
 

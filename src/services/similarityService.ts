@@ -5,21 +5,25 @@ import type {
   SimilaritySortMode,
 } from '../workers/colorSort.worker'
 import type { GradeTuningOptions } from '../core/colorClustering'
+import type { LayoutTuningOptions } from '../core/layoutExtractor'
 import { getCatalogProvider } from '../providers/providerFactory'
 
 export type { SimilaritySortMode }
 export type { GradeTuningOptions }
+export type { LayoutTuningOptions }
 
 export interface SimilarItemsOptions {
   limit?: number
   excludeSelf?: boolean
   mode?: SimilaritySortMode
   gradeTuning?: GradeTuningOptions
+  layoutTuning?: LayoutTuningOptions
 }
 
 export interface SimilarItemsResult {
   items: Artwork[]
   hasVisualEmbeddings: boolean
+  hasLayoutVectors?: boolean
 }
 
 // In-memory LRU cache storing the last 60 calculated similarity arrays keyed by `${targetId}:${mode}`
@@ -34,15 +38,27 @@ function extractStyleTokens(artwork: Artwork): string[] {
   return Array.from(new Set(matches)).slice(0, 24)
 }
 
-function buildCacheKey(targetId: string, mode: SimilaritySortMode, gradeTuning?: GradeTuningOptions): string {
-  if (mode !== 'grade' || !gradeTuning) return `${targetId}:${mode}`
-  const bal = gradeTuning.balance ?? 0
-  const s = gradeTuning.shadowOverride ? `${gradeTuning.shadowOverride.a},${gradeTuning.shadowOverride.b}` : ''
-  const h = gradeTuning.highlightOverride ? `${gradeTuning.highlightOverride.a},${gradeTuning.highlightOverride.b}` : ''
-  const sens = gradeTuning.sensitivity ?? 0.75
-  const skin = gradeTuning.protectSkinTones ?? true ? '1' : '0'
-  const neut = gradeTuning.excludeNeutrals ? '1' : '0'
-  return `${targetId}:grade:b${bal}:s${s}:h${h}:se${sens}:sk${skin}:n${neut}`
+function buildCacheKey(
+  targetId: string,
+  mode: SimilaritySortMode,
+  gradeTuning?: GradeTuningOptions,
+  layoutTuning?: LayoutTuningOptions
+): string {
+  if (mode === 'grade' && gradeTuning) {
+    const bal = gradeTuning.balance ?? 0
+    const s = gradeTuning.shadowOverride ? `${gradeTuning.shadowOverride.a},${gradeTuning.shadowOverride.b}` : ''
+    const h = gradeTuning.highlightOverride ? `${gradeTuning.highlightOverride.a},${gradeTuning.highlightOverride.b}` : ''
+    const sens = gradeTuning.sensitivity ?? 0.75
+    const skin = gradeTuning.protectSkinTones ?? true ? '1' : '0'
+    const neut = gradeTuning.excludeNeutrals ? '1' : '0'
+    return `${targetId}:grade:b${bal}:s${s}:h${h}:se${sens}:sk${skin}:n${neut}`
+  }
+  if (mode === 'layout' && layoutTuning) {
+    const w = layoutTuning.aspectWeight ?? 0.15
+    const sens = layoutTuning.sensitivity ?? 1.0
+    return `${targetId}:layout:w${w}:se${sens}`
+  }
+  return `${targetId}:${mode}`
 }
 
 class SimilarityWorkerManager {
@@ -51,6 +67,8 @@ class SimilarityWorkerManager {
   private itemsSynced = false
   private loadedEmbeddingLibraries = new Set<string>()
   private loadingEmbeddingPromises = new Map<string, Promise<boolean>>()
+  private loadedLayoutLibraries = new Set<string>()
+  private loadingLayoutPromises = new Map<string, Promise<boolean>>()
   private requestId = 0
   private pendingResolvers = new Map<number, (res: SimilarItemsResult) => void>()
 
@@ -64,7 +82,7 @@ class SimilarityWorkerManager {
       this.worker.onmessage = (event: MessageEvent<ColorSortWorkerResponse>) => {
         const msg = event.data
         if (msg.type !== 'SORT_RESULT') return
-        const { requestId, targetId, sortedIndices, hasVisualEmbeddings } = msg
+        const { requestId, targetId, sortedIndices, hasVisualEmbeddings, hasLayoutVectors } = msg
         const resolver = this.pendingResolvers.get(requestId)
         if (!resolver) return
         this.pendingResolvers.delete(requestId)
@@ -78,11 +96,60 @@ class SimilarityWorkerManager {
           }
         }
 
-        resolver({ items: result, hasVisualEmbeddings })
+        resolver({ items: result, hasVisualEmbeddings, hasLayoutVectors })
       }
     } catch (err) {
       console.error('Failed to initialize similarity worker:', err)
     }
+  }
+
+  public async ensureLayoutLoaded(libraryKey: string): Promise<boolean> {
+    if (this.loadedLayoutLibraries.has(libraryKey)) return true
+    const existingPromise = this.loadingLayoutPromises.get(libraryKey)
+    if (existingPromise) return existingPromise
+
+    const promise = (async () => {
+      try {
+        const provider = getCatalogProvider()
+        if (!provider.fetchLayoutBinary) return false
+        const data = await provider.fetchLayoutBinary(libraryKey)
+        if (!data || data.buffer.byteLength < 12) return false
+
+        const { dim, buffer } = data
+        const view = new DataView(buffer)
+        const headerByteLen = view.getUint32(0, true)
+        if (headerByteLen <= 0 || 4 + headerByteLen > buffer.byteLength) {
+          return false
+        }
+
+        const headerBytes = new Uint8Array(buffer, 4, headerByteLen)
+        const idsJson = new TextDecoder('utf-8').decode(headerBytes)
+        const ids = JSON.parse(idsJson) as string[]
+        const vectors = new Uint8Array(buffer, 4 + headerByteLen)
+
+        this.initWorker()
+        if (!this.worker) return false
+
+        this.worker.postMessage({
+          type: 'SET_LAYOUT_VECTORS',
+          library: libraryKey,
+          dim,
+          ids,
+          vectors,
+        } as ColorSortWorkerRequest)
+
+        this.loadedLayoutLibraries.add(libraryKey)
+        SIMILARITY_CACHE.clear()
+        return true
+      } catch {
+        return false
+      } finally {
+        this.loadingLayoutPromises.delete(libraryKey)
+      }
+    })()
+
+    this.loadingLayoutPromises.set(libraryKey, promise)
+    return promise
   }
 
   public async ensureEmbeddingsLoaded(libraryKey: string): Promise<boolean> {
@@ -161,7 +228,8 @@ class SimilarityWorkerManager {
   public computeSimilarity(
     targetArtwork: Artwork,
     mode: SimilaritySortMode = 'hybrid',
-    gradeTuning?: GradeTuningOptions
+    gradeTuning?: GradeTuningOptions,
+    layoutTuning?: LayoutTuningOptions
   ): Promise<SimilarItemsResult> {
     return new Promise((resolve) => {
       this.initWorker()
@@ -182,11 +250,13 @@ class SimilarityWorkerManager {
         targetPaletteWeights: targetArtwork.paletteWeights,
         targetSplitToning: targetArtwork.splitToning,
         targetGradeTuning: gradeTuning,
+        targetLayoutTuning: layoutTuning,
         targetAspectRatio: targetArtwork.aspectRatio,
         targetTags: targetArtwork.tags,
         targetTokens: extractStyleTokens(targetArtwork),
         mode,
         targetEmbedding: targetArtwork.embedding,
+        targetLayoutVector: targetArtwork.layoutVector,
         isTextAnchor: Boolean(targetArtwork.isTextQuery || targetArtwork.tags?.includes('clip-text-query')),
       }
 
@@ -202,20 +272,28 @@ export async function getSimilarArtworks(
   allArtworks: Artwork[],
   options: SimilarItemsOptions = {}
 ): Promise<SimilarItemsResult> {
-  const { limit = 20, mode = 'hybrid', gradeTuning } = options
-  const cacheKey = buildCacheKey(targetArtwork.id, mode, gradeTuning)
+  const { limit = 20, mode = 'hybrid', gradeTuning, layoutTuning } = options
+  const cacheKey = buildCacheKey(targetArtwork.id, mode, gradeTuning, layoutTuning)
 
   const cached = SIMILARITY_CACHE.get(cacheKey)
   if (cached) {
     return {
       items: cached.items.slice(0, limit),
       hasVisualEmbeddings: cached.hasVisualEmbeddings,
+      hasLayoutVectors: cached.hasLayoutVectors,
     }
   }
 
   similarityManager.syncItems(allArtworks)
 
-  if (mode !== 'color' && mode !== 'grade') {
+  if (mode === 'layout') {
+    const libKey = targetArtwork.libraryId || (targetArtwork.id.startsWith('google-flow-')
+      ? 'google-flow'
+      : targetArtwork.id.startsWith('design-')
+      ? 'design'
+      : (allArtworks[0]?.libraryId || (allArtworks[0]?.id.startsWith('google-flow-') ? 'google-flow' : 'design')))
+    await similarityManager.ensureLayoutLoaded(libKey)
+  } else if (mode !== 'color' && mode !== 'grade') {
     const libKey = targetArtwork.libraryId || (targetArtwork.id.startsWith('google-flow-')
       ? 'google-flow'
       : targetArtwork.id.startsWith('design-')
@@ -224,7 +302,7 @@ export async function getSimilarArtworks(
     await similarityManager.ensureEmbeddingsLoaded(libKey)
   }
 
-  const result = await similarityManager.computeSimilarity(targetArtwork, mode, gradeTuning)
+  const result = await similarityManager.computeSimilarity(targetArtwork, mode, gradeTuning, layoutTuning)
 
   if (SIMILARITY_CACHE.size >= MAX_CACHE_SIZE) {
     const firstKey = SIMILARITY_CACHE.keys().next().value
@@ -235,6 +313,7 @@ export async function getSimilarArtworks(
   return {
     items: result.items.slice(0, limit),
     hasVisualEmbeddings: result.hasVisualEmbeddings,
+    hasLayoutVectors: result.hasLayoutVectors,
   }
 }
 

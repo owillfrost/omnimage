@@ -117,6 +117,10 @@ export class WebOpfsProvider implements ICatalogProvider {
     return null
   }
 
+  async fetchLayoutBinary(_libraryId: string): Promise<{ dim: number; buffer: ArrayBuffer } | null> {
+    return null
+  }
+
   async computeTextEmbedding(_query: string): Promise<{ embedding: Int8Array; dim: number }> {
     throw new Error('In-browser text embedding requires WebGPU/WASM pipeline or backend server.')
   }

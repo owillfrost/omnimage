@@ -24,6 +24,7 @@ https://github.com/user-attachments/assets/75053c9e-3d9e-494c-9a5d-d9fabaa10dc7
 </p>
 
 - **2D Spatial Infinite Grid (120 FPS):** $O(\log N)$ viewport virtualization with instant pan/zoom and masonry explore feed.
+- **Spatial Composition & Wireframe Layout Search (`Layout Mode`):** Compact 288-byte spatial layout fingerprint ($16 \times 9$ canonical grid) invariant to Dark/Light mode, clustering references by spatial block distribution, framing, and wireframe structure without restricting to matching color palettes. See [docs/layout-search.md](./docs/layout-search.md).
 - **Perceptual Color Harmonization & Grade Mode (Split Toning):** Multi-color filtering and radial sorting in perceptual **CIELAB (D65) + HSL** space, including the new **Grade Mode** for shadows and highlights color grading matching with clipping and letterbox rejection.
 - **Local Semantic & Visual Search (CLIP):** On-device text-to-image and image-to-image similarity search powered by `Xenova/clip-vit-base-patch32` with Int8 vector quantization (512 bytes per item).
 - **Zero-Lock-In Local Storage:**
@@ -37,6 +38,17 @@ https://github.com/user-attachments/assets/75053c9e-3d9e-494c-9a5d-d9fabaa10dc7
 ---
 
 ## What's New
+
+### New: Layout mode (Spatial Composition & Wireframe Search)
+A new similarity dimension alongside Mixed, AI Aesthetic, Palette, and Grade. Pick an anchor image and find images with the **same spatial arrangement, framing, and wireframe structure**, independent of their color scheme.
+
+- **Color & Theme Invariant:** Measures visual mass relative to each image's adaptive background ($|L - L_{\text{bg}}|$ & redmean $\Delta C$). A split-screen landing page in Dark Mode and one in Light Mode match with $\ge 99.5\%$ similarity.
+- **Ultra-lightweight 288D Fingerprint:** $16 \times 9$ canonical grid with Channel 0 (Redmean mass) and Channel 1 (multi-channel RGB Sobel edges with soft noise suppression).
+- **Fast Off-Thread Search:** Sorted off-thread in the Web Worker in under 10 ms for 20,000+ items.
+- **Live Tuning Controls:** Adjust Aspect Ratio Cohesion ($0\%$ to $50\%$) and Layout Sensitivity directly from the `FloatingInfoCard`.
+- **Dedicated Documentation:** See [docs/layout-search.md](./docs/layout-search.md) for full mathematical formulation, binary file specification, and benchmark data.
+
+---
 
 ### New: Grade mode
 A new similarity mode, next to Mixed, AI Aesthetic and Palette. Pick an anchor image and find images with a similar color grade: the tint in the shadows and in the highlights, not just the overall palette.
